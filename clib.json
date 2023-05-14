@@ -1,0 +1,11 @@
+{
+  "name": "cron",
+  "version": "0.1.0",
+  "dependencies": {
+    "exbotanical/libutil": "*",
+    "exbotanical/libhash": "*"
+  },
+  "development": {
+    "thlorenz/tap.c": "*"
+  }
+}

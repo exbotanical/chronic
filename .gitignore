@@ -1,0 +1,7 @@
+*.so
+*.o
+main
+*.log
+chronic
+jobs
+test
