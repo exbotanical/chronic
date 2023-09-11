@@ -2,6 +2,8 @@
 
 #define BUFFER_SIZE 255
 
+void set_next(Job* job, time_t curr) { job->next = cron_next(job->expr, curr); }
+
 // array_t *scan_jobs(char *fpath) {
 //   char line[BUFFER_SIZE];
 //   FILE *file = fopen(fpath, "r");

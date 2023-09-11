@@ -51,11 +51,11 @@ int main(int argc, char **argv) {
     foreach (jobs, i) {
       Job *job = array_get(jobs, i);
 
-      write_to_log("executing job with code %s\n", job->code);
+      write_to_log("executing job with code %s\n", job->cmd);
 
       if ((job->pid = fork()) == 0) {
         setpgid(0, 0);
-        execl("/bin/sh", "/bin/sh", "-c", job->code, NULL);
+        execl("/bin/sh", "/bin/sh", "-c", job->cmd, NULL);
         write_to_log("%s\n", "exec in child process");
         exit(0);
       }

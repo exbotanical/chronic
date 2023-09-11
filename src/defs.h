@@ -1,9 +1,11 @@
 #ifndef DEFS_H
 #define DEFS_H
 
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <pcre.h>
+#include <pwd.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -11,11 +13,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
 
+#include "ccronexpr/ccronexpr.h"
 #include "libhash/libhash.h"
 #include "libutil/libutil.h"
 
@@ -32,6 +36,8 @@
 typedef struct {
   char *schedule;
   char *cmd;
+  time_t next;
+  cron_expr *expr;
 } Job;
 
 typedef enum { OK, ERR } RETVAL;

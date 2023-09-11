@@ -1,5 +1,3 @@
-#include <sys/stat.h>
-
 #include "defs.h"
 
 bool daemonize() {

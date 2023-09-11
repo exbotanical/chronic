@@ -5,3 +5,5 @@ main
 chronic
 jobs
 test
+*.vscode
+unit_test
