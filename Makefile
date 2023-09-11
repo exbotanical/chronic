@@ -2,12 +2,12 @@ CC ?= gcc
 AR ?= ar
 LINTER ?= clang-format
 
+PROG := chronic
+UNIT_TARGET := unit_test
+
 SRCDIR := src
 DEPSDIR := deps
 TESTDIR := t
-
-TARGET := chronic
-TEST_TARGET := test
 
 SRC := $(wildcard $(SRCDIR)/*.c)
 TEST_DEPS := $(wildcard $(DEPSDIR)/tap.c/*.c)
@@ -18,25 +18,22 @@ LIBS := -lm -lpcre
 
 TESTS := $(wildcard $(TESTDIR)/*.c)
 
-$(TARGET):
-	$(CC) $(CFLAGS) $(SRC) $(DEPS) $(LIBS) -Ideps -Isrc -o $(TARGET)
+$(PROG):
+	$(CC) $(CFLAGS) $(SRC) $(DEPS) $(LIBS) -Ideps -Isrc -o $(PROG)
+
+# Use make -s test 2>/dev/null to see only test results
+test:
+	$(MAKE) unit_test
+
+unit_test:
+	$(CC) $(wildcard $(TESTDIR)/unit/*.c) $(TEST_DEPS) $(DEPS) $(filter-out $(SRCDIR)/main.c, $(SRC)) -I$(SRCDIR) -I$(DEPSDIR) $(LIBS) -o $(UNIT_TARGET)
+	./$(UNIT_TARGET)
+	$(MAKE) clean
 
 clean:
-	rm -f $(OBJ) $(TARGET)$(TEST_TARGET)
-
-test:
-	$(foreach test,$(TESTS),					  																											\
-		$(MAKE) .compile_test file=$(test); 																										\
-		printf "\033[1;32m\nRunning test $(patsubst $(TESTDIR)/%,%,$(test))...\n==================\n\033[0m";	\
-		./test;\
- 	)
-	rm $(TEST_TARGET)
-
-.compile_test:
-	$(CC) $(CFLAGS) $(file) $(filter-out $(SRCDIR)/main.c, $(SRC)) $(DEPS) $(TEST_DEPS) $(LIBS) -Ideps -Isrc -o $(TEST_TARGET)
-
+	rm -f $(UNIT_TARGET) $(PROG)
 
 lint:
-	$(LINTER) -i $(wildcard $(SRCDIR)/*) $(wildcard $(TESTDIR)/*)
+	$(LINTER) -i $(SRC) $(wildcard $(TESTDIR)/*/*.c)
 
-.PHONY: clean test .compile_test lint
+.PHONY: test unit_test clean lint

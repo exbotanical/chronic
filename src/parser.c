@@ -1,137 +1,145 @@
-#include <pthread.h>
+#include "parser.h"
 
-#include "defs.h"
+#include <dirent.h>
+#include <pwd.h>
 
-typedef struct {
-  char* command;
-  time_t curr_date;
-  enum { UTC } tz;
-} cron_parse_opts;
+#include "ccronexpr/ccronexpr.h"
 
-char* parse_entry(char* entry);
-char* parse_expr(char* expr, cron_parse_opts opts);
+static char* get_after_nth_c(const char* str, char c, int n) {
+  int count = 0;
+  while (*str) {
+    if (*str == c && ++count == n) return (char*)str;
+    str++;
+  }
 
-static hash_table* regex_cache;
-
-static pthread_once_t init_regex_cache_once = PTHREAD_ONCE_INIT;
-static void init_regex_cache(void) { regex_cache = ht_init(0 /* TODO: */); }
-
-static hash_set* get_regex_cache(void) {
-  pthread_once(&init_regex_cache_once, init_regex_cache);
-
-  return regex_cache;
+  return NULL;
 }
 
-static const char* COMMENT_PATTERN = "^#";
-static const char* VARIABLE_PATTERN = "^(.*)=(.*)$";
+static RETVAL parse_line(char* line, Job* job, int count) {
+  job->schedule = line;
+  job->cmd = get_after_nth_c(line, ' ', line[0] == '@' ? 1 : count);
 
-cron_config parse_str(char* data) {
-  cron_config config = {.errors = ht_init(0),
-                        .variables = ht_init(0),
-                        .expressions = array_init()};
+  if (!job->cmd) {
+    return ERR;
+  }
 
-  array_t* blocks = s_split(data, "\n");
+  *job->cmd = '\0';
+  ++job->cmd;
 
-  foreach (blocks, i) {
-    char* block = array_get(blocks, i);
-    char* matches = NULL;
-    char* entry = s_trim(block);
+  return OK;
+}
 
-    if (strlen(entry) > 0) {
-      pcre* re = regex_cache_get(get_regex_cache(), "");
-      if (!re) {
-        write_to_log("an error occurred when compiling regex\n");
-        exit(1);
-      }
+time_t parse(time_t curr, Job* job, char* line) {
+  char* line_cp = s_trim(line);  // TODO: free
 
-      if (regex_match(re, COMMENT_PATTERN)) {
-        continue;
-      } else {
-        array_t* matches = regex_matches(re, VARIABLE_PATTERN);
-        if (matches) {
-          ht_insert(config.variables, array_get(matches, 1),
-                    array_get(matches, 2));
-        } else {
-          char* result = parse_entry(s_concat("0 ", entry));
+  char* comment_start = strchr(line_cp, '#');
 
-          array_push(config.expressions, result);
-        }
-      }
+  if (comment_start) {
+    *comment_start = '\0';
+  }
+
+  if (parse_line(line_cp, job, SPACES_BEFORE_CMD) != OK) {
+    return ERR;
+  }
+
+  cron_expr expr;
+  const char* err = NULL;
+  cron_parse_expr(job->schedule, &expr, &err);
+
+  if (err) {
+    printf("error parsing cron expression: %s\n", err);
+    return ERR;
+  }
+
+  return cron_next(&expr, curr);
+}
+
+array_t* process_file(char* path, char* uname) {
+  unsigned int max_entries;
+  unsigned int max_lines;
+
+  if (strcmp(uname, "root") == 0) {
+    max_entries = 65535;
+  } else {
+    max_entries = MAXENTRIES;
+  }
+
+  max_lines = max_entries * 10;
+
+  FILE* fp;
+  char buf[RW_BUFFER];
+
+  array_t* lines = NULL;
+
+  if ((fp = fopen(path, "r")) != NULL) {
+    lines = array_init();
+
+    while (fgets(buf, sizeof(buf), fp) != NULL && --max_lines) {
+      char* ptr = buf;
+      int len;
+
+      // Skip whitespace and newlines
+      while (*ptr == ' ' || *ptr == '\t' || *ptr == '\n') ++ptr;
+
+      // Remove trailing newline
+      len = strlen(ptr);
+      if (len && ptr[len - 1] == '\n') ptr[--len] = 0;
+
+      // If that's it or the entire line is a comment, skip
+      if (*ptr == 0 || *ptr == '#') continue;
+
+      if (--max_entries == 0) break;
+
+      array_push(lines, s_copy(ptr));
     }
   }
 
-  return config;
+  fclose(fp);
+
+  return lines;
 }
 
-char* parse_entry(char* entry) {
-  array_t* atoms = s_split(entry, " ");
-  unsigned int sz = array_size(atoms);
+array_t* process_dir(char* dpath) {
+  DIR* dir;
 
-  if (sz == 6) {
-    return parse_expr(entry, (cron_parse_opts){});
-  } else if (sz > 6) {
-    // TODO: err handling
-    char* joined = str_join(array_slice(atoms, 0, 6), " ");
+  if ((dir = opendir(dpath)) != NULL) {
+    struct dirent* den;
+    char* path;
 
-    char* command = str_join(array_slice(atoms, 6, array_size(atoms)), " ");
+    array_t* all_lines = array_init();
 
-    return parse_expr(joined, (cron_parse_opts){.command = command});
+    while ((den = readdir(dir)) != NULL) {
+      // Skip pointer files
+      if (s_equals(den->d_name, ".") || s_equals(den->d_name, "..")) {
+        continue;
+      }
+
+      char* path;
+      if (!(path = fmt_str("%s/%s", dpath, den->d_name))) {
+        printf("UH OH\n");
+
+        return;
+      }
+
+      // TODO: perms check
+      // TODO: root vs user
+      array_t* lines = process_file(path, den->d_name);
+      if (!lines) {
+        printf("failed to process file");
+        continue;
+      }
+
+      array_t* tmp = array_concat(all_lines, lines);
+      array_free(lines);
+      array_free(all_lines);
+
+      all_lines = tmp;
+    }
+    closedir(dir);
+    return all_lines;
   } else {
-    // error
+    printf("unable to scan directory %s\n", dpath);
   }
+
+  return NULL;
 }
-
-cron_config parse_file(char* filepath) {
-  return parse_str(read_file(filepath));
-}
-
-char* parse_expr(char* expr, cron_parse_opts opts) {
-  if (opts.curr_date == NULL) {
-    opts.curr_date = to_current_date(opts);
-  }
-}
-
-char* to_current_date(cron_parse_opts opts) {}
-
-/*
-
-syncdir()
-  remove_updates_f()
-
-  for dirinfo in dir:
-    if dirinfo.name == .:
-      continue
-    if dirinfo.name = CRONUPDATE:
-      continue
-    syncdir(dirinfo, dir)
-
-
-
-syncfile(dirinfo, dir)
-  maxlines = 256
-
-  open(dirinfo.name)
-  if (stat(fileno(handle)) and stat.uuid = this):
-
-
-
-
-
-while 1:
-  if been_five_min(t1, now):
-    foreach file in crontabs:
-      if file.ts < now - 5s:
-        config.ts = time(NULL)
-
-        cron_jobs.push(parse(file))
-
-  foreach job in cron_job:
-    if job.ready:
-      run(job)
-
-parse(file) {
-  data = read(file)
-  for line in data:
-    if get_time(line)
-}
-*/

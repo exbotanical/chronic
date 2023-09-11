@@ -1,8 +1,6 @@
 #define _POSIX_C_SOURCE 199309L
 
 /*
-The Wire
-
 The Barksdale crew is especially interesting. When Avon is in prison
 and Stringer has taken over operations, Stringer is arranging faked suicides
 and backdoor deals with un-friendly rivals in order to save what is a business
@@ -15,9 +13,10 @@ extern pid_t daemon_pid;
 pid_t daemon_pid;
 
 int main(int argc, char **argv) {
+  // Become a daemon process
   if (!daemonize()) {
-    printf("ERROR");
-    exit(1);
+    printf("daemonize fail");
+    exit(EXIT_FAILURE);
   }
 
   int log_fd;
@@ -37,8 +36,8 @@ int main(int argc, char **argv) {
   short stime = 60;
 
   while (true) {
-    // Subtract the remainder of the current time to ensure the iteration begins
-    // as close to possible to the desired interval boundary
+    // Subtract the remainder of the current time to ensure the iteration
+    // begins as close as possible to the desired interval boundary
     sleep((stime + 1) - (short)(time(NULL) % stime));
 
     t2 = time(NULL);
@@ -80,30 +79,3 @@ int main(int argc, char **argv) {
     }
   }
 }
-
-// close(STDIN_FILENO);
-// close(STDOUT_FILENO);
-// close(STDERR_FILENO);
-
-// if (open("/dev/null", O_WRONLY) != 0) {
-//   return false;
-// }
-
-// if (dup2(0, STDERR_FILENO) != STDERR_FILENO) {
-//   return false;
-// }
-
-// close(0);
-
-// become the session leader of a new process group
-// so we can control all processes using the gid
-// if (setsid() == -1) {
-//   perror("setsid");
-//   return false;
-// }
-
-// if (chdir("/") != 0) {
-//   return false;
-// }
-
-// umask(0);
