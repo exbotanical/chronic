@@ -33,11 +33,16 @@
 #define MAXENTRIES 256
 #define RW_BUFFER 1024
 
+typedef enum { EXITED, PENDING } JobStatus;
+
 typedef struct {
   char *schedule;
   char *cmd;
   time_t next;
   cron_expr *expr;
+  pid_t *pid;
+  JobStatus status;
+  int ret;
 } Job;
 
 typedef enum { OK, ERR } RETVAL;
@@ -47,7 +52,7 @@ typedef enum { OK, ERR } RETVAL;
 
 bool daemonize();
 
-array_t *scan_jobs(char *fpath);
+array_t *scan_jobs(char *fpath, time_t curr);
 
 void write_to_log(char *str, ...);
 
@@ -61,6 +66,9 @@ array_t *regex_matches(pcre *re, char *cmp);
  */
 void *xmalloc(size_t sz);
 
+array_t *process_dir(char *dpath);
 char *read_file(char *filepath);
+bool parse(Job *job, char *line);
+void reap(Job *job);
 
 #endif /* DEFS_H */

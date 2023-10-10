@@ -23,16 +23,16 @@ bool daemonize() {
     perror("open /dev/null");
     return EXIT_FAILURE;
   }
-  dup2(i, 0);
-  dup2(i, 1);
+  dup2(i, STDIN_FILENO);
+  dup2(i, STDOUT_FILENO);
 
   // Reset perms so we can set them explicitly
   umask(0);
   // Reset to root dir to prevent a dangling reference to the parent's cwd
-  if (chdir("/") != 0) {
-    perror("chdir(\"/\")");
-    return EXIT_FAILURE;
-  };
+  // if (chdir("/") != 0) {
+  //   perror("chdir(\"/\")");
+  //   return EXIT_FAILURE;
+  // };
 
   // Become the session leader of a new process group
   // so we can control all processes using the gid
@@ -53,20 +53,20 @@ bool daemonize() {
   return EXIT_SUCCESS;
 }
 
-void reap(Job *job) {
-  // write_to_log("hello from the reaper...\n");
+void reap(Job* job) {
+  write_to_log("hello from the reaper...\n");
 
-  // int status;
-  // int r = waitpid(job->pid, &status, WNOHANG);
+  int status;
+  int r = waitpid(job->pid, &status, WNOHANG);
 
-  // // -1 == error; 0 == still running; pid == dead
-  // if (r < 0 || r == job->pid) {
-  //   if (r > 0 && WIFEXITED(status))
-  //     status = WEXITSTATUS(status);
-  //   else
-  //     status = 1;
+  // -1 == error; 0 == still running; pid == dead
+  if (r < 0 || r == job->pid) {
+    if (r > 0 && WIFEXITED(status))
+      status = WEXITSTATUS(status);
+    else
+      status = 1;
 
-  //   job->ret = status;
-  //   job->status = EXITED;
-  // }
+    job->ret = status;
+    job->status = EXITED;
+  }
 }

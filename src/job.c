@@ -2,34 +2,29 @@
 
 #define BUFFER_SIZE 255
 
-void set_next(Job* job, time_t curr) { job->next = cron_next(job->expr, curr); }
+void set_next(Job *job, time_t curr) { job->next = cron_next(job->expr, curr); }
 
-// array_t *scan_jobs(char *fpath) {
-//   char line[BUFFER_SIZE];
-//   FILE *file = fopen(fpath, "r");
-//   if (file == NULL) {
-//     perror("fopen");
-//     exit(1);
-//   }
+array_t *scan_jobs(char *fpath, time_t curr) {
+  array_t *lines = process_dir(fpath);
+  array_t *jobs = array_init();
 
-//   if (fgetc(file) == EOF) {
-//     return NULL;
-//   }
+  foreach (lines, i) {
+    char *line = array_get(lines, i);
+    Job *job = malloc(sizeof(Job));
 
-//   fseek(file, 0, SEEK_SET);
+    if (!parse(job, line)) {
+      write_to_log("failed to parse job line %s", line);
+    }
+    write_to_log("done parsing line %s\n", line);
 
-//   array_t *jobs = array_init();
-//   while (fgets(line, sizeof(line), file)) {
-//     Job *j = malloc(sizeof(Job));
+    free(line);
 
-//     j->code = s_trim(line);
-//     j->pid = -1;
-//     j->ret = -1;
-//     j->status = PENDING;
+    array_push(jobs, job);
+    job->pid = -1;
+    job->ret = -1;
+    job->status = PENDING;
+    set_next(job, curr);
+  }
 
-//     array_push(jobs, j);
-//   }
-
-//   fclose(file);
-//   return jobs;
-// }
+  return jobs;
+}
