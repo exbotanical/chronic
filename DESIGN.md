@@ -85,3 +85,31 @@ main():
 - mutex in main and watcher threads
   - use granular locks (per-job to reduce contention)
 - job states e.g. scheduled,running,complete
+
+## alternative to inotify
+1. set global db mtime to 0
+2. every iter, scan crontabs
+3. compare mtime
+4. for each crontab file, create a meta tracking object and set the mtime
+
+```ts
+type Metadata {
+  filePath: string
+  crontabs: CrontabEntry[]
+}
+
+const crontabDir = '/etc/some/path';
+
+for (const { file } of readdir(crontabDir)) {
+  let metadata = getMetadata(file.path);
+  if (!metadata) {
+    metadata = createMetadata(file.path);
+  }
+  if (stat(file).mtime > metadata.mtime) {
+
+    // setup crontabs
+  } else {
+    continue;
+  }
+}
+```
