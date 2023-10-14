@@ -1,4 +1,4 @@
-#include "parser.h"
+#include "defs.h"
 
 static char* get_after_nth_c(const char* str, char c, int n) {
   int count = 0;
@@ -25,7 +25,7 @@ static RETVAL parse_line(char* line, Job* job, int count) {
   return OK;
 }
 
-bool parse(Job* job, char* line) {
+RETVAL parse(Job* job, char* line) {
   char* line_cp = s_trim(line);  // TODO: free
 
   char* comment_start = strchr(line_cp, '#');
@@ -38,15 +38,15 @@ bool parse(Job* job, char* line) {
     return ERR;
   }
 
-  cron_expr expr;
+  cron_expr* expr = malloc(sizeof(cron_expr));
   const char* err = NULL;
-  cron_parse_expr(job->schedule, &expr, &err);
+  cron_parse_expr(job->schedule, expr, &err);
 
   if (err) {
     printf("error parsing cron expression: %s\n\n", err);
     return ERR;
   }
 
-  job->expr = &expr;
+  job->expr = expr;
   return OK;
 }

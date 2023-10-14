@@ -14,7 +14,7 @@ TEST_DEPS := $(wildcard $(DEPSDIR)/tap.c/*.c)
 DEPS := $(filter-out $(wildcard $(DEPSDIR)/tap.c/*), $(wildcard $(DEPSDIR)/*/*.c))
 
 CFLAGS := -I$(DEPSDIR) -Wall -Wextra -pedantic
-LIBS := -lm -lpcre
+LIBS := -lm -lpcre -luuid
 
 TESTS := $(wildcard $(TESTDIR)/*.c)
 
@@ -31,7 +31,7 @@ unit_test:
 	$(MAKE) clean
 
 clean:
-	rm -f $(UNIT_TARGET) $(PROG)
+	rm -f $(UNIT_TARGET) $(PROG) .log
 
 lint:
 	$(LINTER) -i $(SRC) $(wildcard $(TESTDIR)/*/*.c)

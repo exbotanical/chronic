@@ -1,4 +1,4 @@
-#include "fs.h"
+#include "defs.h"
 
 static array_t* process_file(char* path, char* uname) {
   unsigned int max_entries;
@@ -12,15 +12,15 @@ static array_t* process_file(char* path, char* uname) {
 
   max_lines = max_entries * 10;
 
-  FILE* fp;
+  FILE* fd;
   char buf[RW_BUFFER];
 
   array_t* lines = NULL;
 
-  if ((fp = fopen(path, "r")) != NULL) {
+  if ((fd = fopen(path, "r")) != NULL) {
     lines = array_init();
 
-    while (fgets(buf, sizeof(buf), fp) != NULL && --max_lines) {
+    while (fgets(buf, sizeof(buf), fd) != NULL && --max_lines) {
       char* ptr = buf;
       int len;
 
@@ -40,7 +40,7 @@ static array_t* process_file(char* path, char* uname) {
     }
   }
 
-  fclose(fp);
+  fclose(fd);
 
   return lines;
 }

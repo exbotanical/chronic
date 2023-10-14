@@ -1,4 +1,3 @@
 #!/usr/bin/env sh
-rm chronic && make && ./chronic
-sleep 10
-ps aux | grep './chronic' | awk '{ print $2 }'
+make clean && make && ./chronic
+ps aux | grep './chronic' |  grep -vE 'color|codium' | awk '{ print $2 }'

@@ -1,5 +1,3 @@
-#include "fs.h"
-
 #include "defs.h"
 #include "tap.c/tap.h"
 #include "tests.h"

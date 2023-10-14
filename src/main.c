@@ -14,7 +14,7 @@ pid_t daemon_pid;
 
 int main(int _argc, char** _argv) {
   // Become a daemon process
-  if (daemonize() != 0) {
+  if (daemonize() != OK) {
     printf("daemonize fail");
     exit(EXIT_FAILURE);
   }
@@ -29,8 +29,6 @@ int main(int _argc, char** _argv) {
   close(STDERR_FILENO);
   dup2(log_fd, STDERR_FILENO);
 
-  write_to_log("log init\n");
-
   time_t start_time = time(NULL);
   time_t current_iter_time;
   long difftime;
@@ -38,58 +36,57 @@ int main(int _argc, char** _argv) {
   // Desired interval in seconds between loop iterations
   short stime = 60;
 
-  write_to_log("setup. starting cron loop\n");
+  write_to_log("[chronic] Initialized. pid=%d\n", getpid());
+
+  write_to_log("Scanning jobs\n");
+
+  array_t* jobs = scan_jobs("./t/fixtures/runnable", start_time);
+  write_to_log("Scanned %d jobs; starting loop...\n", array_size(jobs));
 
   while (true) {
     // Subtract the remainder of the current time to ensure the iteration
     // begins as close as possible to the desired interval boundary
-    sleep((stime + 1) - (short)(time(NULL) % stime));
+    unsigned short sleep_time = (stime + 1) - (short)(time(NULL) % stime);
+
+    sleep(sleep_time);
+    write_to_log("Sleeping for %d seconds...\n", sleep_time);
 
     current_iter_time = time(NULL);
+    time_t rounded_timestamp =
+        (current_iter_time + 30) / 60 *
+        60;  // Adding 30 seconds before division rounds it
 
-    write_to_log("pid=%d\n", getpid());
-    write_to_log("%s\n", "attempting to read jobs file");
+    foreach (jobs, i) {
+      Job* job = array_get(jobs, i);
 
-    array_t* jobs = scan_jobs("./t/fixtures/valid", current_iter_time);
-    write_to_log("scanned %d jobs\n", array_size(jobs));
+      write_to_log(
+          "current iter time %s, rounded time %s, next time %s - "
+          "code: %s, schedule: %s\n",
+          to_time_str(current_iter_time), to_time_str(rounded_timestamp),
+          to_time_str(job->next), job->cmd, job->schedule);
 
-    //   foreach (jobs, i) {
-    //     Job *job = array_get(jobs, i);
+      if (job->next == rounded_timestamp) {
+        run_job(job);
+      }
+    }
 
-    //     write_to_log("executing job with code %s\n", job->cmd);
+    sleep(5);
 
-    //     time_t rounded_timestamp =
-    //         (current_iter_time + 30) / 60 *
-    //         60;  // Adding 30 seconds before division rounds it
+    foreach (jobs, i) {
+      Job* job = array_get(jobs, i);
+      reap_job(job);
+    }
 
-    //     write_to_log("comparing current iter time %d to next time %d",
-    //                  current_iter_time, job->next);
+    foreach (jobs, i) {
+      Job* job = array_get(jobs, i);
+      if (job->status == EXITED) {
+        write_to_log("Job %d has status %d\n", job->id, job->ret);
+      } else {
+        write_to_log("Job %d is still running with status %s\n", job->pid,
+                     job_status_names[job->status]);
+      }
+    }
 
-    //     if (job->next == rounded_timestamp) {
-    //       if ((job->pid = fork()) == 0) {
-    //         setpgid(0, 0);
-    //         execl("/bin/sh", "/bin/sh", "-c", job->cmd, NULL);
-    //         write_to_log("%s\n", "exec in child process");
-    //         exit(0);
-    //       }
-    //     }
-    //   }
-
-    //   write_to_log("%s\n", "sleeping...");
-
-    //   foreach (jobs, i) {
-    //     Job *job = array_get(jobs, i);
-    //     reap(job);
-    //   }
-
-    //   foreach (jobs, i) {
-    //     Job *job = array_get(jobs, i);
-    //     if (job->status == EXITED) {
-    //       write_to_log("%s\n",
-    //                    fmt_str("Job %d has status %d", job->pid, job->ret));
-    //     } else {
-    //       write_to_log("Job %d is still running\n", job->pid);
-    //     }
-    // }
+    update_jobs(jobs, current_iter_time);
   }
 }

@@ -1,3 +1,4 @@
-*/10 * * * * echo "cron" > /tmp/cron1
-*/10 * * * * echo "cron2" > /tmp/cron1
-0 09-18 * * 1-5 echo "cron3" > /tmp/cron1
+*/1 * * * * /home/goldmund/repositories/chronic/t/fixtures/script.sh min
+*/2 * * * * /home/goldmund/repositories/chronic/t/fixtures/script.sh 2min
+*/10 * * * * /home/goldmund/repositories/chronic/t/fixtures/script.sh 10min
+*/15 * * * * /home/goldmund/repositories/chronic/t/fixtures/script.sh 15min

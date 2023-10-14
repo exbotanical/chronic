@@ -1,5 +1,3 @@
-#include "parser.h"
-
 #include "defs.h"
 #include "tap.c/tap.h"
 #include "tests.h"
@@ -11,10 +9,10 @@ typedef struct {
 
 void test_parse(void) {
   CleanStrTestCase tests[] = {
-      {.input = "*/5 * * * * * /bin/sh command # with a comment",
+      {.input = "*/5 * * * * /bin/sh command # with a comment",
        .expect_err = false},
-      {.input = "*/5 * * * * * /bin/sh command#", .expect_err = false},
-      {.input = "   */5 * * * * * /bin/sh command ", .expect_err = false},
+      {.input = "*/5 * * * * /bin/sh command#", .expect_err = false},
+      {.input = "   */5 * * * * /bin/sh command ", .expect_err = false},
       {.input = "*/5 * * * x /bin/sh command ", .expect_err = true},
       {.input = "/bin/sh command ", .expect_err = true},
   };
