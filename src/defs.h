@@ -23,12 +23,14 @@
 #include "libhash/libhash.h"
 #include "libutil/libutil.h"
 
-#ifndef SYS_CRONTABS
-#define SYS_CRONTABS "/etc/cron.d"
+#ifndef SYS_CRONTABS_DIR
+#define SYS_CRONTABS_DIR "/etc/cron.d"
 #endif
-#ifndef CRONTABS
-#define CRONTABS "/var/spool/cron/crontabs"
+#ifndef CRONTABS_DIR
+#define CRONTABS_DIR "/var/spool/cron/crontabs"
 #endif
+
+#define ROOT_USER "root"
 
 #define MAXENTRIES 256
 #define RW_BUFFER 1024
@@ -53,6 +55,7 @@ typedef struct {
   int ret;
   unsigned int id;
   char *run_id;
+  char *owner_path;
 } Job;
 
 typedef enum { OK, ERR } RETVAL;

@@ -1,10 +1,11 @@
+
 #include "defs.h"
 
 static array_t* process_file(char* path, char* uname) {
   unsigned int max_entries;
   unsigned int max_lines;
 
-  if (strcmp(uname, "root") == 0) {
+  if (strcmp(uname, ROOT_USER) == 0) {
     max_entries = 65535;
   } else {
     max_entries = MAXENTRIES;

@@ -21,17 +21,35 @@ static Job *make_job(char *raw, time_t curr) {
   job->id = id_counter++;
   job->run_id = NULL;
   job->status = PENDING;
+  job->owner_path = NULL;
 
   set_next(job, curr);
 
   return job;
 }
 
+static inline bool ts_cmp(struct timespec a, struct timespec b) {
+  return a.tv_sec == b.tv_sec && a.tv_nsec == b.tv_nsec;
+}
+
+static time_t t_max(time_t a, time_t b) { return a > b ? a : b; }
+static bool is_ge(time_t a, time_t b) { return a >= b; }
+
 void update_jobs(array_t *jobs, time_t curr) {
   foreach (jobs, i) {
     Job *job = array_get(jobs, i);
     write_to_log("checking job for update %d (status %s)\n", job->id,
                  job_status_names[job->status]);
+
+    struct stat statbuf;
+
+    if (stat(job->owner_path, &statbuf) < OK) {
+      write_to_log("failed to stat crontabs file %s\n", job->owner_path);
+    }
+
+    if (is_ge(statbuf.st_mtime, curr)) {
+      write_to_log("crontab %s has been modified\n", job->owner_path);
+    }
 
     // only set next if the job has run
     if (job->status == EXITED) {
@@ -51,6 +69,7 @@ array_t *scan_jobs(char *fpath, time_t curr) {
     char *line = array_get(lines, i);
     // TODO: handle
     Job *job = make_job(line, curr);
+    job->owner_path = fpath;
 
     free(line);
     array_push(jobs, job);
