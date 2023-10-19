@@ -1,7 +1,7 @@
 
 #include "defs.h"
 
-static array_t* process_file(char* path, char* uname) {
+array_t* process_file(char* path, char* uname) {
   unsigned int max_entries;
   unsigned int max_lines;
 
@@ -51,7 +51,6 @@ array_t* process_dir(char* dpath) {
 
   if ((dir = opendir(dpath)) != NULL) {
     struct dirent* den;
-    char* path;
 
     array_t* all_lines = array_init();
 
@@ -63,7 +62,7 @@ array_t* process_dir(char* dpath) {
 
       char* path;
       if (!(path = fmt_str("%s/%s", dpath, den->d_name))) {
-        printf("UH OH\n");
+        write_to_log("UH OH\n");
 
         return NULL;
       }
@@ -72,7 +71,7 @@ array_t* process_dir(char* dpath) {
       // TODO: root vs user
       array_t* lines = process_file(path, den->d_name);
       if (!lines) {
-        printf("failed to process file");
+        write_to_log("failed to process file\n");
         continue;
       }
 
@@ -85,7 +84,7 @@ array_t* process_dir(char* dpath) {
     closedir(dir);
     return all_lines;
   } else {
-    printf("unable to scan directory %s\n", dpath);
+    write_to_log("unable to scan directory %s\n", dpath);
   }
 
   return NULL;

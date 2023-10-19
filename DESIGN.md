@@ -113,3 +113,102 @@ for (const { file } of readdir(crontabDir)) {
   }
 }
 ```
+
+
+## The New New Plan
+
+```js
+interface Job {
+
+}
+
+interface User {
+
+}
+
+running_jobs = []
+
+main() {
+  while (true) {
+    curr = now()
+    db_map = {}
+
+    // { root: [1, 2, 3, 4], goldmund: [1, 2]}
+    // Note: db_map should actually be a linked list of linked lists?
+    // Nah, we'll use HashMap<username, LinkedList<Job>>
+    scan_jobs(sys, usr, db_map)
+
+    db_map.entries().for_each(([user, job]) =>
+      if curr == job.run_at {
+        run_job(job, user)
+      }
+    )
+
+    // { root: [1, 3], goldmund: [2]}
+    running_jobs.for_each(j =>
+      reap(j)
+    )
+  }
+}
+
+scan_jobs(sys, usr, db_map) {
+
+  for (file in sys.dirname) {
+    sys_jobs = []
+
+    // always runs the first time
+    if (sys.mtime < file.mtime) {
+      for (line in file) {
+        job = make_job(line)
+        sys_jobs.push(job)
+      }
+    }
+
+    if (sys_jobs.length > 0) {
+      if (db_map.has("root")) {
+        db_map.get("root") = sys_jobs)
+      } else {
+        db_map.put("root", sys_jobs)
+      }
+    }
+  }
+
+  for (file in usr.dirname) {
+    usr_jobs = []
+
+    // always runs the first time
+    if (usr.mtime < file.mtime) {
+      for (line in file) {
+        job = make_job(line)
+        usr_jobs.push(job)
+      }
+    }
+
+    if (usr_jobs.length > 0) {
+      if (db_map.has("root")) {
+        db_map.get("root") = usr_jobs)
+      } else {
+        db_map.put("root", usr_jobs)
+      }
+    }
+  }
+
+  return db_map
+}
+
+run_job(job, user) {
+  running_jobs.push({
+    id: job.id,
+    ...blablabla
+  })
+
+  jobs.remove(job)
+
+  run(job)
+}
+
+reap(j) {
+  output = waitpid(j.pid)
+  email_user(output, j)
+}
+```

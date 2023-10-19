@@ -9,8 +9,12 @@ damaged by profound loss, or casualty, depending on how you look at it.
 */
 #include "defs.h"
 
+const char* job_status_names[] = {X(PENDING), X(RUNNING), X(EXITED)};
+
 extern pid_t daemon_pid;
 pid_t daemon_pid;
+
+array_t* job_queue;
 
 int main(int _argc, char** _argv) {
   // Become a daemon process
@@ -31,12 +35,14 @@ int main(int _argc, char** _argv) {
 
   time_t start_time = time(NULL);
   time_t current_iter_time;
-  long difftime;
+  // long difftime;
 
   // Desired interval in seconds between loop iterations
   short stime = 60;
 
   write_to_log("[chronic] Initialized. pid=%d\n", getpid());
+
+  job_queue = array_init();
 
   write_to_log("Scanning jobs\n");
 

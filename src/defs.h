@@ -43,19 +43,20 @@ typedef enum {
 
 #define X(e) [e] = #e
 
-static const char *job_status_names[] = {X(PENDING), X(RUNNING), X(EXITED)};
+extern const char *job_status_names[];
 
 typedef struct {
   char *schedule;
   char *cmd;
   time_t next;
   cron_expr *expr;
-  pid_t *pid;
+  pid_t pid;
   JobStatus status;
   int ret;
   unsigned int id;
   char *run_id;
   char *owner_path;
+  time_t mtime;
 } Job;
 
 typedef enum { OK, ERR } RETVAL;
@@ -69,6 +70,7 @@ typedef enum { OK, ERR } RETVAL;
 void *xmalloc(size_t sz);
 RETVAL daemonize();
 array_t *process_dir(char *dpath);
+array_t *process_file(char *path, char *uname);
 RETVAL parse(Job *job, char *line);
 void reap_job(Job *job);
 array_t *scan_jobs(char *fpath, time_t curr);
@@ -76,6 +78,6 @@ void update_jobs(array_t *jobs, time_t curr);
 void run_job(Job *job);
 char *create_uuid(void);
 void write_to_log(char *str, ...);
-char *to_time_str(time_t *t);
+char *to_time_str(time_t t);
 
 #endif /* DEFS_H */

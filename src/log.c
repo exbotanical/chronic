@@ -13,7 +13,7 @@ void write_to_log(char *str, ...) {
   va_end(va);
 }
 
-char *to_time_str(time_t *t) {
+char *to_time_str(time_t t) {
   char msg[512];
   struct tm *time_info = localtime(&t);
   strftime(msg, sizeof(msg), TIMESTAMP_FMT, time_info);
