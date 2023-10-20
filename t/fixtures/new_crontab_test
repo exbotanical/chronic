@@ -1,0 +1,7 @@
+*/1 * * * * script.sh
+
+*/2 * * * * exec.sh
+#
+*/10 * * * * echo whatever > /tmp/hi
+*/15 * * * * date  # comment
+# comment

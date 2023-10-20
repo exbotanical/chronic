@@ -1,25 +1,55 @@
+interface Crontab {
+  mtime: number
+  jobs: Job[]
+}
+
+interface Job {
+  id: number
+  run_at: number
+  line: string
+  user: string
+  status: number
+}
+
+interface FFile {
+  mtime: number
+  fileName: string
+  lines: string[]
+  hasChanged: boolean
+}
+
+interface DirConfig {
+  mtime: number
+  dirname: string
+  files: FFile[]
+}
+
+type DbMap = Map<string, Crontab>
+
+let mail_jobs: Job[] = /* mmap() */ []
 let running_jobs: Job[] = []
 
 let id_counter = 0
-
-type DbMap = Map<string, Crontab>
 
 const f1: FFile = {
   fileName: 'yearly',
   lines: ['hi', 'world'],
   mtime: Date.now(),
+  hasChanged: false,
 }
 
 const f2: FFile = {
   fileName: 'goldmund',
   lines: ['hsi', 'wosrld'],
   mtime: Date.now(),
+  hasChanged: false,
 }
 
 const f3: FFile = {
   fileName: 'harumbi',
   lines: ['howod', 'howdy'],
   mtime: Date.now(),
+  hasChanged: true,
 }
 
 const sys: DirConfig = {
@@ -34,31 +64,7 @@ const usr: DirConfig = {
   files: [f2, f3],
 }
 
-interface Crontab {
-  mtime: number
-  jobs: Job[]
-}
-
-interface Job {
-  id: number
-  run_at: number
-  line: string
-  user: string
-}
-
-interface FFile {
-  mtime: number
-  fileName: string
-  lines: string[]
-}
-
-interface DirConfig {
-  mtime: number
-  dirname: string
-  files: FFile[]
-}
-
-function scan_jobs(_sys: DirConfig, usr: DirConfig, old_db: DbMap) {
+function scan_crontabs(_sys: DirConfig, usr: DirConfig, old_db: DbMap) {
   let new_db: DbMap = new Map()
   console.log({ INNER: old_db })
   for (const file of usr.files) {
@@ -69,6 +75,8 @@ function scan_jobs(_sys: DirConfig, usr: DirConfig, old_db: DbMap) {
         jobs: [],
         mtime: 0,
       }
+    } else {
+      // if mtimes equal, add old entry to new to carry over unchanged
     }
 
     new_db.set(file.fileName, fileConfig)
@@ -77,7 +85,7 @@ function scan_jobs(_sys: DirConfig, usr: DirConfig, old_db: DbMap) {
       const usr_jobs: Job[] = []
 
       for (const line of file.lines) {
-        const job = make_job(line, file.fileName)
+        const job = new_job(line, file.fileName)
         usr_jobs.push(job)
       }
 
@@ -89,26 +97,27 @@ function scan_jobs(_sys: DirConfig, usr: DirConfig, old_db: DbMap) {
 }
 
 function run_job(job: Job, db_map: DbMap) {
-  const crontab = db_map.get(job.user)!
-
-  crontab.jobs = crontab.jobs.filter(x => x.id == job.id)
-
+  // must keep in og db for carry overs
   running_jobs.push(job)
   console.log(running_jobs)
 }
 
-function make_job(line: string, user: string): Job {
+function new_job(line: string, user: string): Job {
   return {
     run_at: Date.now(),
     line,
     id: ++id_counter,
     user,
+    status: -Infinity,
   }
 }
 
 function reap() {
   for (const running_job of running_jobs) {
-    console.log(`job ${running_job.id} cleaned up`)
+    // pretend status here means waitpid returned
+    if (running_job.status == 0) {
+      push_to_mail_jobs(running_job)
+    }
   }
   running_jobs = []
 }
@@ -129,7 +138,7 @@ async function main(sys: DirConfig, usr: DirConfig) {
 
     await new Promise(r => setTimeout(r, sleep_time))
 
-    db_map = scan_jobs(sys, usr, db_map)
+    db_map = scan_crontabs(sys, usr, db_map)
 
     console.log({ db_map })
 
@@ -147,6 +156,22 @@ async function main(sys: DirConfig, usr: DirConfig) {
     })
 
     reap()
+  }
+}
+
+function push_to_mail_jobs(job: Job) {
+  mail_jobs.push(job)
+}
+
+const send_email = console.log
+// Running in another process
+function job_mailer() {
+  while (true) {
+    for (const s of mail_jobs) {
+      send_email(`blablabla ${s}`)
+    }
+
+    mail_jobs = []
   }
 }
 

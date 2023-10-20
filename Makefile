@@ -14,7 +14,8 @@ TEST_DEPS := $(wildcard $(DEPSDIR)/tap.c/*.c)
 DEPS := $(filter-out $(wildcard $(DEPSDIR)/tap.c/*), $(wildcard $(DEPSDIR)/*/*.c))
 
 CFLAGS := -I$(DEPSDIR) -Wall -Wextra -pedantic
-LIBS := -lm -lpcre -luuid
+UNIT_TEST_CFLAGS := -DUNIT_TEST
+LIBS := -lm -luuid
 
 TESTS := $(wildcard $(TESTDIR)/*.c)
 
@@ -26,7 +27,7 @@ test:
 	$(MAKE) unit_test
 
 unit_test:
-	$(CC) $(wildcard $(TESTDIR)/unit/*.c) $(TEST_DEPS) $(DEPS) $(filter-out $(SRCDIR)/main.c, $(SRC)) -I$(SRCDIR) -I$(DEPSDIR) $(LIBS) -o $(UNIT_TARGET)
+	$(CC) $(UNIT_TEST_CFLAGS) $(wildcard $(TESTDIR)/unit/*.c) $(TEST_DEPS) $(DEPS) $(filter-out $(SRCDIR)/main.c, $(SRC)) -I$(SRCDIR) -I$(DEPSDIR) $(LIBS) -o $(UNIT_TARGET)
 	./$(UNIT_TARGET)
 	$(MAKE) clean
 

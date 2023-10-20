@@ -136,7 +136,7 @@ main() {
     // { root: [1, 2, 3, 4], goldmund: [1, 2]}
     // Note: db_map should actually be a linked list of linked lists?
     // Nah, we'll use HashMap<username, LinkedList<Job>>
-    scan_jobs(sys, usr, db_map)
+    scan_crontabs(sys, usr, db_map)
 
     db_map.entries().for_each(([user, job]) =>
       if curr == job.run_at {
@@ -151,7 +151,7 @@ main() {
   }
 }
 
-scan_jobs(sys, usr, db_map) {
+scan_crontabs(sys, usr, db_map) {
 
   for (file in sys.dirname) {
     sys_jobs = []
@@ -159,7 +159,7 @@ scan_jobs(sys, usr, db_map) {
     // always runs the first time
     if (sys.mtime < file.mtime) {
       for (line in file) {
-        job = make_job(line)
+        job = new_job(line)
         sys_jobs.push(job)
       }
     }
@@ -179,7 +179,7 @@ scan_jobs(sys, usr, db_map) {
     // always runs the first time
     if (usr.mtime < file.mtime) {
       for (line in file) {
-        job = make_job(line)
+        job = new_job(line)
         usr_jobs.push(job)
       }
     }
