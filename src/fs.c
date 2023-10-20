@@ -89,3 +89,28 @@ array_t* process_dir(char* dpath) {
 
   return NULL;
 }
+
+array_t* get_filenames(char* dpath) {
+  DIR* dir;
+
+  if ((dir = opendir(dpath)) != NULL) {
+    struct dirent* den;
+
+    array_t* file_names = array_init();
+
+    while ((den = readdir(dir)) != NULL) {
+      // Skip pointer files
+      if (s_equals(den->d_name, ".") || s_equals(den->d_name, "..")) {
+        continue;
+      }
+
+      array_push(file_names, den->d_name);
+    }
+    closedir(dir);
+    return file_names;
+  } else {
+    write_to_log("unable to scan directory %s\n", dpath);
+  }
+
+  return NULL;
+}

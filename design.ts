@@ -4,6 +4,36 @@ let id_counter = 0
 
 type DbMap = Map<string, Crontab>
 
+const f1: FFile = {
+  fileName: 'yearly',
+  lines: ['hi', 'world'],
+  mtime: Date.now(),
+}
+
+const f2: FFile = {
+  fileName: 'goldmund',
+  lines: ['hsi', 'wosrld'],
+  mtime: Date.now(),
+}
+
+const f3: FFile = {
+  fileName: 'harumbi',
+  lines: ['howod', 'howdy'],
+  mtime: Date.now(),
+}
+
+const sys: DirConfig = {
+  dirname: '/etc/cron.d',
+  mtime: 0,
+  files: [f1],
+}
+
+const usr: DirConfig = {
+  dirname: '/var/crontab',
+  mtime: 0,
+  files: [f2, f3],
+}
+
 interface Crontab {
   mtime: number
   jobs: Job[]
@@ -28,18 +58,20 @@ interface DirConfig {
   files: FFile[]
 }
 
-function scan_jobs(_sys: DirConfig, usr: DirConfig, db_map: DbMap) {
+function scan_jobs(_sys: DirConfig, usr: DirConfig, old_db: DbMap) {
+  let new_db: DbMap = new Map()
+  console.log({ INNER: old_db })
   for (const file of usr.files) {
-    let fileConfig = db_map.get(file.fileName)!
+    let fileConfig = old_db.get(file.fileName)
 
     if (!fileConfig) {
-      db_map.set(file.fileName, {
+      fileConfig = {
         jobs: [],
         mtime: 0,
-      })
-
-      fileConfig = db_map.get(file.fileName)!
+      }
     }
+
+    new_db.set(file.fileName, fileConfig)
 
     if (fileConfig.mtime < file.mtime) {
       const usr_jobs: Job[] = []
@@ -53,7 +85,7 @@ function scan_jobs(_sys: DirConfig, usr: DirConfig, db_map: DbMap) {
     }
   }
 
-  return db_map
+  return new_db
 }
 
 function run_job(job: Job, db_map: DbMap) {
@@ -88,22 +120,22 @@ function queue_job(job: Job) {
 
 const stime = 10
 async function main(sys: DirConfig, usr: DirConfig) {
-  while (true) {
-    const db_map: DbMap = new Map()
+  let db_map: DbMap = new Map()
 
-    scan_jobs(sys, usr, db_map)
+  while (true) {
+    const sleep_time = stime * 1000
+    const curr = Date.now()
+    console.log(`sleeping for ${sleep_time}ms`)
+
+    await new Promise(r => setTimeout(r, sleep_time))
+
+    db_map = scan_jobs(sys, usr, db_map)
 
     console.log({ db_map })
 
     db_map.forEach(m => {
       console.log({ H: m.jobs })
     })
-
-    const sleep_time = stime * 1000
-    const curr = Date.now()
-    console.log(`sleeping for ${sleep_time}ms`)
-
-    await new Promise(r => setTimeout(r, sleep_time))
 
     Array.from(db_map.values()).forEach(crontab => {
       crontab.jobs.forEach(job => {
@@ -116,36 +148,6 @@ async function main(sys: DirConfig, usr: DirConfig) {
 
     reap()
   }
-}
-
-const f1: FFile = {
-  fileName: 'yearly',
-  lines: ['hi', 'world'],
-  mtime: Date.now(),
-}
-
-const f2: FFile = {
-  fileName: 'goldmund',
-  lines: ['hsi', 'wosrld'],
-  mtime: Date.now(),
-}
-
-const f3: FFile = {
-  fileName: 'harumbi',
-  lines: ['howod', 'howdy'],
-  mtime: Date.now(),
-}
-
-const sys: DirConfig = {
-  dirname: '/etc/cron.d',
-  mtime: 0,
-  files: [f1],
-}
-
-const usr: DirConfig = {
-  dirname: '/var/crontab',
-  mtime: 0,
-  files: [f2, f3],
 }
 
 main(sys, usr)
