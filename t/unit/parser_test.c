@@ -1,6 +1,11 @@
+#include "parser.h"
+
 #include "defs.h"
 #include "tap.c/tap.h"
 #include "tests.h"
+
+// TODO: find a better place for this
+array_t* job_queue = NULL;
 
 void strip_comment_test(void) {
   typedef struct {

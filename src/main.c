@@ -2,7 +2,12 @@
 
 #include <fcntl.h>
 
+#include "daemon.h"
 #include "defs.h"
+#include "fs.h"
+#include "job.h"
+#include "log.h"
+#include "utils.h"
 
 extern pid_t daemon_pid;
 pid_t daemon_pid;
@@ -13,53 +18,6 @@ const char* job_status_names[] = {X(PENDING), X(RUNNING), X(EXITED)};
 const short loop_interval = 60;
 
 array_t* job_queue;
-
-void reap_job(Job* job) {
-  write_to_log("Running reap routine for job %d...\n", job->id);
-  if (job->pid == -1) {
-    return;
-  }
-
-  write_to_log("Attempting to reap process for job %d\n", job->id);
-
-  int status;
-  int r = waitpid(job->pid, &status, WNOHANG);
-
-  write_to_log("Job %d waitpid result is %d (pid=%d)\n", job->id, r, job->pid);
-  // -1 == error; 0 == still running; pid == dead
-  if (r < 0 || r == job->pid) {
-    if (r > 0 && WIFEXITED(status))
-      status = WEXITSTATUS(status);
-    else
-      status = 1;
-
-    job->ret = status;
-    job->status = EXITED;
-    job->pid = -1;
-    free(job->run_id);
-    job->run_id = NULL;
-    // TODO: cleanup fn
-  }
-}
-
-static void run_job(Job* job) {
-  array_push(job_queue, job);
-
-  job->enqueued = true;
-  job->run_id = create_uuid();
-
-  if ((job->pid = fork()) == 0) {
-    setpgid(0, 0);
-    execl("/bin/sh", "/bin/sh", "-c", job->cmd, NULL);
-    write_to_log("Writing log from child process %d\n", job->id);
-    exit(0);
-  }
-
-  write_to_log("New job pid: %d for job %d\n", job->pid, job->id);
-
-  // ONLY free enqueued
-  job->status = RUNNING;
-}
 
 int main(int _argc, char** _argv) {
   // Become a daemon process
@@ -98,7 +56,8 @@ int main(int _argc, char** _argv) {
     write_to_log("Sleeping for %d seconds...\n", sleep_dur);
     sleep(sleep_dur);
 
-    scan_crontabs(db, sys, usr, current_iter_time);
+    // TODO: sys
+    scan_crontabs(db, usr, current_iter_time);
 
     for (unsigned int i = 0; i < (unsigned int)db->capacity; i++) {
       Crontab* ct = db->records[i]->value;

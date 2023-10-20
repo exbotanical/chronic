@@ -1,3 +1,5 @@
+#include "log.h"
+
 #include "defs.h"
 
 #define LOG_BUFFER 2048

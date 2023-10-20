@@ -1,4 +1,9 @@
-#include "defs.h"
+#include "fs.h"
+
+#include "job.h"
+#include "log.h"
+#include "parser.h"
+#include "utils.h"
 
 array_t* get_filenames(char* dpath) {
   DIR* dir;

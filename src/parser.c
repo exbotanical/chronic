@@ -1,6 +1,7 @@
 #include <ctype.h>
 
 #include "defs.h"
+#include "log.h"
 
 // TODO: static fns
 char* until_nth_of_char(const char* str, char c, int n) {

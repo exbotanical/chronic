@@ -1,6 +1,6 @@
-#include "defs.h"
 #include "tap.c/tap.h"
 #include "tests.h"
+#include "utils.h"
 
 void round_ts_test(void) {
   typedef struct {
