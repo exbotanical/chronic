@@ -1,7 +1,8 @@
 #include <stdlib.h>
 #include <uuid/uuid.h>
 
-#include "defs.h"
+#include "libutil/libutil.h"
+#include "log.h"
 
 void* xmalloc(size_t sz) {
   void* ptr;

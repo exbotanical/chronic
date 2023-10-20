@@ -1,7 +1,14 @@
-#include <ctype.h>
+#include "parser.h"
 
-#include "defs.h"
+#include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "libutil/libutil.h"
 #include "log.h"
+
+// Basically whether we support seconds (7)
+#define SPACES_BEFORE_CMD 5
 
 // TODO: static fns
 char* until_nth_of_char(const char* str, char c, int n) {

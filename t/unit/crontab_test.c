@@ -1,8 +1,12 @@
-#include "fs.h"
+#include "crontab.h"
 
-#include "defs.h"
+#include <fcntl.h>
+#include <string.h>
+
+#include "job.h"
 #include "tap.c/tap.h"
 #include "tests.h"
+#include "utils.h"
 
 static char* setup_test_directory() {
   char template[] = "/tmp/tap_test_dir.XXXXXX";
@@ -60,9 +64,7 @@ static void cleanup_test_file(char* dirname, char* fname) {
 }
 
 // TODO: close?
-static int get_fd(char* fpath) {
-  return open(fpath, O_RDONLY | O_NONBLOCK | O_NOFOLLOW, 0);
-}
+static int get_fd(char* fpath) { return open(fpath, O_RDONLY | O_NONBLOCK, 0); }
 
 static void validate_job(Job* job, Job* expected) {
   is(expected->cmd, job->cmd, "Expect cmd '%s'", expected->cmd);
@@ -149,9 +151,9 @@ void test_scan_crontabs() {
 
   ok(db->count == 3, "Two crontab files should have been processed");
 
-  Crontab* ct1 = ht_get(db, "user1");
-  Crontab* ct2 = ht_get(db, "user2");
-  Crontab* ct3 = ht_get(db, "user3");
+  Crontab* ct1 = (Crontab*)ht_get(db, "user1");
+  Crontab* ct2 = (Crontab*)ht_get(db, "user2");
+  Crontab* ct3 = (Crontab*)ht_get(db, "user3");
 
   ok(ct1 != NULL, "user1's crontab should exist in the database");
   ok(ct2 != NULL, "user2's crontab should exist in the database");
@@ -171,9 +173,9 @@ void test_scan_crontabs() {
   modify_test_file(usr_dirname, "user3", "* * * * * echo 'sup dud'\n");
   scan_crontabs(db, usr_dir, now);
 
-  ct1 = ht_get(db, "user1");
-  ct2 = ht_get(db, "user2");
-  ct3 = ht_get(db, "user3");
+  ct1 = (Crontab*)ht_get(db, "user1");
+  ct2 = (Crontab*)ht_get(db, "user2");
+  ct3 = (Crontab*)ht_get(db, "user3");
 
   ok(ct1 != NULL, "user1's crontab should exist in the database");
   ok(ct2 == NULL, "user2's crontab was deleted from the database");

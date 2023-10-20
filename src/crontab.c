@@ -1,9 +1,34 @@
-#include "fs.h"
+#include "crontab.h"
 
+#include <dirent.h>
+#include <fcntl.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/stat.h>
+
+#include "defs.h"
 #include "job.h"
 #include "log.h"
 #include "parser.h"
 #include "utils.h"
+
+/*
+ * Because crontab/at files may be owned by their respective users we
+ * take extreme care in opening them.  If the OS lacks the O_NOFOLLOW
+ * we will just have to live without it.  In order for this to be an
+ * issue an attacker would have to subvert group CRON_GROUP.
+ * TODO: comment
+ */
+#ifndef O_NOFOLLOW
+#define O_NOFOLLOW 0
+#endif
+
+#define ALL_PERMS 07777
+#define OWNER_RW_PERMS 0600
+
+#define MAXENTRIES 256
+#define RW_BUFFER 1024
 
 array_t* get_filenames(char* dpath) {
   DIR* dir;

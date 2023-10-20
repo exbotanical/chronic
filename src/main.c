@@ -1,10 +1,14 @@
 #define _POSIX_C_SOURCE 199309L
 
+#include <errno.h>
 #include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
+#include "crontab.h"
 #include "daemon.h"
 #include "defs.h"
-#include "fs.h"
 #include "job.h"
 #include "log.h"
 #include "utils.h"
@@ -13,7 +17,6 @@ extern pid_t daemon_pid;
 pid_t daemon_pid;
 
 const char* job_status_names[] = {X(PENDING), X(RUNNING), X(EXITED)};
-
 // Desired interval in seconds between loop iterations
 const short loop_interval = 60;
 

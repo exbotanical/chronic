@@ -1,6 +1,11 @@
 #include "log.h"
 
-#include "defs.h"
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "libutil/libutil.h"
 
 #define LOG_BUFFER 2048
 #define TIMESTAMP_FMT "%Y-%m-%d %H:%M:%S"

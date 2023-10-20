@@ -3,6 +3,10 @@
 
 #include <time.h>
 
+#define X(e) [e] = #e
+
+typedef enum { OK, ERR } RETVAL;
+
 /**
  * xmalloc is a malloc wrapper that exits the program if out of memory
  */

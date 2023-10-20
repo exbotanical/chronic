@@ -1,7 +1,27 @@
 #ifndef JOB_H
 #define JOB_H
 
-#include "defs.h"
+#include <time.h>
+
+#include "ccronexpr/ccronexpr.h"
+
+typedef enum {
+  PENDING,
+  RUNNING,
+  EXITED,
+} JobStatus;
+
+typedef struct {
+  cron_expr *expr;
+  char *schedule;
+  char *cmd;
+  char *owner_uname;
+  time_t next;
+  pid_t pid;
+  JobStatus status;
+  int ret;
+  unsigned int id;
+} Job;
 
 Job *new_job(char *raw, time_t curr, char *uname);
 

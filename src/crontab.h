@@ -1,7 +1,22 @@
 #ifndef FS_H
 #define FS_H
 
-#include "defs.h"
+#include <stdbool.h>
+#include <time.h>
+
+#include "libhash/libhash.h"
+#include "libutil/libutil.h"
+
+// TODO: check dir mtime as well?
+typedef struct {
+  char *name;
+  bool is_root;
+} DirConfig;
+
+typedef struct {
+  array_t *jobs;
+  time_t mtime;
+} Crontab;
 
 array_t *get_filenames(char *dpath);
 Crontab *new_crontab(int crontab_fd, bool is_root, time_t curr_time,

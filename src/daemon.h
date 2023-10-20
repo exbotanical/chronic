@@ -1,7 +1,7 @@
 #ifndef DAEMON_H
 #define DAEMON_H
 
-#include "defs.h"
+#include "utils.h"
 
 RETVAL daemonize();
 

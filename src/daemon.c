@@ -1,4 +1,10 @@
-#include "defs.h"
+#include "daemon.h"
+
+#include <fcntl.h>
+#include <stdio.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #define DEV_NULL_DEVICE "/dev/null"
 #define TERMINAL_DEVICE "/dev/tty"

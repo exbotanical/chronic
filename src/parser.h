@@ -1,7 +1,10 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include "defs.h"
+#include <stdbool.h>
+
+#include "job.h"
+#include "utils.h"
 
 void strip_comment(char *str);
 char *until_nth_of_char(const char *str, char c, int n);

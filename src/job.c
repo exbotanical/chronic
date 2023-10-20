@@ -1,6 +1,11 @@
 #include "job.h"
 
+#include <stdlib.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
 #include "defs.h"
+#include "libutil/libutil.h"
 #include "log.h"
 #include "parser.h"
 #include "utils.h"
