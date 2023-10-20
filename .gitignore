@@ -4,6 +4,5 @@ main
 *.log
 chronic
 jobs
-test
 *.vscode
 unit_test
