@@ -34,6 +34,7 @@ array_t* get_filenames(char* dpath) {
   DIR* dir;
 
   if ((dir = opendir(dpath)) != NULL) {
+    write_to_log("scanning dir %s\n", dpath);
     struct dirent* den;
 
     array_t* file_names = array_init();
@@ -44,6 +45,7 @@ array_t* get_filenames(char* dpath) {
         continue;
       }
 
+      write_to_log("found file %s/%s\n", dpath, den->d_name);
       array_push(file_names, s_copy(den->d_name));
     }
 
@@ -51,7 +53,7 @@ array_t* get_filenames(char* dpath) {
     return file_names;
   } else {
     perror("opendir");
-    write_to_log("unable to scan directory %s\n", dpath);
+    write_to_log("unable to scan dir %s\n", dpath);
   }
 
   return NULL;
@@ -89,17 +91,19 @@ int get_crontab_fd_if_valid(char* fpath, char* uname, time_t last_mtime,
     goto dont_process;
   }
 
-  struct stat statbuf2;
-  fstat(crontab_fd, &statbuf2);
-
   if (!S_ISREG(statbuf->st_mode)) {
     write_to_log("file %s not regular");
     goto dont_process;
   }
 
 #ifndef UNIT_TEST
-  if ((statbuf->st_mode & ALL_PERMS) != OWNER_RW_PERMS) {
-    write_to_log("file %s has invalid permissions (r/w by owner only)\n");
+  int file_perms = statbuf->st_mode & ALL_PERMS;
+
+  if (file_perms != OWNER_RW_PERMS) {
+    write_to_log(
+        "file %s has invalid permissions (should be r/w by owner only but got "
+        "%o)\n",
+        fpath, file_perms);
     goto dont_process;
   }
 
@@ -175,6 +179,7 @@ Crontab* new_crontab(int crontab_fd, bool is_root, time_t curr_time,
 
     // TODO: handle
     Job* job = new_job(ptr, curr_time, uname);
+    write_to_log("New job (%d) for crontab %s\n", job->id, uname);
     array_push(jobs, job);
   }
 
@@ -190,64 +195,83 @@ Crontab* new_crontab(int crontab_fd, bool is_root, time_t curr_time,
 // We HAVE to make a brand new db each time, else we will not be able to tell if
 // a file was deleted
 void scan_crontabs(hash_table* db, DirConfig dir_conf, time_t curr) {
-  // TODO: handle
   array_t* fnames = get_filenames(dir_conf.name);
-
   hash_table* new_db = ht_init(0);
 
-  foreach (fnames, i) {
-    char* fname = array_get(fnames, i);
-    Crontab* ct = (Crontab*)ht_get(db, fname);
+  // If no files, fall through to db replacement
+  // This will handle removal of any files that were deleted during runtime
+  if (has_elements(fnames)) {
+    foreach (fnames, i) {
+      char* fname = array_get(fnames, i);
+      Crontab* ct = (Crontab*)ht_get(db, fname);
 
-    char* fpath;
-    if (!(fpath = fmt_str("%s/%s", dir_conf.name, fname))) {
-      write_to_log("failed to concatenate as %s/%s\n", dir_conf.name, fname);
-      continue;
-    }
-
-    int crontab_fd;
-    struct stat statbuf;
-    // File hasn't been processed before
-    if (!ct) {
-      if ((crontab_fd = get_crontab_fd_if_valid(fpath, fname, 0, &statbuf)) <
-          OK) {
+      char* fpath;
+      if (!(fpath = fmt_str("%s/%s", dir_conf.name, fname))) {
+        write_to_log("failed to concatenate as %s/%s\n", dir_conf.name, fname);
         continue;
       }
 
-      ct = new_crontab(crontab_fd, dir_conf.is_root, curr, statbuf.st_mtime,
-                       fname);
+      int crontab_fd;
+      struct stat statbuf;
 
-      // TODO: free existing values
-      ht_insert(new_db, fname, ct);
-    }
-    // File exists in db
-    else {
-      // Skips mtime check
-      if ((crontab_fd = get_crontab_fd_if_valid(fpath, fname, -1, &statbuf)) <
-          OK) {
-        continue;
-      }
+      write_to_log("scanning file %s...\n", fpath);
 
-      // not modified, just renew the jobs
-      // TODO: research whether we should adjust the precision of our mtime
-      if (ct->mtime >= statbuf.st_mtime) {
-        foreach (ct->jobs, i) {
-          Job* job = array_get(ct->jobs, i);
-          renew_job(job, curr);
+      // File hasn't been processed before
+      if (!ct) {
+        if ((crontab_fd = get_crontab_fd_if_valid(fpath, fname, 0, &statbuf)) <
+            OK) {
+          write_to_log("file %s not valid; continuing...\n", fpath);
+          continue;
         }
-      } else {
-        // modified, re-process
-        // TODO: free
+
+        write_to_log("creating new crontab from file %s...\n", fpath);
+
         ct = new_crontab(crontab_fd, dir_conf.is_root, curr, statbuf.st_mtime,
                          fname);
+        // TODO: free existing values
+        ht_insert(new_db, fname, ct);
       }
+      // File exists in db
+      else {
+        write_to_log("crontab for file %s exists...\n", fpath);
 
-      // TODO: remove from old db
-      ht_insert(new_db, fname, ct);
+        // Skips mtime check
+        if ((crontab_fd = get_crontab_fd_if_valid(fpath, fname, -1, &statbuf)) <
+            OK) {
+          write_to_log(
+              "existing crontab file %s not valid; it won't be carried over. "
+              "continuing...\n",
+              fpath);
+          continue;
+        }
+
+        // not modified, just renew the jobs
+        // TODO: research whether we should adjust the precision of our mtime
+        if (ct->mtime >= statbuf.st_mtime) {
+          write_to_log("existing file %s not modified, renewing jobs if any\n",
+                       fpath);
+          foreach (ct->jobs, i) {
+            Job* job = array_get(ct->jobs, i);
+            renew_job(job, curr);
+          }
+        } else {
+          write_to_log("existing file %s was modified, recreating crontab\n",
+                       fpath);
+
+          // modified, re-process
+          // TODO: free
+          ct = new_crontab(crontab_fd, dir_conf.is_root, curr, statbuf.st_mtime,
+                           fname);
+        }
+
+        // TODO: remove from old db
+        ht_insert(new_db, fname, ct);
+      }
     }
+
+    array_free(fnames);
   }
 
-  array_free(fnames);
   // TODO: free
   *db = *new_db;
 }

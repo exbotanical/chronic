@@ -1,4 +1,4 @@
-*/1 * * * * /home/goldmund/repositories/chronic/t/fixtures/script.sh min
-*/2 * * * * /home/goldmund/repositories/chronic/t/fixtures/script.sh 2min
-*/10 * * * * /home/goldmund/repositories/chronic/t/fixtures/script.sh 10min
-*/15 * * * * /home/goldmund/repositories/chronic/t/fixtures/script.sh 15min
+*/1 * * * * /usr/app/t/fixtures/script.sh min
+*/2 * * * * /usr/app/t/fixtures/script.sh 2min
+*/10 * * * * /usr/app/t/fixtures/script.sh 10min
+*/15 * * * * /usr/app/t/fixtures/script.sh 15min

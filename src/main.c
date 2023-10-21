@@ -51,7 +51,36 @@ int main(int _argc, char** _argv) {
   DirConfig usr = {.is_root = false, .name = CRONTABS_DIR};
 
   while (true) {
+    write_to_log("\n----------------\n");
     current_iter_time = time(NULL);
+
+    // TODO: sys
+
+    // CURR: 2023-10-21 15:06:28
+    // ROUND: 2023-10-21 15:06:00
+    // NEXT: 2023-10-21 15:07:00
+
+    // SLEEP: 33
+    // RUN
+    // SLEEP 5
+
+    // CURR: 2023-10-21 15:07:06
+    // ROUND: 2023-10-21 15:07:00
+    // NEXT: 2023-10-21 15:08:00
+
+    // SLEEP: 55
+    // RUN
+    // SLEEP 5
+
+    // CURR: 2023-10-21 15:08:06
+    // ...
+
+    // SLEEP: 55
+    // RUN
+    // SLEEP 5
+
+    write_to_log("CURRENT ITER: %s\n", to_time_str(current_iter_time));
+    scan_crontabs(db, usr, current_iter_time);
 
     time_t rounded_timestamp = round_ts(current_iter_time, loop_interval);
 
@@ -59,14 +88,23 @@ int main(int _argc, char** _argv) {
     write_to_log("Sleeping for %d seconds...\n", sleep_dur);
     sleep(sleep_dur);
 
-    // TODO: sys
-    scan_crontabs(db, usr, current_iter_time);
-
+    // We must iterate the capacity here because hash table records are not
+    // stored contiguously
     for (unsigned int i = 0; i < (unsigned int)db->capacity; i++) {
-      Crontab* ct = db->records[i]->value;
+      ht_record* r = db->records[i];
+      // If there's no record in this slot, continue
+      if (!r) {
+        continue;
+      }
+
+      Crontab* ct = r->value;
+
       foreach (ct->jobs, i) {
         Job* job = array_get(ct->jobs, i);
         write_to_log("[dbg] Have job: %s\n", job->cmd);
+
+        write_to_log("NEXT: %s, CURR: %s\n", to_time_str(job->next),
+                     to_time_str(rounded_timestamp));
 
         if (job->next == rounded_timestamp) {
           run_job(job);

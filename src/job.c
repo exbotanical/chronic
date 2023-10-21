@@ -10,6 +10,8 @@
 #include "parser.h"
 #include "utils.h"
 
+unsigned int id_counter = 0;
+
 Job* new_job(char* raw, time_t curr, char* uname) {
   Job* job = xmalloc(sizeof(Job));
 
@@ -23,6 +25,7 @@ Job* new_job(char* raw, time_t curr, char* uname) {
   job->status = PENDING;
   job->owner_uname = uname;
   job->next = cron_next(job->expr, curr);
+  job->id = ++id_counter;
 
   return job;
 }
