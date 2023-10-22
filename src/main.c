@@ -43,7 +43,8 @@ int main(int _argc, char** _argv) {
   hash_table* db = ht_init(0);
 
   time_t start_time = time(NULL);
-  write_to_log("cron daemon started at %ld...\n", start_time);
+  write_to_log("cron daemon (pid=%d) started at %s\n", getpid(),
+               to_time_str(start_time));
 
   time_t current_iter_time;
 
@@ -52,41 +53,17 @@ int main(int _argc, char** _argv) {
 
   while (true) {
     write_to_log("\n----------------\n");
-    current_iter_time = time(NULL);
-
-    // TODO: sys
-
-    // CURR: 2023-10-21 15:06:28
-    // ROUND: 2023-10-21 15:06:00
-    // NEXT: 2023-10-21 15:07:00
-
-    // SLEEP: 33
-    // RUN
-    // SLEEP 5
-
-    // CURR: 2023-10-21 15:07:06
-    // ROUND: 2023-10-21 15:07:00
-    // NEXT: 2023-10-21 15:08:00
-
-    // SLEEP: 55
-    // RUN
-    // SLEEP 5
-
-    // CURR: 2023-10-21 15:08:06
-    // ...
-
-    // SLEEP: 55
-    // RUN
-    // SLEEP 5
-
-    write_to_log("CURRENT ITER: %s\n", to_time_str(current_iter_time));
-    scan_crontabs(db, usr, current_iter_time);
-
-    time_t rounded_timestamp = round_ts(current_iter_time, loop_interval);
 
     unsigned short sleep_dur = get_sleep_duration(loop_interval, time(NULL));
     write_to_log("Sleeping for %d seconds...\n", sleep_dur);
     sleep(sleep_dur);
+
+    current_iter_time = time(NULL);
+    time_t rounded_timestamp = round_ts(current_iter_time, loop_interval);
+
+    write_to_log("Current iter time: %s (rounded to %s)\n",
+                 to_time_str(current_iter_time),
+                 to_time_str(rounded_timestamp));
 
     // We must iterate the capacity here because hash table records are not
     // stored contiguously
@@ -101,10 +78,8 @@ int main(int _argc, char** _argv) {
 
       foreach (ct->jobs, i) {
         Job* job = array_get(ct->jobs, i);
-        write_to_log("[dbg] Have job: %s\n", job->cmd);
-
-        write_to_log("NEXT: %s, CURR: %s\n", to_time_str(job->next),
-                     to_time_str(rounded_timestamp));
+        write_to_log("[dbg] Have job: %s. Next %s == Curr %s\n", job->cmd,
+                     to_time_str(job->next), to_time_str(rounded_timestamp));
 
         if (job->next == rounded_timestamp) {
           run_job(job);
@@ -112,17 +87,13 @@ int main(int _argc, char** _argv) {
       }
     }
 
-    sleep(5);
-
     foreach (job_queue, i) {
       Job* job = array_get(job_queue, i);
       reap_job(job);
+      array_remove(job_queue, i);
     }
+
+    // TODO: sys
+    scan_crontabs(db, usr, current_iter_time);
   }
 }
-
-// The Barksdale crew is especially interesting. When Avon is in prison
-// and Stringer has taken over operations, Stringer is arranging faked suicides
-// and backdoor deals with un-friendly rivals in order to save what is a
-// business damaged by profound loss, or casualty, depending on how you look at
-// it.

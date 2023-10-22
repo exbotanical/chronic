@@ -9,3 +9,8 @@ COPY . .
 
 # docker build -f Dockerfile.dev -t chronic .
 # docker run -it --entrypoint /bin/bash -v `pwd`:/usr/app chronic
+# mkdir -p /var/spool/cron/crontabs
+# mkdir -p /home/cookie && useradd cookie
+# touch /var/spool/cron/crontabs/cookie
+# chmod 600 /var/spool/cron/crontabs/cookie
+# echo '*/1 * * * * /usr/app/t/fixtures/script.sh min' > /var/spool/cron/crontabs/cookie

@@ -15,7 +15,8 @@ DEPS := $(filter-out $(wildcard $(DEPSDIR)/tap.c/*), $(wildcard $(DEPSDIR)/*/*.c
 
 CFLAGS := -I$(DEPSDIR) -Wall -Wextra -pedantic
 UNIT_TEST_CFLAGS := -DUNIT_TEST
-LIBS := -lm -luuid
+LIBS := -lm
+# -luuid
 
 TESTS := $(wildcard $(TESTDIR)/*.c)
 
