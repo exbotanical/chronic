@@ -1,16 +1,13 @@
 FROM ubuntu:20.04
 
-RUN apt-get update && apt-get install -y git gcc make uuid-dev vim
+RUN apt-get update && apt-get install -y git gcc make uuid-dev vim bash curl
 
-# RUN sh -c "`curl -L https://raw.githubusercontent.com/rylnd/shpec/master/install.sh`"
+RUN sh -c "`curl -L https://raw.githubusercontent.com/rylnd/shpec/master/install.sh`"
 
 WORKDIR /usr/app
 COPY . .
 
+# docker container ls -a | grep chronic | awk '{print $1}' | xargs docker rm
+# docker image ls | grep chronic | awk '{ print $3 }' | xargs docker rmi
 # docker build -f Dockerfile.dev -t chronic .
 # docker run -it --entrypoint /bin/bash -v `pwd`:/usr/app chronic
-# mkdir -p /var/spool/cron/crontabs
-# mkdir -p /home/cookie && useradd cookie
-# touch /var/spool/cron/crontabs/cookie
-# chmod 600 /var/spool/cron/crontabs/cookie
-# echo '*/1 * * * * /usr/app/t/fixtures/script.sh min' > /var/spool/cron/crontabs/cookie

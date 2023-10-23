@@ -51,6 +51,8 @@ int main(int _argc, char** _argv) {
   DirConfig sys = {.is_root = true, .name = SYS_CRONTABS_DIR};
   DirConfig usr = {.is_root = false, .name = CRONTABS_DIR};
 
+  scan_crontabs(db, usr, start_time);
+
   while (true) {
     write_to_log("\n----------------\n");
 
@@ -87,6 +89,7 @@ int main(int _argc, char** _argv) {
       }
     }
 
+    // TODO: bg thread
     foreach (job_queue, i) {
       Job* job = array_get(job_queue, i);
       reap_job(job);

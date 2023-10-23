@@ -2,6 +2,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -15,8 +16,13 @@ void write_to_log(char *str, ...) {
   char buf[LOG_BUFFER];
 
   va_start(va, str);
-  vsnprintf(buf, sizeof(buf), str, va);
+
+  char *s = fmt_str("%s %s", to_time_str(time(NULL)), str);
+  vsnprintf(buf, sizeof(buf), s, va);
+
   write(STDERR_FILENO, buf, strlen(buf));
+
+  free(s);
   va_end(va);
 }
 

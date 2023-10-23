@@ -32,6 +32,10 @@ unit_test:
 	./$(UNIT_TARGET)
 	$(MAKE) clean
 
+integ_test: $(PROG)
+	./$(TESTDIR)/integ/utils/run.bash
+	$(MAKE) clean
+
 clean:
 	rm -f $(UNIT_TARGET) $(PROG) .log
 
