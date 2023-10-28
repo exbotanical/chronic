@@ -74,7 +74,7 @@ int get_crontab_fd_if_valid(char* fpath, char* uname, time_t last_mtime,
 
 #ifndef UNIT_TEST
   // No user found in passwd
-  if ((pw = getpwnam(uname)) == NULL) {
+  if (!s_equals(uname, ROOT_UNAME) && (pw = getpwnam(uname)) == NULL) {
     write_to_log("user %s not found\n", uname);
     goto dont_process;
   }
@@ -93,7 +93,7 @@ int get_crontab_fd_if_valid(char* fpath, char* uname, time_t last_mtime,
   }
 
   if (!S_ISREG(statbuf->st_mode)) {
-    write_to_log("file %s not regular");
+    write_to_log("file %s is not a regular file");
     goto dont_process;
   }
 
@@ -201,22 +201,22 @@ void scan_crontabs(hash_table* old_db, hash_table* new_db, DirConfig dir_conf,
   if (has_elements(fnames)) {
     foreach (fnames, i) {
       char* fname = array_get(fnames, i);
-      Crontab* ct = (Crontab*)ht_get(old_db, fname);
-
       char* fpath;
       if (!(fpath = fmt_str("%s/%s", dir_conf.name, fname))) {
         write_to_log("failed to concatenate as %s/%s\n", dir_conf.name, fname);
         continue;
       }
+      Crontab* ct = (Crontab*)ht_get(old_db, fpath);
 
       int crontab_fd;
       struct stat statbuf;
 
       write_to_log("scanning file %s...\n", fpath);
 
+      char* uname = dir_conf.is_root ? ROOT_UNAME : fname;
       // File hasn't been processed before
       if (!ct) {
-        if ((crontab_fd = get_crontab_fd_if_valid(fpath, fname, 0, &statbuf)) <
+        if ((crontab_fd = get_crontab_fd_if_valid(fpath, uname, 0, &statbuf)) <
             OK) {
           write_to_log("file %s not valid; continuing...\n", fpath);
           continue;
@@ -227,14 +227,14 @@ void scan_crontabs(hash_table* old_db, hash_table* new_db, DirConfig dir_conf,
         ct = new_crontab(crontab_fd, dir_conf.is_root, curr, statbuf.st_mtime,
                          fname);
         // TODO: free existing values
-        ht_insert(new_db, fname, ct);
+        ht_insert_ptr(new_db, fpath, ct);
       }
       // File exists in db
       else {
         write_to_log("crontab for file %s exists...\n", fpath);
 
         // Skips mtime check
-        if ((crontab_fd = get_crontab_fd_if_valid(fpath, fname, -1, &statbuf)) <
+        if ((crontab_fd = get_crontab_fd_if_valid(fpath, uname, -1, &statbuf)) <
             OK) {
           write_to_log(
               "existing crontab file %s not valid; it won't be carried over. "
@@ -247,7 +247,7 @@ void scan_crontabs(hash_table* old_db, hash_table* new_db, DirConfig dir_conf,
         // TODO: research whether we should adjust the precision of our mtime
         if (ct->mtime >= statbuf.st_mtime) {
           write_to_log(
-              "existing file %s not moddbified, renewing entries if any\n",
+              "existing file %s not modified, renewing entries if any\n",
               fpath);
           foreach (ct->entries, i) {
             CronEntry* entry = array_get(ct->entries, i);
@@ -258,13 +258,11 @@ void scan_crontabs(hash_table* old_db, hash_table* new_db, DirConfig dir_conf,
                        fpath);
 
           // modified, re-process
-          // TODO: free
           ct = new_crontab(crontab_fd, dir_conf.is_root, curr, statbuf.st_mtime,
                            fname);
         }
 
-        // TODO: remove from old db
-        ht_insert(new_db, fname, ct);
+        ht_insert_ptr(new_db, fpath, ct);
       }
     }
 
@@ -279,11 +277,17 @@ void update_db(hash_table* db, time_t curr, DirConfig* dir_conf, ...) {
 
   va_list args;
   va_start(args, dir_conf);
+
   while (dir_conf != NULL) {
     scan_crontabs(db, new_db, *dir_conf, curr);
-    *dir_conf = va_arg(args, DirConfig);
+
+    dir_conf = va_arg(args, DirConfig*);
   }
+
   va_end(args);
+
+  // TODO: we have to remove records that we copied over to the new_db first
+  // ht_delete_table_ptr(db);
 
   *db = *new_db;
 }

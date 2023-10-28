@@ -14,7 +14,7 @@ static char* setup_test_directory() {
   char* dirname = s_copy(mkdtemp(template));
 
   if (dirname == NULL) {
-    perror("mkdtemp failed: ");
+    perror("mkdtemp failed");
     fail();
   }
 
@@ -142,8 +142,7 @@ void new_crontab_test(void) {
   }
 }
 
-void test_scan_crontabs() {
-  // Test Setup: Create some crontab files with known content.
+void scan_crontabs_test() {
   char* usr_dirname = setup_test_directory();
   setup_test_file(usr_dirname, "user1", "* * * * * echo 'test1'\n");
   setup_test_file(usr_dirname, "user2", "* * * * * echo 'test2'\n");
@@ -159,11 +158,11 @@ void test_scan_crontabs() {
   scan_crontabs(db, new_db, usr_dir, now);
   *db = *new_db;
 
-  ok(db->count == 3, "Two crontab files should have been processed");
+  ok(db->count == 3, "Three crontab files should have been processed");
 
-  Crontab* ct1 = (Crontab*)ht_get(db, "user1");
-  Crontab* ct2 = (Crontab*)ht_get(db, "user2");
-  Crontab* ct3 = (Crontab*)ht_get(db, "user3");
+  Crontab* ct1 = (Crontab*)ht_get(db, fmt_str("%s/%s",usr_dirname,"user1"));
+  Crontab* ct2 = (Crontab*)ht_get(db, fmt_str("%s/%s",usr_dirname,"user2"));
+  Crontab* ct3 = (Crontab*)ht_get(db, fmt_str("%s/%s",usr_dirname,"user3"));
 
   ok(ct1 != NULL, "user1's crontab should exist in the database");
   ok(ct2 != NULL, "user2's crontab should exist in the database");
@@ -186,9 +185,9 @@ void test_scan_crontabs() {
   scan_crontabs(db, new_db, usr_dir, now);
   *db = *new_db;
 
-  ct1 = (Crontab*)ht_get(db, "user1");
-  ct2 = (Crontab*)ht_get(db, "user2");
-  ct3 = (Crontab*)ht_get(db, "user3");
+  ct1 = (Crontab*)ht_get(db, fmt_str("%s/%s",usr_dirname,"user1"));
+  ct2 = (Crontab*)ht_get(db, fmt_str("%s/%s",usr_dirname,"user2"));
+  ct3 = (Crontab*)ht_get(db, fmt_str("%s/%s",usr_dirname,"user3"));
 
   ok(ct1 != NULL, "user1's crontab should exist in the database");
   ok(ct2 == NULL, "user2's crontab was deleted from the database");
@@ -204,11 +203,87 @@ void test_scan_crontabs() {
   cleanup_test_file(usr_dirname, "user1");
   cleanup_test_file(usr_dirname, "user3");
   cleanup_test_directory(usr_dirname);
-  // TODO: free memory, cleanup hash table, etc...
+  ht_delete_table_ptr(db);
 }
 
-void run_fs_tests(void) {
+void update_db_test(void) {
+  char* usr_dirname = setup_test_directory();
+  setup_test_file(usr_dirname, "user1", "* * * * * echo 'test1'\n");
+  setup_test_file(usr_dirname, "user2", "* * * * * echo 'test2'\n");
+
+  DirConfig usr_dir;
+  usr_dir.name = usr_dirname;
+  usr_dir.is_root = false;
+
+  char* sys_dirname = setup_test_directory();
+  setup_test_file(sys_dirname, "root1", "* * * * * echo 'test1'\n");
+  setup_test_file(sys_dirname, "root2", "* * * * * echo 'test2'\n");
+
+  DirConfig sys_dir;
+  sys_dir.name = sys_dirname;
+  sys_dir.is_root = true;
+
+  hash_table* db = ht_init(0);
+  time_t now = time(NULL);
+
+
+  update_db(db, now, &usr_dir, &sys_dir, NULL);
+
+  ok(db->count == 4, "Four crontab files should have been processed");
+
+  Crontab* ct1 = (Crontab*)ht_get(db, fmt_str("%s/%s",usr_dirname,"user1"));
+  Crontab* ct2 = (Crontab*)ht_get(db, fmt_str("%s/%s",usr_dirname,"user2"));
+  Crontab* ct3 = (Crontab*)ht_get(db, fmt_str("%s/%s",sys_dirname,"root1"));
+  Crontab* ct4 = (Crontab*)ht_get(db, fmt_str("%s/%s",sys_dirname,"root2"));
+
+  ok(ct1 != NULL, "user1's crontab should exist in the database");
+  ok(ct2 != NULL, "user2's crontab should exist in the database");
+  ok(ct3 != NULL, "the root1 crontab should exist in the database");
+  ok(ct4 != NULL, "the root2 crontab should exist in the database");
+
+  ok(array_size(ct1->entries) == 1, "user1's crontab has 1 entry");
+  ok(array_size(ct2->entries) == 1, "user2's crontab has 1 entry");
+  ok(array_size(ct3->entries) == 1, "the root1 crontab has 1 entry");
+  ok(array_size(ct4->entries) == 1, "the root2 crontab has 1 entry");
+
+  time_t ct1_mtime = ct1->mtime;
+  time_t ct3_mtime = ct3->mtime;
+
+  cleanup_test_file(usr_dirname, "user2");
+  cleanup_test_file(sys_dirname, "root1");
+
+  // Make sure enough time passes for the mtime to be updated
+  // (mtime is typically measured in seconds)
+  sleep(1);
+  modify_test_file(usr_dirname, "user1", "* * * * * echo 'sup dud'\n");
+  modify_test_file(sys_dirname, "root2", "* * * * * echo 'sup dud'\n");
+
+  update_db(db, now, &usr_dir, &sys_dir, NULL);
+
+  ct1 = (Crontab*)ht_get(db, fmt_str("%s/%s",usr_dirname,"user1"));
+  ct2 = (Crontab*)ht_get(db, fmt_str("%s/%s",usr_dirname,"user2"));
+  ct3 = (Crontab*)ht_get(db, fmt_str("%s/%s",sys_dirname,"root1"));
+  ct4 = (Crontab*)ht_get(db, fmt_str("%s/%s",sys_dirname,"root2"));
+
+  ok(ct1 != NULL, "user1's crontab should exist in the database");
+  ok(ct2 == NULL, "user2's crontab was deleted from the database");
+  ok(ct3 == NULL, "the root1 crontab was deleted from the database");
+  ok(ct4 != NULL, "the root2 crontab should exist in the database");
+
+  ok(array_size(ct1->entries) == 2, "user1's crontab has 2 entries");
+  ok(array_size(ct4->entries) == 2, "the root2 crontab has 2 entries");
+
+  // Cleanup
+  cleanup_test_file(usr_dirname, "user1");
+  cleanup_test_file(sys_dirname, "root2");
+  cleanup_test_directory(usr_dirname);
+  cleanup_test_directory(sys_dirname);
+  ht_delete_table_ptr(db);
+}
+
+void run_crontab_tests(void) {
   get_filenames_test();
   new_crontab_test();
-  test_scan_crontabs();
+  scan_crontabs_test();
+  update_db_test();
 }

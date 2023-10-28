@@ -23,5 +23,6 @@ Crontab *new_crontab(int crontab_fd, bool is_root, time_t curr_time,
                      time_t mtime, char *uname);
 void scan_crontabs(hash_table *old_db, hash_table *new_db, DirConfig dir_conf,
                    time_t curr);
+void update_db(hash_table *db, time_t curr, DirConfig *dir_conf, ...);
 
 #endif /* FS_H */

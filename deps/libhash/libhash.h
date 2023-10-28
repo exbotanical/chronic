@@ -53,6 +53,18 @@ hash_table *ht_init(int base_capacity);
 void ht_insert(hash_table *ht, const char *key, void *value);
 
 /**
+ * Insert a key, value pair into the given hash table.
+ *
+ * This version of ht_insert will also free the record value.
+ * Thus, the record value must be allocated on the heap.
+ *
+ * @param ht
+ * @param key
+ * @param value
+ */
+void ht_insert_ptr(hash_table *ht, const char *key, void *value);
+
+/**
  * Search for the record corresponding to the given key
  *
  * @param ht
@@ -71,6 +83,16 @@ char *ht_get(hash_table *ht, const char *key);
 void ht_delete_table(hash_table *ht);
 
 /**
+ * Delete a hash table and deallocate its memory
+ *
+ * This version of ht_delete_table will also free the record value.
+ * Thus, the record value must be allocated on the heap.
+ *
+ * @param ht Hash table to delete
+ */
+void ht_delete_table_ptr(hash_table *ht);
+
+/**
  * Delete a record for the given key `key`. Because records
  * may be part of a collision chain, and removing them completely
  * could cause infinite lookup attempts, we replace the deleted record
@@ -83,6 +105,23 @@ void ht_delete_table(hash_table *ht);
  * to the given key could be found
  */
 int ht_delete(hash_table *ht, const char *key);
+
+/**
+ * Delete a record for the given key `key`. Because records
+ * may be part of a collision chain, and removing them completely
+ * could cause infinite lookup attempts, we replace the deleted record
+ * with a NULL sentinel record.
+ *
+ * This version of ht_delete will also free the record value.
+ * Thus, the record value must be allocated on the heap.
+ *
+ * @param ht
+ * @param key
+ *
+ * @return int 1 if a record was deleted, 0 if no record corresponding
+ * to the given key could be found
+ */
+int ht_delete_ptr(hash_table *ht, const char *key);
 
 typedef struct {
   /**

@@ -11,7 +11,7 @@
 #define CRONTABS_DIR "/var/spool/cron/crontabs"
 #endif
 
-#define ROOT_USER "root"
+#define ROOT_UNAME "root"
 #define ROOT_UID 0
 
 extern pid_t daemon_pid;

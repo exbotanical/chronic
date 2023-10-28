@@ -52,7 +52,7 @@ int main(int _argc, char** _argv) {
   DirConfig sys = {.is_root = true, .name = SYS_CRONTABS_DIR};
   DirConfig usr = {.is_root = false, .name = CRONTABS_DIR};
 
-  scan_crontabs(db, usr, start_time);
+  update_db(db, start_time, &usr, NULL);
 
   pthread_t reaper_thread_id;
   pthread_create(&reaper_thread_id, NULL, &reap_routine, NULL);
@@ -76,15 +76,16 @@ int main(int _argc, char** _argv) {
 
     // We must iterate the capacity here because hash table records are not
     // stored contiguously
+    // if db count...
     for (unsigned int i = 0; i < (unsigned int)db->capacity; i++) {
       ht_record* r = db->records[i];
+
       // If there's no record in this slot, continue
       if (!r) {
         continue;
       }
 
       Crontab* ct = r->value;
-
       foreach (ct->entries, i) {
         CronEntry* entry = array_get(ct->entries, i);
         write_to_log("[dbg] Have entry: %s. Next %s == Curr %s\n", entry->cmd,
@@ -96,11 +97,6 @@ int main(int _argc, char** _argv) {
       }
     }
 
-    // We HAVE to make a brand new db each time, else we will not be able to
-    // tell if a file was deleted
-    hash_table* new_db = ht_init(0);
-    scan_crontabs(db, new_db, sys, current_iter_time);
-    scan_crontabs(db, new_db, usr, current_iter_time);
-    *db = *new_db;
+    update_db(db, current_iter_time, &usr, NULL);
   }
 }
