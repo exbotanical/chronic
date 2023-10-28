@@ -154,8 +154,10 @@ void test_scan_crontabs() {
   usr_dir.is_root = false;
 
   hash_table* db = ht_init(0);
+  hash_table* new_db = ht_init(0);
   time_t now = time(NULL);
-  scan_crontabs(db, usr_dir, now);
+  scan_crontabs(db, new_db, usr_dir, now);
+  *db = *new_db;
 
   ok(db->count == 3, "Two crontab files should have been processed");
 
@@ -179,7 +181,10 @@ void test_scan_crontabs() {
   // (mtime is typically measured in seconds)
   sleep(1);
   modify_test_file(usr_dirname, "user3", "* * * * * echo 'sup dud'\n");
-  scan_crontabs(db, usr_dir, now);
+
+  new_db = ht_init(0);
+  scan_crontabs(db, new_db, usr_dir, now);
+  *db = *new_db;
 
   ct1 = (Crontab*)ht_get(db, "user1");
   ct2 = (Crontab*)ht_get(db, "user2");

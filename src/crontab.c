@@ -3,6 +3,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <pwd.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -192,18 +193,15 @@ Crontab* new_crontab(int crontab_fd, bool is_root, time_t curr_time,
   return ct;
 }
 
-// We HAVE to make a brand new db each time, else we will not be able to tell if
-// a file was deleted
-void scan_crontabs(hash_table* db, DirConfig dir_conf, time_t curr) {
+void scan_crontabs(hash_table* old_db, hash_table* new_db, DirConfig dir_conf,
+                   time_t curr) {
   array_t* fnames = get_filenames(dir_conf.name);
-  hash_table* new_db = ht_init(0);
-
   // If no files, fall through to db replacement
   // This will handle removal of any files that were deleted during runtime
   if (has_elements(fnames)) {
     foreach (fnames, i) {
       char* fname = array_get(fnames, i);
-      Crontab* ct = (Crontab*)ht_get(db, fname);
+      Crontab* ct = (Crontab*)ht_get(old_db, fname);
 
       char* fpath;
       if (!(fpath = fmt_str("%s/%s", dir_conf.name, fname))) {
@@ -249,7 +247,7 @@ void scan_crontabs(hash_table* db, DirConfig dir_conf, time_t curr) {
         // TODO: research whether we should adjust the precision of our mtime
         if (ct->mtime >= statbuf.st_mtime) {
           write_to_log(
-              "existing file %s not modified, renewing entries if any\n",
+              "existing file %s not moddbified, renewing entries if any\n",
               fpath);
           foreach (ct->entries, i) {
             CronEntry* entry = array_get(ct->entries, i);
@@ -272,7 +270,20 @@ void scan_crontabs(hash_table* db, DirConfig dir_conf, time_t curr) {
 
     array_free(fnames);
   }
+}
 
-  // TODO: free
+void update_db(hash_table* db, time_t curr, DirConfig* dir_conf, ...) {
+  // We HAVE to make a brand new db each time, else we will not be able to
+  // tell if a file was deleted
+  hash_table* new_db = ht_init(0);
+
+  va_list args;
+  va_start(args, dir_conf);
+  while (dir_conf != NULL) {
+    scan_crontabs(db, new_db, *dir_conf, curr);
+    *dir_conf = va_arg(args, DirConfig);
+  }
+  va_end(args);
+
   *db = *new_db;
 }

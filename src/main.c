@@ -96,7 +96,11 @@ int main(int _argc, char** _argv) {
       }
     }
 
-    // TODO: sys
-    scan_crontabs(db, usr, current_iter_time);
+    // We HAVE to make a brand new db each time, else we will not be able to
+    // tell if a file was deleted
+    hash_table* new_db = ht_init(0);
+    scan_crontabs(db, new_db, sys, current_iter_time);
+    scan_crontabs(db, new_db, usr, current_iter_time);
+    *db = *new_db;
   }
 }
