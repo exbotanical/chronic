@@ -1,5 +1,5 @@
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef UTIL_H
+#define UTIL_H
 
 #include <time.h>
 
@@ -26,4 +26,4 @@ inline static unsigned short get_sleep_duration(short interval, time_t now) {
   return sleep_time;
 }
 
-#endif /* UTILS_H */
+#endif /* UTIL_H */

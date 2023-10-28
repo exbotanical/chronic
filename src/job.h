@@ -3,7 +3,7 @@
 
 #include <time.h>
 
-#include "ccronexpr/ccronexpr.h"
+#include "cronentry.h"
 
 typedef enum {
   PENDING,
@@ -12,24 +12,14 @@ typedef enum {
 } JobStatus;
 
 typedef struct {
-  cron_expr *expr;
-  char *schedule;
   char *cmd;
-  char *owner_uname;
-  time_t next;
   pid_t pid;
   JobStatus status;
   int ret;
-  unsigned int id;
 } Job;
-
-Job *new_job(char *raw, time_t curr, char *uname);
-
-void renew_job(Job *job, time_t curr);
 
 void reap_job(Job *job);
 
-// e.g. Adding 30 seconds before division rounds it to nearest minute
-void run_job(Job *job);
+void enqueue_job(CronEntry *entry);
 
 #endif /* JOB_H */

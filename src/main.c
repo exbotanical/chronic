@@ -2,24 +2,25 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "cronentry.h"
 #include "crontab.h"
 #include "daemon.h"
 #include "defs.h"
 #include "job.h"
 #include "log.h"
-#include "utils.h"
-
-extern pid_t daemon_pid;
-pid_t daemon_pid;
+#include "reaper.h"
+#include "util.h"
 
 const char* job_status_names[] = {X(PENDING), X(RUNNING), X(EXITED)};
 // Desired interval in seconds between loop iterations
 const short loop_interval = 60;
 
+pid_t daemon_pid;
 array_t* job_queue;
 
 int main(int _argc, char** _argv) {
@@ -40,10 +41,12 @@ int main(int _argc, char** _argv) {
   dup2(log_fd, STDERR_FILENO);
 
   job_queue = array_init();
+  daemon_pid = getpid();
+
   hash_table* db = ht_init(0);
 
   time_t start_time = time(NULL);
-  write_to_log("cron daemon (pid=%d) started at %s\n", getpid(),
+  write_to_log("cron daemon (pid=%d) started at %s\n", daemon_pid,
                to_time_str(start_time));
 
   time_t current_iter_time;
@@ -53,8 +56,14 @@ int main(int _argc, char** _argv) {
 
   scan_crontabs(db, usr, start_time);
 
+  pthread_t reaper_thread_id;
+  pthread_create(&reaper_thread_id, NULL, &reap_routine, NULL);
+
   while (true) {
     write_to_log("\n----------------\n");
+
+    // Take advantage of our sleep time to run reap routines
+    signal_reap_routine();
 
     unsigned short sleep_dur = get_sleep_duration(loop_interval, time(NULL));
     write_to_log("Sleeping for %d seconds...\n", sleep_dur);
@@ -78,22 +87,15 @@ int main(int _argc, char** _argv) {
 
       Crontab* ct = r->value;
 
-      foreach (ct->jobs, i) {
-        Job* job = array_get(ct->jobs, i);
-        write_to_log("[dbg] Have job: %s. Next %s == Curr %s\n", job->cmd,
-                     to_time_str(job->next), to_time_str(rounded_timestamp));
+      foreach (ct->entries, i) {
+        CronEntry* entry = array_get(ct->entries, i);
+        write_to_log("[dbg] Have entry: %s. Next %s == Curr %s\n", entry->cmd,
+                     to_time_str(entry->next), to_time_str(rounded_timestamp));
 
-        if (job->next == rounded_timestamp) {
-          run_job(job);
+        if (entry->next == rounded_timestamp) {
+          enqueue_job(entry);
         }
       }
-    }
-
-    // TODO: bg thread
-    foreach (job_queue, i) {
-      Job* job = array_get(job_queue, i);
-      reap_job(job);
-      array_remove(job_queue, i);
     }
 
     // TODO: sys

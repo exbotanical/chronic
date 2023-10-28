@@ -33,33 +33,33 @@ void strip_comment(char* str) {
   }
 }
 
-RETVAL parse_cmd(char* line, Job* job, int count) {
+RETVAL parse_cmd(char* line, CronEntry* entry, int count) {
   char* line_cp = s_copy(line);
 
-  job->cmd = until_nth_of_char(line_cp, ' ', line_cp[0] == '@' ? 1 : count);
-  if (s_nullish(job->cmd)) {
+  entry->cmd = until_nth_of_char(line_cp, ' ', line_cp[0] == '@' ? 1 : count);
+  if (s_nullish(entry->cmd)) {
     return ERR;
   }
 
   // TODO: free
-  job->schedule = line_cp;
+  entry->schedule = line_cp;
 
   // splits the string in two; note: shared memory block so only one `free` may
   // be called
-  *job->cmd = '\0';
-  ++job->cmd;
+  *entry->cmd = '\0';
+  ++entry->cmd;
   // TODO: free
-  job->cmd = s_trim(job->cmd);
+  entry->cmd = s_trim(entry->cmd);
 
   return OK;
 }
 
-// TODO: what if the line itself is invalid? wbt job?
-RETVAL parse(Job* job, char* line) {
+// TODO: what if the line itself is invalid? wbt entry?
+RETVAL parse(CronEntry* entry, char* line) {
   char* line_cp = s_trim(line);
   strip_comment(line_cp);
 
-  if (parse_cmd(line_cp, job, SPACES_BEFORE_CMD) != OK) {
+  if (parse_cmd(line_cp, entry, SPACES_BEFORE_CMD) != OK) {
     free(line_cp);
     return ERR;
   }
@@ -68,14 +68,14 @@ RETVAL parse(Job* job, char* line) {
 
   cron_expr* expr = malloc(sizeof(cron_expr));
   const char* err = NULL;
-  cron_parse_expr(job->schedule, expr, &err);
+  cron_parse_expr(entry->schedule, expr, &err);
 
   if (err) {
     write_to_log("error parsing cron expression: %s\n\n", err);
     return ERR;
   }
 
-  job->expr = expr;
+  entry->expr = expr;
   return OK;
 }
 

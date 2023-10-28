@@ -14,7 +14,7 @@ typedef struct {
 } DirConfig;
 
 typedef struct {
-  array_t *jobs;
+  array_t *entries;
   time_t mtime;
 } Crontab;
 

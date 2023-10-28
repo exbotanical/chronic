@@ -4,75 +4,58 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include "cronentry.h"
 #include "defs.h"
 #include "libutil/libutil.h"
 #include "log.h"
-#include "parser.h"
-#include "utils.h"
+#include "util.h"
 
-unsigned int id_counter = 0;
-
-Job* new_job(char* raw, time_t curr, char* uname) {
+static Job* new_job(CronEntry* entry) {
   Job* job = xmalloc(sizeof(Job));
-
-  if (parse(job, raw) != OK) {
-    write_to_log("Failed to parse job line %s\n", raw);
-    return NULL;
-  }
-
-  job->pid = -1;
   job->ret = -1;
+  job->pid = -1;
   job->status = PENDING;
-  job->owner_uname = uname;
-  job->next = cron_next(job->expr, curr);
-  job->id = ++id_counter;
+  job->cmd = s_copy(entry->cmd);  // TODO: free
 
   return job;
 }
 
-void renew_job(Job* job, time_t curr) {
-  write_to_log("Updating time for job %d\n", job->id);
-
-  job->next = cron_next(job->expr, curr);
-  job->status = PENDING;
-}
-
-void run_job(Job* job) {
-  array_push(job_queue, job);
+void enqueue_job(CronEntry* entry) {
+  Job* job = new_job(entry);
 
   if ((job->pid = fork()) == 0) {
     setpgid(0, 0);
     execl("/bin/sh", "/bin/sh", "-c", job->cmd, NULL);
-    write_to_log("Writing log from child process %d\n", job->id);
+    write_to_log("Writing log from child process %d\n", getpid());
     exit(0);
   }
 
-  write_to_log("New job pid: %d for job %d\n", job->pid, job->id);
+  write_to_log("New running job with pid %d\n", job->pid);
 
-  // ONLY free enqueued
   job->status = RUNNING;
+  array_push(job_queue, job);
 }
 
 void reap_job(Job* job) {
-  write_to_log("Running reap routine for job %d...\n", job->id);
-  if (job->pid == -1) {
+  // This shouldn't happen, but just in case...
+  if (job->pid == -1 || job->status == EXITED) {
     return;
   }
-
-  write_to_log("Attempting to reap process for job %d\n", job->id);
 
   int status;
   int r = waitpid(job->pid, &status, WNOHANG);
 
-  write_to_log("Job %d waitpid result is %d (pid=%d)\n", job->id, r, job->pid);
+  write_to_log("Job with pid=%d waitpid result is %d\n", job->pid, r);
   // -1 == error; 0 == still running; pid == dead
   if (r < 0 || r == job->pid) {
-    if (r > 0 && WIFEXITED(status))
+    if (r > 0 && WIFEXITED(status)) {
       status = WEXITSTATUS(status);
-    else
+    } else {
       status = 1;
+    }
 
-    // TODO: remove from queue, add to waiters
+    write_to_log("set job with pid=%d to EXITED\n", job->pid);
+
     job->ret = status;
     job->status = EXITED;
     job->pid = -1;

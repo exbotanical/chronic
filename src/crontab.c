@@ -7,11 +7,11 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#include "cronentry.h"
 #include "defs.h"
-#include "job.h"
 #include "log.h"
 #include "parser.h"
-#include "utils.h"
+#include "util.h"
 
 /*
  * Because crontab/at files may be owned by their respective users we
@@ -159,7 +159,7 @@ Crontab* new_crontab(int crontab_fd, bool is_root, time_t curr_time,
 
   char buf[RW_BUFFER];
 
-  array_t* jobs = array_init();
+  array_t* entries = array_init();
 
   while (fgets(buf, sizeof(buf), fd) != NULL && --max_lines) {
     char* ptr = buf;
@@ -178,15 +178,15 @@ Crontab* new_crontab(int crontab_fd, bool is_root, time_t curr_time,
     if (--max_entries == 0) break;
 
     // TODO: handle
-    Job* job = new_job(ptr, curr_time, uname);
-    write_to_log("New job (%d) for crontab %s\n", job->id, uname);
-    array_push(jobs, job);
+    CronEntry* entry = new_cron_entry(ptr, curr_time, uname);
+    write_to_log("New entry (%d) for crontab %s\n", entry->id, uname);
+    array_push(entries, entry);
   }
 
   fclose(fd);
 
   Crontab* ct = xmalloc(sizeof(Crontab));
-  ct->jobs = jobs;
+  ct->entries = entries;
   ct->mtime = mtime;
 
   return ct;
@@ -245,14 +245,15 @@ void scan_crontabs(hash_table* db, DirConfig dir_conf, time_t curr) {
           continue;
         }
 
-        // not modified, just renew the jobs
+        // not modified, just renew the entries
         // TODO: research whether we should adjust the precision of our mtime
         if (ct->mtime >= statbuf.st_mtime) {
-          write_to_log("existing file %s not modified, renewing jobs if any\n",
-                       fpath);
-          foreach (ct->jobs, i) {
-            Job* job = array_get(ct->jobs, i);
-            renew_job(job, curr);
+          write_to_log(
+              "existing file %s not modified, renewing entries if any\n",
+              fpath);
+          foreach (ct->entries, i) {
+            CronEntry* entry = array_get(ct->entries, i);
+            renew_cron_entry(entry, curr);
           }
         } else {
           write_to_log("existing file %s was modified, recreating crontab\n",
