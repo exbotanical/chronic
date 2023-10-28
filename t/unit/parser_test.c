@@ -1,5 +1,6 @@
 #include "parser.h"
 
+#include "cronentry.h"
 #include "defs.h"
 #include "tap.c/tap.h"
 #include "tests.h"
@@ -23,7 +24,6 @@ void strip_comment_test(void) {
 
   ITER_CASES_TEST(tests, TestCase) {
     TestCase tc = tests[i];
-    Job job;
 
     char* s = s_copy(tc.input);
     strip_comment(s);
@@ -51,7 +51,6 @@ void until_nth_of_char_test(void) {
 
   ITER_CASES_TEST(tests, TestCase) {
     TestCase tc = tests[i];
-    Job job;
 
     char* s = s_copy(tc.input);
     char* ret = until_nth_of_char(s, tc.delim, tc.num);
@@ -90,16 +89,16 @@ void parse_cmd_test(void) {
   char* expected = "/bin/sh command";
   ITER_CASES_TEST(tests, TestCase) {
     TestCase tc = tests[i];
-    Job job;
+    CronEntry entry;
 
     char* s = s_copy(tc.input);
-    RETVAL ret = parse_cmd(s, &job, tc.spaces_until_cmd);
+    RETVAL ret = parse_cmd(s, &entry, tc.spaces_until_cmd);
 
     if (tc.expect_err) {
       ok(ret == ERR, "Expect result to be ERR (%d)", ERR);
     } else {
       ok(ret == OK, "Expect result to be OK (%d)", OK);
-      is(expected, job.cmd, "Expect '%s'", expected);
+      is(expected, entry.cmd, "Expect '%s'", expected);
     }
 
     free(s);
@@ -124,15 +123,15 @@ void parse_test(void) {
   char* expected = "/bin/sh command";
   ITER_CASES_TEST(tests, TestCase) {
     TestCase tc = tests[i];
-    Job job;
+    CronEntry entry;
 
-    RETVAL ret = parse(&job, tc.input);
+    RETVAL ret = parse(&entry, tc.input);
 
     if (tc.expect_err) {
       ok(ret == ERR, "Expect result to be ERR (%d)", ERR);
     } else {
       ok(ret == OK, "Expect result to be OK (%d)", OK);
-      is(expected, job.cmd, "Expect '%s'", expected);
+      is(expected, entry.cmd, "Expect '%s'", expected);
     }
   }
 }

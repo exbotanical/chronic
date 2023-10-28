@@ -1,13 +1,17 @@
 ROOT_DIR="$(dirname "$(readlink -f $BASH_SOURCE)")"
 
-source "$ROOT_DIR/utils/shpec_util.bash"
+# shellcheck source=utils/shpec_utils.bash
+. "$ROOT_DIR/utils/shpec_utils.bash"
+# shellcheck source=utils/test_utils.bash
+. "$ROOT_DIR/utils/test_utils.bash"
+
 SETUP_PATH="$ROOT_DIR/utils/setup.bash"
 
 ONE_MIN_IN_SECS=60
 
 describe 'chronic cron daemon'
   # shellcheck source=utils/setup.bash
-  source "$SETUP_PATH"
+  . "$SETUP_PATH"
 
   uname_1='narcissus'
   uname_2='demian'

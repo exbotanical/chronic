@@ -2,7 +2,7 @@
 IFS=$'\n'
 
 TESTING_DIR=t/integ
-UTILS_F=utils.bash
+UTILS_F=run_utils.bash
 
 declare -a SKIP_FILES=(
   # 'main_shpec.bash'
@@ -44,6 +44,7 @@ main () {
   run
 }
 
+# shellcheck source=utils/run_utils.bash
 . "$(dirname "$(readlink -f "$BASH_SOURCE")")"/$UTILS_F
 
 main $*

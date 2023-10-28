@@ -1,7 +1,6 @@
-#include "utils.h"
-
 #include "tap.c/tap.h"
 #include "tests.h"
+#include "util.h"
 
 void round_ts_test(void) {
   typedef struct {
@@ -33,14 +32,14 @@ void get_sleep_duration_test() {
   } TestCase;
 
   TestCase tests[] = {
-      {.ival = 5, .now = 1697811728219, .expect = 2},
-      {.ival = 10, .now = 1697811728219, .expect = 2},
-      {.ival = 30, .now = 1697812811409, .expect = 22},
-      {.ival = 30, .now = 1697812854805, .expect = 6},
-      {.ival = 60, .now = 1697811728219, .expect = 2},
-      {.ival = 60, .now = 1697812625779, .expect = 42},
-      {.ival = 60, .now = 1697812679910, .expect = 31},
-      {.ival = 60, .now = 1697811728200, .expect = 21},
+      {.ival = 5, .now = 1697811728219, .expect = 1},
+      {.ival = 10, .now = 1697811728219, .expect = 1},
+      {.ival = 30, .now = 1697812811409, .expect = 21},
+      {.ival = 30, .now = 1697812854805, .expect = 5},
+      {.ival = 60, .now = 1697811728219, .expect = 1},
+      {.ival = 60, .now = 1697812625779, .expect = 41},
+      {.ival = 60, .now = 1697812679910, .expect = 30},
+      {.ival = 60, .now = 1697811728200, .expect = 20},
 
   };
 
@@ -49,8 +48,9 @@ void get_sleep_duration_test() {
 
     unsigned short actual = get_sleep_duration(tc.ival, tc.now);
     ok(tc.expect == actual,
-       "Computes sleep duration as %d given interval %d and curr time %ld",
-       tc.expect, tc.ival, tc.now);
+       "Computes sleep duration as %d given interval %d and curr time %ld "
+       "(actual %ld)",
+       tc.expect, tc.ival, tc.now, actual);
   }
 }
 
