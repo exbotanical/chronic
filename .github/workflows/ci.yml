@@ -12,7 +12,7 @@ on:
 jobs:
   test_job:
     runs-on: ubuntu-latest
-    name: A job to run the Ys tests
+    name: A job to run the chronic tests
     steps:
       - name: Checkout
         uses: actions/checkout@v3
