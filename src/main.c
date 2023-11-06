@@ -3,8 +3,10 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <syslog.h>
 #include <unistd.h>
 
+#include "cli.h"
 #include "cronentry.h"
 #include "crontab.h"
 #include "daemon.h"
@@ -21,22 +23,21 @@ const short loop_interval = 60;
 pid_t daemon_pid;
 array_t* job_queue;
 
-int main(int _argc, char** _argv) {
+CliOptions opts = {0};
+
+int main(int argc, char** argv) {
+  cli_init(argc, argv);
+
+  // TODO: check if instance already running
+
   // Become a daemon process
   if (daemonize() != OK) {
     printf("daemonize fail");
     exit(EXIT_FAILURE);
   }
 
-  // tmp
-  int log_fd;
-  if ((log_fd = open(".log", O_WRONLY | O_CREAT | O_APPEND, 0600)) < 0) {
-    perror("open log");
-    exit(errno);
-  }
-
-  close(STDERR_FILENO);
-  dup2(log_fd, STDERR_FILENO);
+  // TODO: handle signals
+  logger_init(&opts);
 
   job_queue = array_init();
   daemon_pid = getpid();
@@ -44,8 +45,9 @@ int main(int _argc, char** _argv) {
   hash_table* db = ht_init(0);
 
   time_t start_time = time(NULL);
-  write_to_log("cron daemon (pid=%d) started at %s\n", daemon_pid,
-               to_time_str(start_time));
+
+  printlogf("cron daemon (pid=%d) started at %s\n", daemon_pid,
+            to_time_str(start_time));
 
   time_t current_iter_time;
 
@@ -53,50 +55,53 @@ int main(int _argc, char** _argv) {
   DirConfig usr = {.is_root = false, .name = CRONTABS_DIR};
 
   update_db(db, start_time, &usr, NULL);
-
+  // TODO: sys
   pthread_t reaper_thread_id;
   pthread_create(&reaper_thread_id, NULL, &reap_routine, NULL);
 
   while (true) {
-    write_to_log("\n----------------\n");
+    printlogf("\n----------------\n");
 
     // Take advantage of our sleep time to run reap routines
     signal_reap_routine();
 
     unsigned short sleep_dur = get_sleep_duration(loop_interval, time(NULL));
-    write_to_log("Sleeping for %d seconds...\n", sleep_dur);
+    printlogf("Sleeping for %d seconds...\n", sleep_dur);
     sleep(sleep_dur);
 
     current_iter_time = time(NULL);
     time_t rounded_timestamp = round_ts(current_iter_time, loop_interval);
 
-    write_to_log("Current iter time: %s (rounded to %s)\n",
-                 to_time_str(current_iter_time),
-                 to_time_str(rounded_timestamp));
+    printlogf("Current iter time: %s (rounded to %s)\n",
+              to_time_str(current_iter_time), to_time_str(rounded_timestamp));
 
     // We must iterate the capacity here because hash table records are not
     // stored contiguously
-    // if db count...
-    for (unsigned int i = 0; i < (unsigned int)db->capacity; i++) {
-      ht_record* r = db->records[i];
+    if (db->count > 0) {
+      for (unsigned int i = 0; i < (unsigned int)db->capacity; i++) {
+        ht_record* r = db->records[i];
 
-      // If there's no record in this slot, continue
-      if (!r) {
-        continue;
-      }
+        // If there's no record in this slot, continue
+        if (!r) {
+          continue;
+        }
 
-      Crontab* ct = r->value;
-      foreach (ct->entries, i) {
-        CronEntry* entry = array_get(ct->entries, i);
-        write_to_log("[dbg] Have entry: %s. Next %s == Curr %s\n", entry->cmd,
-                     to_time_str(entry->next), to_time_str(rounded_timestamp));
+        Crontab* ct = r->value;
+        foreach (ct->entries, i) {
+          CronEntry* entry = array_get(ct->entries, i);
+          printlogf("[dbg] Have entry: %s. Next %s == Curr %s\n", entry->cmd,
+                    to_time_str(entry->next), to_time_str(rounded_timestamp));
 
-        if (entry->next == rounded_timestamp) {
-          enqueue_job(entry);
+          if (entry->next == rounded_timestamp) {
+            enqueue_job(entry);
+          }
         }
       }
     }
 
     update_db(db, current_iter_time, &usr, NULL);
   }
+
+  printlogf("AFTER THE LOOP\n");
+  exit(1);
 }

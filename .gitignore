@@ -6,3 +6,4 @@ chronic
 jobs
 *.vscode
 unit_test
+local.c

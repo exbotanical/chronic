@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "dependencies": {
     "exbotanical/libutil": "*",
-    "exbotanical/libhash": "*"
+    "exbotanical/libhash": "*",
+    "clibs/commander": "1.3.2"
   },
   "development": {
     "thlorenz/tap.c": "*"

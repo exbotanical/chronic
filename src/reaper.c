@@ -20,10 +20,10 @@ void* reap_routine(void* _arg) {
     pthread_mutex_lock(&mutex);
     pthread_cond_wait(&cond, &mutex);
 
-    write_to_log("in reaper thread\n");
+    printlogf("in reaper thread\n");
     foreach (job_queue, i) {
       Job* job = array_get(job_queue, i);
-      write_to_log("Attempting to reap job with pid %d\n", job->pid);
+      printlogf("Attempting to reap job with pid %d\n", job->pid);
       reap_job(job);
 
       // We need to be careful to only remove EXITED jobs, else

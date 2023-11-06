@@ -71,7 +71,7 @@ RETVAL parse(CronEntry* entry, char* line) {
   cron_parse_expr(entry->schedule, expr, &err);
 
   if (err) {
-    write_to_log("error parsing cron expression: %s\n\n", err);
+    printlogf("error parsing cron expression: %s\n\n", err);
     return ERR;
   }
 

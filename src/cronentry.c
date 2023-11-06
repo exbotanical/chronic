@@ -10,7 +10,7 @@ CronEntry* new_cron_entry(char* raw, time_t curr, char* uname) {
   CronEntry* entry = xmalloc(sizeof(CronEntry));
 
   if (parse(entry, raw) != OK) {
-    write_to_log("Failed to parse entry line %s\n", raw);
+    printlogf("Failed to parse entry line %s\n", raw);
     return NULL;
   }
 
@@ -22,7 +22,7 @@ CronEntry* new_cron_entry(char* raw, time_t curr, char* uname) {
 }
 
 void renew_cron_entry(CronEntry* entry, time_t curr) {
-  write_to_log("Updating time for entry %d\n", entry->id);
+  printlogf("Updating time for entry %d\n", entry->id);
 
   entry->next = cron_next(entry->expr, curr);
 }

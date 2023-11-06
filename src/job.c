@@ -26,11 +26,11 @@ void enqueue_job(CronEntry* entry) {
   if ((job->pid = fork()) == 0) {
     setpgid(0, 0);
     execl("/bin/sh", "/bin/sh", "-c", job->cmd, NULL);
-    write_to_log("Writing log from child process %d\n", getpid());
+    printlogf("Writing log from child process %d\n", getpid());
     exit(0);
   }
 
-  write_to_log("New running job with pid %d\n", job->pid);
+  printlogf("New running job with pid %d\n", job->pid);
 
   job->status = RUNNING;
   array_push(job_queue, job);
@@ -45,7 +45,7 @@ void reap_job(Job* job) {
   int status;
   int r = waitpid(job->pid, &status, WNOHANG);
 
-  write_to_log("Job with pid=%d waitpid result is %d\n", job->pid, r);
+  printlogf("Job with pid=%d waitpid result is %d\n", job->pid, r);
   // -1 == error; 0 == still running; pid == dead
   if (r < 0 || r == job->pid) {
     if (r > 0 && WIFEXITED(status)) {
@@ -54,7 +54,7 @@ void reap_job(Job* job) {
       status = 1;
     }
 
-    write_to_log("set job with pid=%d to EXITED\n", job->pid);
+    printlogf("set job with pid=%d to EXITED\n", job->pid);
 
     job->ret = status;
     job->status = EXITED;

@@ -22,8 +22,8 @@ RETVAL daemonize() {
   }
 
   // Close std file descriptors to isolate the daemon process
-  close(STDIN_FILENO);
-  close(STDOUT_FILENO);
+  fclose(stdin);
+  fclose(stdout);
 
   // ...and redirect them to /dev/null to prevent side-effects of unintended
   // writes to them (in case of accidental opens)

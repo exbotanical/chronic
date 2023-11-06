@@ -21,7 +21,7 @@ run () {
   }
 
   # It's a daemon; we don't need to bg it ourselves...
-  ./chronic
+  ./chronic -L .log
 
   # This step is critical:
   # We cannot use `$!` because the PID will be for the program itself (which sets up the daemon).
