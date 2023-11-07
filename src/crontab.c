@@ -159,6 +159,7 @@ Crontab* new_crontab(int crontab_fd, bool is_root, time_t curr_time,
 
   array_t* entries = array_init();
 
+  // TODO: move this logic to parser
   while (fgets(buf, sizeof(buf), fd) != NULL && --max_lines) {
     char* ptr = buf;
     int len;

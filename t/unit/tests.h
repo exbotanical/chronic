@@ -7,5 +7,6 @@
 void run_parser_tests(void);
 void run_crontab_tests(void);
 void run_time_tests(void);
+void run_regexpr_tests(void);
 
 #endif /* TESTS_H */

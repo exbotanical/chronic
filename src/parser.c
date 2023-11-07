@@ -4,8 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "libhash/libhash.h"
 #include "libutil/libutil.h"
 #include "log.h"
+#include "strdup/strdup.h"
 
 // Basically whether we support seconds (7)
 #define SPACES_BEFORE_CMD 5
@@ -94,4 +96,18 @@ bool should_parse_line(const char* line) {
   }
 
   return true;
+}
+
+void extract_vars(const char* s, hash_table* ht) {
+  char* sc = s_copy(s);
+
+  char* value = strchr(sc, '=');
+  if (!value) return;
+
+  char* key = malloc(sizeof(char) + 1 + (value - sc));
+  strncpy(key, sc, value - sc);
+
+  *value++;
+
+  ht_insert(ht, key, value);
 }

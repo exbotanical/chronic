@@ -12,3 +12,4 @@
 - log to syslog
 - integ testing
 - unit tests
+- Ensure tests don't log to syslog or whatever (maybe a test sink?)

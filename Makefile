@@ -15,7 +15,7 @@ DEPS := $(filter-out $(wildcard $(DEPSDIR)/tap.c/*), $(wildcard $(DEPSDIR)/*/*.c
 
 CFLAGS := -I$(DEPSDIR) -Wall -Wextra -pedantic
 UNIT_TEST_CFLAGS := -DUNIT_TEST
-LIBS := -lm -lpthread
+LIBS := -lm -lpthread -lpcre
 # -luuid
 
 TESTS := $(wildcard $(TESTDIR)/*.c)
@@ -34,7 +34,7 @@ unit_test:
 
 integ_test: $(PROG)
 	./$(TESTDIR)/integ/utils/run.bash
-	$(MAKE) clean
+	# $(MAKE) clean
 
 clean:
 	rm -f $(UNIT_TARGET) $(PROG) .log
