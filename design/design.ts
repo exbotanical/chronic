@@ -1,3 +1,4 @@
+// Doing this helped me conceptualize how this whole thing would work
 interface Crontab {
   mtime: number
   jobs: Job[]

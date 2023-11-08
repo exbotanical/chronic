@@ -7,12 +7,30 @@
 #include "libhash/libhash.h"
 #include "libutil/libutil.h"
 #include "log.h"
+#include "regexpr.h"
 #include "strdup/strdup.h"
 
 // Basically whether we support seconds (7)
 #define SPACES_BEFORE_CMD 5
 
 // TODO: static fns
+bool is_comment_line(const char* str) {
+  while (isspace((unsigned char)*str)) {
+    str++;
+  }
+
+  return *str == '#';
+}
+
+bool should_parse_line(const char* line) {
+  if (strlen(line) < (SPACES_BEFORE_CMD * 2) + 1 || (*line == 0) ||
+      is_comment_line(line)) {
+    return false;
+  }
+
+  return true;
+}
+
 char* until_nth_of_char(const char* str, char c, int n) {
   int count = 0;
   while (*str) {
@@ -35,7 +53,7 @@ void strip_comment(char* str) {
   }
 }
 
-RETVAL parse_cmd(char* line, CronEntry* entry, int count) {
+Retval parse_cmd(char* line, CronEntry* entry, int count) {
   char* line_cp = s_copy(line);
 
   entry->cmd = until_nth_of_char(line_cp, ' ', line_cp[0] == '@' ? 1 : count);
@@ -56,8 +74,7 @@ RETVAL parse_cmd(char* line, CronEntry* entry, int count) {
   return OK;
 }
 
-// TODO: what if the line itself is invalid? wbt entry?
-RETVAL parse(CronEntry* entry, char* line) {
+Retval parse_entry(CronEntry* entry, char* line) {
   char* line_cp = s_trim(line);
   strip_comment(line_cp);
 
@@ -81,33 +98,21 @@ RETVAL parse(CronEntry* entry, char* line) {
   return OK;
 }
 
-bool is_comment_line(const char* str) {
-  while (isspace((unsigned char)*str)) {
-    str++;
-  }
+ParseLineResult parse_line(char* ptr, int max_entries) {
+  // TODO: move?
+  if (max_entries == 1) return DONE;
 
-  return *str == '#';
-}
+  unsigned int len;
 
-bool should_parse_line(const char* line) {
-  if (strlen(line) < (SPACES_BEFORE_CMD * 2) + 1 || (*line == 0) ||
-      is_comment_line(line)) {
-    return false;
-  }
+  // Skip whitespace and newlines
+  while (*ptr == ' ' || *ptr == '\t' || *ptr == '\n') ++ptr;
 
-  return true;
-}
+  // Remove trailing newline
+  len = strlen(ptr);
+  if (len && ptr[len - 1] == '\n') ptr[--len] = 0;
 
-void extract_vars(const char* s, hash_table* ht) {
-  char* sc = s_copy(s);
+  // If that's it or the entire line is a comment, skip
+  if (!should_parse_line(ptr)) return SKIP_LINE;
 
-  char* value = strchr(sc, '=');
-  if (!value) return;
-
-  char* key = malloc(sizeof(char) + 1 + (value - sc));
-  strncpy(key, sc, value - sc);
-
-  *value++;
-
-  ht_insert(ht, key, value);
+  return ENTRY;
 }

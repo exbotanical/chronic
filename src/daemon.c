@@ -9,7 +9,7 @@
 #define DEV_NULL_DEVICE "/dev/null"
 #define TERMINAL_DEVICE "/dev/tty"
 
-RETVAL daemonize() {
+Retval daemonize() {
   // Fork a new process
   pid_t pid;
   if ((pid = fork()) < 0) {

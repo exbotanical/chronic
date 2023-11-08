@@ -9,7 +9,8 @@ unsigned int id_counter = 0;
 CronEntry* new_cron_entry(char* raw, time_t curr, char* uname) {
   CronEntry* entry = xmalloc(sizeof(CronEntry));
 
-  if (parse(entry, raw) != OK) {
+  // TODO: Lift out
+  if (parse_entry(entry, raw) != OK) {
     printlogf("Failed to parse entry line %s\n", raw);
     return NULL;
   }

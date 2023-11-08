@@ -3,6 +3,6 @@
 
 #include "util.h"
 
-RETVAL daemonize();
+Retval daemonize();
 
 #endif /* DAEMON_H */

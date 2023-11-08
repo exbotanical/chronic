@@ -10,7 +10,6 @@
 
 static const char *COMMENT_PATTERN = "^#";
 static const char *VARIABLE_PATTERN =
-    // "^([a-zA-Z_-][a-zA-Z0-9_-]*)=(.*?)(?<! )$";  // " ^(.*)=(.*)$"
     "^([a-zA-Z_-][a-zA-Z0-9_-]*)=\"([^\"]*)\"(?<! )$";
 
 static int ovecsize = 30;
@@ -97,13 +96,10 @@ bool match_variable(char *line, hash_table *vars) {
 
   array_t *matches = regex_matches(re, line);
   if (matches && array_size(matches) == 3) {
-    printf("MATCHES >>> %s %s\n\n", array_get(matches, 1),
-           array_get(matches, 2));
-
     ht_insert(vars, s_copy(array_get(matches, 1)),
               s_copy(array_get(matches, 2)));
 
-    // array_free_ptrs(matches);
+    array_free_ptrs(matches);
 
     return true;
   }

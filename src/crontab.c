@@ -137,7 +137,6 @@ dont_process:
 Crontab* new_crontab(int crontab_fd, bool is_root, time_t curr_time,
                      time_t mtime, char* uname) {
   FILE* fd;
-
   if (!(fd = fdopen(crontab_fd, "r"))) {
     printlogf("fdopen on crontab_fd %d failed\n", crontab_fd);
     // TODO: perrors
@@ -159,27 +158,32 @@ Crontab* new_crontab(int crontab_fd, bool is_root, time_t curr_time,
 
   array_t* entries = array_init();
 
-  // TODO: move this logic to parser
   while (fgets(buf, sizeof(buf), fd) != NULL && --max_lines) {
     char* ptr = buf;
-    int len;
 
-    // Skip whitespace and newlines
-    while (*ptr == ' ' || *ptr == '\t' || *ptr == '\n') ++ptr;
+    switch (parse_line(ptr, max_entries)) {
+      case ENV_VAR_ADDED:
+      case SKIP_LINE:
+        continue;
+      case DONE:
+        break;
+      case ENTRY: {
+        CronEntry* entry = new_cron_entry(ptr, curr_time, uname);
+        if (!entry) {
+          printlogf(
+              "Failed to parse what was thought to be a cron entry: %s (user "
+              "%s)\n",
+              ptr, uname);
+          continue;
+        }
 
-    // Remove trailing newline
-    len = strlen(ptr);
-    if (len && ptr[len - 1] == '\n') ptr[--len] = 0;
-
-    // If that's it or the entire line is a comment, skip
-    if (!should_parse_line(ptr)) continue;
-
-    if (--max_entries == 0) break;
-
-    // TODO: handle
-    CronEntry* entry = new_cron_entry(ptr, curr_time, uname);
-    printlogf("New entry (%d) for crontab %s\n", entry->id, uname);
-    array_push(entries, entry);
+        printlogf("New entry (%d) for crontab %s\n", entry->id, uname);
+        array_push(entries, entry);
+        max_entries--;
+      }
+      default:
+        break;
+    }
   }
 
   fclose(fd);

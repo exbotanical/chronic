@@ -30,7 +30,8 @@ void match_variable_test() {
       {.key = "EMPTY", .value = "", .invalid_str = NULL},
       {.invalid_str = "SOME_INVALID_VAR"},
       {.invalid_str = ""},
-      {.invalid_str = "str=\"invalid"}};
+      {.invalid_str = "str=\"invalid"},
+      {.invalid_str = "~=\"valid_val_but_invalid_key\""}};
 
   hash_table* ht = ht_init(0);
 
@@ -43,7 +44,7 @@ void match_variable_test() {
       match_variable(input, ht);
       int after = ht->count;
 
-      ok(before == after);
+      ok(before == after, "doesn't update the hash table when no variable");
 
       free(input);
     } else {
@@ -52,7 +53,8 @@ void match_variable_test() {
 
       match_variable(input, ht);
 
-      is(ht_get(ht, tc.key), tc.value);
+      is(ht_get(ht, tc.key), tc.value,
+         "parses the variable and updates the hash table");
     }
   }
 }

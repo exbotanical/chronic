@@ -4,15 +4,3 @@ alias it='(_shpec_failures=0; alias setup &>/dev/null && { setup; unalias setup;
 # shellcheck disable=SC2154
 alias ti='return "$_shpec_failures"); (( _shpec_failures += $?, _shpec_examples++ ))'
 alias end_describe='end; unalias setup teardown 2>/dev/null'
-
-get_header () {
-  sed -n "s/$1: //p" | tr -d '[:space:]'
-}
-
-get_status () {
-  grep -Eo '\b[0-9]{3} .*\b' | sed -e 's/\r$//'
-}
-
-get_cookie () {
-  echo "$res" | grep 'Set-Cookie'
-}

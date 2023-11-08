@@ -89,7 +89,7 @@ void parse_cmd_test(void) {
     CronEntry entry;
 
     char* s = s_copy(tc.input);
-    RETVAL ret = parse_cmd(s, &entry, tc.spaces_until_cmd);
+    Retval ret = parse_cmd(s, &entry, tc.spaces_until_cmd);
 
     if (tc.expect_err) {
       ok(ret == ERR, "Expect result to be ERR (%d)", ERR);
@@ -102,7 +102,7 @@ void parse_cmd_test(void) {
   }
 }
 
-void parse_test(void) {
+void parse_entry_test(void) {
   typedef struct {
     char* input;
     bool expect_err;
@@ -122,7 +122,7 @@ void parse_test(void) {
     TestCase tc = tests[i];
     CronEntry entry;
 
-    RETVAL ret = parse(&entry, tc.input);
+    Retval ret = parse_entry(&entry, tc.input);
 
     if (tc.expect_err) {
       ok(ret == ERR, "Expect result to be ERR (%d)", ERR);
@@ -186,7 +186,7 @@ void run_parser_tests(void) {
   strip_comment_test();
   until_nth_of_char_test();
   parse_cmd_test();
-  parse_test();
+  parse_entry_test();
   is_comment_line_test();
   should_parse_line_test();
 }

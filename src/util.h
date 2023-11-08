@@ -5,7 +5,7 @@
 
 #define X(e) [e] = #e
 
-typedef enum { OK, ERR } RETVAL;
+typedef enum { OK, ERR } Retval;
 
 /**
  * xmalloc is a malloc wrapper that exits the program if out of memory
