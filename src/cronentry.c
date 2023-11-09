@@ -6,7 +6,7 @@
 
 unsigned int id_counter = 0;
 
-CronEntry* new_cron_entry(char* raw, time_t curr, char* uname) {
+CronEntry* new_cron_entry(char* raw, time_t curr, Crontab* ct) {
   CronEntry* entry = xmalloc(sizeof(CronEntry));
 
   // TODO: Lift out
@@ -15,7 +15,7 @@ CronEntry* new_cron_entry(char* raw, time_t curr, char* uname) {
     return NULL;
   }
 
-  entry->owner_uname = uname;
+  entry->parent = ct;
   entry->next = cron_next(entry->expr, curr);
   entry->id = ++id_counter;
 

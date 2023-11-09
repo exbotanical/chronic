@@ -9,8 +9,13 @@
 #ifndef SYS_CRONTABS_DIR
 #define SYS_CRONTABS_DIR "/etc/cron.d"
 #endif
+
 #ifndef CRONTABS_DIR
 #define CRONTABS_DIR "/var/spool/cron/crontabs"
+#endif
+
+#ifndef DEFAULT_PATH
+#define DEFAULT_PATH "/usr/bin:/bin:/usr/sbin:/sbin"
 #endif
 
 #define ROOT_UNAME "root"
@@ -18,6 +23,10 @@
 
 #define ALL_PERMS 07777
 #define OWNER_RW_PERMS 0600
+#define HOMEDIR_ENVVAR "HOME"
+#define SHELL_ENVVAR "SHELL"
+#define PATH_ENVVAR "PATH"
+#define UNAME_ENVVAR "USER"
 
 #define CHRONIC_VERSION "0.0.1"
 

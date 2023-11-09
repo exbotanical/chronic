@@ -28,6 +28,62 @@
 #define MAXENTRIES 256
 #define RW_BUFFER 1024
 
+static bool file_not_owned_by(struct stat* statbuf, struct passwd* pw,
+                              char* uname) {
+  return statbuf->st_uid != ROOT_UID &&
+         (pw == NULL || statbuf->st_uid != pw->pw_uid ||
+          strcmp(uname, pw->pw_name) != 0);
+}
+
+static void complete_env(Crontab* ct) {
+  hash_table* vars = ct->vars;
+
+#ifndef UNIT_TEST
+  struct passwd* pw = getpwnam(ct->uname);
+  if (pw) {
+    if (!ht_search(vars, HOMEDIR_ENVVAR)) {
+      ht_insert(vars, HOMEDIR_ENVVAR, s_copy(pw->pw_dir));
+    }
+
+    if (!ht_search(vars, SHELL_ENVVAR)) {
+      ht_insert(vars, SHELL_ENVVAR, s_copy(pw->pw_shell));
+    }
+
+    if (!ht_search(vars, UNAME_ENVVAR)) {
+      ht_insert(vars, UNAME_ENVVAR, s_copy(pw->pw_name));
+    }
+
+    if (!ht_search(vars, PATH_ENVVAR)) {
+      ht_insert(vars, PATH_ENVVAR, DEFAULT_PATH);
+    }
+  } else {
+    printlogf(
+        "Something went really awry and uname=%s wasn't found in the system "
+        "user db\n",
+        ct->uname);
+  }
+#endif
+
+  // TODO: We could totally hoist this logic - the var matching function
+  // actually returns the full key=value string in the first element of the
+  // matches array I was just lazy and really wanted to get the crond up and
+  // running
+  if (vars->count > 0) {
+    ct->envp = malloc(sizeof(char*) * vars->count + 1);
+
+    unsigned int idx = 0;
+    for (unsigned int i = 0; i < (unsigned int)vars->capacity; i++) {
+      ht_record* r = vars->records[i];
+      if (!r) continue;
+
+      ct->envp[idx] = fmt_str("%s=%s", r->key, r->value);
+      idx++;
+    }
+
+    ct->envp[idx] = NULL;
+  }
+}
+
 array_t* get_filenames(char* dpath) {
   DIR* dir;
 
@@ -55,12 +111,6 @@ array_t* get_filenames(char* dpath) {
   }
 
   return NULL;
-}
-
-bool file_not_owned_by(struct stat* statbuf, struct passwd* pw, char* uname) {
-  return statbuf->st_uid != ROOT_UID &&
-         (pw == NULL || statbuf->st_uid != pw->pw_uid ||
-          strcmp(uname, pw->pw_name) != 0);
 }
 
 int get_crontab_fd_if_valid(char* fpath, char* uname, time_t last_mtime,
@@ -156,19 +206,24 @@ Crontab* new_crontab(int crontab_fd, bool is_root, time_t curr_time,
 
   char buf[RW_BUFFER];
 
-  array_t* entries = array_init();
+  Crontab* ct = xmalloc(sizeof(Crontab));
+  ct->mtime = mtime;
+  ct->uname = uname;
+  ct->entries = array_init();
+  ct->vars = ht_init(0);
+  ct->envp = NULL;
 
   while (fgets(buf, sizeof(buf), fd) != NULL && --max_lines) {
     char* ptr = buf;
 
-    switch (parse_line(ptr, max_entries)) {
+    switch (parse_line(ptr, max_entries, ct->vars)) {
       case ENV_VAR_ADDED:
       case SKIP_LINE:
         continue;
       case DONE:
         break;
       case ENTRY: {
-        CronEntry* entry = new_cron_entry(ptr, curr_time, uname);
+        CronEntry* entry = new_cron_entry(ptr, curr_time, ct);
         if (!entry) {
           printlogf(
               "Failed to parse what was thought to be a cron entry: %s (user "
@@ -178,7 +233,7 @@ Crontab* new_crontab(int crontab_fd, bool is_root, time_t curr_time,
         }
 
         printlogf("New entry (%d) for crontab %s\n", entry->id, uname);
-        array_push(entries, entry);
+        array_push(ct->entries, entry);
         max_entries--;
       }
       default:
@@ -188,9 +243,7 @@ Crontab* new_crontab(int crontab_fd, bool is_root, time_t curr_time,
 
   fclose(fd);
 
-  Crontab* ct = xmalloc(sizeof(Crontab));
-  ct->entries = entries;
-  ct->mtime = mtime;
+  complete_env(ct);
 
   return ct;
 }

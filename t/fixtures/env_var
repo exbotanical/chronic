@@ -1,7 +1,0 @@
-SHELL=/bin/sh
-*/1 * * * * /usr/app/t/fixtures/script.sh min
-*/2 * * * * /usr/app/t/fixtures/script.sh 2min # WHATEVER=WHAT
-*/10 * * * * /usr/app/t/fixtures/script.sh 10min
-*/15 * * * * /usr/app/t/fixtures/script.sh 15min
-# OOPS=NOTME
-PATH=/what/is/this

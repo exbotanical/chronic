@@ -8,7 +8,6 @@
 
 #include "libutil/libutil.h"
 
-static const char *COMMENT_PATTERN = "^#";
 static const char *VARIABLE_PATTERN =
     "^([a-zA-Z_-][a-zA-Z0-9_-]*)=\"([^\"]*)\"(?<! )$";
 

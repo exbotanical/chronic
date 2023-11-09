@@ -4,6 +4,7 @@
 #include <time.h>
 
 #include "cronentry.h"
+#include "libhash/libhash.h"
 
 typedef enum {
   PENDING,

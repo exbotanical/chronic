@@ -1,3 +1,4 @@
+SHELL="/bin/echo"
 */1 * * * * script.sh
 
 */2 * * * * exec.sh
@@ -5,3 +6,7 @@
 */10 * * * * echo whatever > /tmp/hi
 */15 * * * * date  # comment
 # comment
+# OOPS="NOTME"
+PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+DOESNTWORK=VAL
+KEY="VALUE"

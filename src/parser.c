@@ -98,8 +98,7 @@ Retval parse_entry(CronEntry* entry, char* line) {
   return OK;
 }
 
-ParseLineResult parse_line(char* ptr, int max_entries) {
-  // TODO: move?
+ParseLineResult parse_line(char* ptr, int max_entries, hash_table* vars) {
   if (max_entries == 1) return DONE;
 
   unsigned int len;
@@ -113,6 +112,8 @@ ParseLineResult parse_line(char* ptr, int max_entries) {
 
   // If that's it or the entire line is a comment, skip
   if (!should_parse_line(ptr)) return SKIP_LINE;
+
+  if (match_variable(ptr, vars)) return ENV_VAR_ADDED;
 
   return ENTRY;
 }

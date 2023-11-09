@@ -1,5 +1,6 @@
 #include "job.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -10,6 +11,8 @@
 #include "log.h"
 #include "util.h"
 
+// TODO: pass entry by value? Otherwise if entry is freed before we call fork,
+// we're fucked
 static Job* new_job(CronEntry* entry) {
   Job* job = xmalloc(sizeof(Job));
   job->ret = -1;
@@ -23,11 +26,20 @@ static Job* new_job(CronEntry* entry) {
 void enqueue_job(CronEntry* entry) {
   Job* job = new_job(entry);
 
+  char* home = ht_get(entry->parent->vars, HOMEDIR_ENVVAR);
+  char* shell = ht_get(entry->parent->vars, SHELL_ENVVAR);
+
   if ((job->pid = fork()) == 0) {
-    setpgid(0, 0);
-    execl("/bin/sh", "/bin/sh", "-c", job->cmd, NULL);
-    printlogf("Writing log from child process %d\n", getpid());
-    exit(0);
+    printlogf(
+        "Writing log from child process pid=%d homedir=%s shell=%s cmd=%s\n",
+        getpid(), home, shell, job->cmd);
+
+    chdir(home);
+
+    int r = execle(shell, shell, "-c", job->cmd, NULL, entry->parent->envp);
+    printlogf("execle finished with %d\n", r);
+    perror("execle");
+    _exit(1);
   }
 
   printlogf("New running job with pid %d\n", job->pid);
@@ -54,7 +66,7 @@ void reap_job(Job* job) {
       status = 1;
     }
 
-    printlogf("set job with pid=%d to EXITED\n", job->pid);
+    printlogf("set job with pid=%d to EXITED (status=%d)\n", job->pid, status);
 
     job->ret = status;
     job->status = EXITED;

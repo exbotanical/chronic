@@ -13,3 +13,4 @@
 - integ testing
 - unit tests
 - Ensure tests don't log to syslog or whatever (maybe a test sink?)
+- handle signals and log getting closed or deleted
