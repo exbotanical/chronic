@@ -210,11 +210,11 @@ hash_table *ht_init(int base_capacity) {
 }
 
 void ht_insert(hash_table *ht, const char *key, void *value) {
-  return __ht_insert(ht, key, value, false);
+  __ht_insert(ht, key, value, false);
 }
 
 void ht_insert_ptr(hash_table *ht, const char *key, void *value) {
-  return __ht_insert(ht, key, value, true);
+  __ht_insert(ht, key, value, true);
 }
 
 ht_record *ht_search(hash_table *ht, const char *key) {
@@ -241,9 +241,9 @@ char *ht_get(hash_table *ht, const char *key) {
   return r ? r->value : NULL;
 }
 
-void ht_delete_table(hash_table *ht) { return __ht_delete_table(ht, false); }
+void ht_delete_table(hash_table *ht) { __ht_delete_table(ht, false); }
 
-void ht_delete_table_ptr(hash_table *ht) { return __ht_delete_table(ht, true); }
+void ht_delete_table_ptr(hash_table *ht) { __ht_delete_table(ht, true); }
 
 int ht_delete(hash_table *ht, const char *key) {
   return __ht_delete(ht, key, false);

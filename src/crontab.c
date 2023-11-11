@@ -5,12 +5,14 @@
 #include <pwd.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 
+#include "constants.h"
 #include "cronentry.h"
-#include "defs.h"
 #include "log.h"
+#include "opt-constants.h"
 #include "parser.h"
 #include "util.h"
 
@@ -189,7 +191,7 @@ Crontab* new_crontab(int crontab_fd, bool is_root, time_t curr_time,
   FILE* fd;
   if (!(fd = fdopen(crontab_fd, "r"))) {
     printlogf("fdopen on crontab_fd %d failed\n", crontab_fd);
-    // TODO: perrors
+    perror("fdopen");
     return NULL;
   }
 

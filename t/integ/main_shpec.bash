@@ -21,7 +21,7 @@ describe 'chronic cron daemon'
 
   # Wait for an even minute minus 1 second so we catch the next run
   # 10# to force base10 and avoid `bash: 60 - 08: value too great for base (error token is "08")`
-  sleep $((ONE_MIN_IN_SECS - 10#$(date +%S) - 1))
+  # sleep $((ONE_MIN_IN_SECS - 10#$(date +%S) - 1))
 
   now="$(date -u +'%Y-%m-%dT%H:%M:%S')"
   # Add an additional minute because the daemon will not see any crontabs first pass and will sleep until the next

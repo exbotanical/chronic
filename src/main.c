@@ -1,3 +1,5 @@
+#define _BSD_SOURCE 1  // For `gethostname`
+
 #include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>
@@ -7,26 +9,41 @@
 #include <unistd.h>
 
 #include "cli.h"
+#include "constants.h"
 #include "cronentry.h"
 #include "crontab.h"
 #include "daemon.h"
-#include "defs.h"
 #include "job.h"
 #include "log.h"
+#include "opt-constants.h"
 #include "reaper.h"
 #include "util.h"
 
-const char* job_status_names[] = {X(PENDING), X(RUNNING), X(EXITED)};
+pid_t daemon_pid;
+char hostname[SMALL_BUFFER];
+
+array_t* job_queue;
+
+const char* job_status_names[] = {X(PENDING), X(RUNNING), X(EXITED),
+                                  X(RESOLVED), X(MAIL_RUNNING)};
+
 // Desired interval in seconds between loop iterations
 const short loop_interval = 60;
 
-pid_t daemon_pid;
-array_t* job_queue;
-
 CliOptions opts = {0};
+
+static void set_hostname() {
+  if (gethostname(hostname, sizeof(hostname)) == 0) {
+    hostname[sizeof(hostname) - 1] = 0;
+  } else {
+    hostname[0] = 0;
+  }
+}
 
 int main(int argc, char** argv) {
   cli_init(argc, argv);
+
+  set_hostname();
 
   // TODO: check if instance already running
 
@@ -89,9 +106,6 @@ int main(int argc, char** argv) {
         Crontab* ct = r->value;
         foreach (ct->entries, i) {
           CronEntry* entry = array_get(ct->entries, i);
-          printlogf("[dbg] Have entry: %s. Next %s == Curr %s\n", entry->cmd,
-                    to_time_str(entry->next), to_time_str(rounded_timestamp));
-
           if (entry->next == rounded_timestamp) {
             enqueue_job(entry);
           }
@@ -99,9 +113,17 @@ int main(int argc, char** argv) {
       }
     }
 
+    foreach (job_queue, i) {
+      Job* job = array_get(job_queue, i);
+      if (job->status == EXITED) {
+        printlogf("\n[mailjob %s] about to run mailjob (status %s)\n\n",
+                  job->ident, job_status_names[job->status]);
+        run_mailjob(job);
+      }
+    }
+
     update_db(db, current_iter_time, &usr, NULL);
   }
 
-  printlogf("AFTER THE LOOP\n");
   exit(1);
 }

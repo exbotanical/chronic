@@ -1,7 +1,7 @@
 #include "parser.h"
 
+#include "constants.h"
 #include "cronentry.h"
-#include "defs.h"
 #include "tap.c/tap.h"
 #include "tests.h"
 

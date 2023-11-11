@@ -2,7 +2,7 @@
 
 #include <stdbool.h>
 
-#include "defs.h"
+#include "constants.h"
 #include "job.h"
 #include "log.h"
 
@@ -23,12 +23,15 @@ void* reap_routine(void* _arg) {
     printlogf("in reaper thread\n");
     foreach (job_queue, i) {
       Job* job = array_get(job_queue, i);
-      printlogf("Attempting to reap job with pid %d\n", job->pid);
+      // TODO: null checks everywhere
+      printlogf("[job %s] Attempting to reap job with status %s\n", job->ident,
+                job_status_names[job->status]);
       reap_job(job);
 
-      // We need to be careful to only remove EXITED jobs, else
+      // We need to be careful to only remove RESOLVED jobs, else
       // we'll end up with zombley processes
-      if (job->status == EXITED) {
+      if (job->status == RESOLVED) {
+        printlogf("[job %s] Removing RESOLVED job\n", job->ident);
         array_remove(job_queue, i);
       }
     }

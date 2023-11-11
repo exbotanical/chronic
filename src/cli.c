@@ -1,7 +1,7 @@
 #include "cli.h"
 
 #include "commander/commander.h"
-#include "defs.h"
+#include "constants.h"
 
 static void setopt_logfile(command_t* self) {
   opts.log_file = (char*)self->arg;

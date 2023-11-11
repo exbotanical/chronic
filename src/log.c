@@ -1,5 +1,4 @@
 #include "log.h"
-#define _BSD_SOURCE 1
 
 #include <errno.h>
 #include <stdarg.h>
@@ -9,23 +8,18 @@
 #include <syslog.h>
 #include <unistd.h>
 
-#include "defs.h"
+#include "constants.h"
 #include "libutil/libutil.h"
 
-#define LOG_BUFFER 2048
-#define SMALL_BUFFER 256
 // TODO: Allow override
 #define TIMESTAMP_FMT "%Y-%m-%d %H:%M:%S"
-// #define TIMESTAMP_FMT "%b %e %H:%M:%S"
-#define LOG_HEADER TIMESTAMP_FMT " %%s " LOG_IDENT ": "
-
-char hostname[SMALL_BUFFER];
+#define LOG_HEADER TIMESTAMP_FMT " %%s " DAEMON_IDENT ": "
 
 static bool use_syslog = false;
 
 // Logging utils vlog, printlogf based on those in M Dillon's dcron
 static void vlog(int fd, const char *fmt, va_list va) {
-  char buf[LOG_BUFFER];
+  char buf[LARGE_BUFFER];
   // Used to omit the header in the case of multi-line logs
   static short suppress_header = 0;
 
@@ -44,12 +38,6 @@ static void vlog(int fd, const char *fmt, va_list va) {
       char header[SMALL_BUFFER];
 
       if (strftime(header, sizeof(header), LOG_HEADER, ts_info)) {
-        if (gethostname(hostname, sizeof(hostname)) == 0) {
-          hostname[sizeof(hostname) - 1] = 0;
-        } else {
-          hostname[0] = 0;
-        }
-
         if ((headerlen = snprintf(buf, sizeof(header), header, hostname)) >=
             sizeof(header)) {
           headerlen = sizeof(header) - 1;
@@ -89,7 +77,7 @@ void logger_init(CliOptions *opts) {
       dup2(log_fd, STDERR_FILENO);
     } else {
       perror("open");
-      // fdprintf()
+      // fdprintf();
       exit(errno);
     }
 
@@ -103,7 +91,7 @@ void logger_init(CliOptions *opts) {
 
     // TODO: just learn about this...
     // TODO: check if syslog, else try journal, and finally LOG_CONS
-    openlog(LOG_IDENT, LOG_CONS | LOG_PID, LOG_CRON);
+    openlog(DAEMON_IDENT, LOG_CONS | LOG_PID, LOG_CRON);
   }
 }
 

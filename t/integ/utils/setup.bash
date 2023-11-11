@@ -12,9 +12,8 @@ mk_basic_cron_cmd () {
 setup_user () {
   local uname="$1"
 
-  useradd -ms /bin/bash $uname
-  touch "$USER_CRONDIR/$uname" && \
-  chmod 600 "$USER_CRONDIR/$uname"
+  useradd -m -s /bin/bash $uname && \
+  setup_user_crontab $uname
 }
 
 add_user_job () {
@@ -48,7 +47,8 @@ setup_user_crondir () {
 setup_user_crontab () {
   local uname="$1"
 
-  touch "$USER_CRONDIR/$uname"
+  touch "$USER_CRONDIR/$uname" && \
+  chmod 600 "$USER_CRONDIR/$uname"
 }
 
 teardown_user_crontab () {

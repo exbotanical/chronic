@@ -5,8 +5,6 @@
 
 #include "cli.h"
 
-#define LOG_IDENT "crond"
-
 void logger_init(CliOptions *opts);
 void printlogf(const char *fmt, ...);
 char *to_time_str(time_t t);
