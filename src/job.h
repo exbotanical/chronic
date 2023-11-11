@@ -6,22 +6,23 @@
 #include "cronentry.h"
 #include "libhash/libhash.h"
 
-typedef enum { PENDING, RUNNING, EXITED, MAIL_RUNNING, RESOLVED } JobStatus;
+typedef enum { PENDING, RUNNING, EXITED } JobState;
+
+typedef enum { CMD, MAIL } JobType;
 
 typedef struct {
+  char *ident;
   char *cmd;
   pid_t pid;
-  pid_t mailer_pid;
-  JobStatus status;
-  int ret;
+  JobState state;
   char *mailto;
-  char *ident;
+  JobType type;
+  int ret;
 } Job;
 
-void reap_job(Job *job);
+void run_cronjob(CronEntry *entry);
 
-void enqueue_job(CronEntry *entry);
-
-void run_mailjob(Job *mailjob);
+void init_reap_routine(void);
+void signal_reap_routine(void);
 
 #endif /* JOB_H */

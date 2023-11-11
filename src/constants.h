@@ -32,5 +32,6 @@ extern char hostname[SMALL_BUFFER];
 
 extern array_t *job_queue;
 
-extern const char *job_status_names[];
+extern const char *job_state_names[];
+
 #endif /* CONSTANTS_H */

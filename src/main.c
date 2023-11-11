@@ -16,16 +16,15 @@
 #include "job.h"
 #include "log.h"
 #include "opt-constants.h"
-#include "reaper.h"
 #include "util.h"
 
 pid_t daemon_pid;
 char hostname[SMALL_BUFFER];
 
 array_t* job_queue;
+// array_t* mail_queue;
 
-const char* job_status_names[] = {X(PENDING), X(RUNNING), X(EXITED),
-                                  X(RESOLVED), X(MAIL_RUNNING)};
+const char* job_state_names[] = {X(PENDING), X(RUNNING), X(EXITED)};
 
 // Desired interval in seconds between loop iterations
 const short loop_interval = 60;
@@ -73,8 +72,7 @@ int main(int argc, char** argv) {
 
   update_db(db, start_time, &usr, NULL);
   // TODO: sys
-  pthread_t reaper_thread_id;
-  pthread_create(&reaper_thread_id, NULL, &reap_routine, NULL);
+  init_reap_routine();
 
   while (true) {
     printlogf("\n----------------\n");
@@ -107,18 +105,9 @@ int main(int argc, char** argv) {
         foreach (ct->entries, i) {
           CronEntry* entry = array_get(ct->entries, i);
           if (entry->next == rounded_timestamp) {
-            enqueue_job(entry);
+            run_cronjob(entry);
           }
         }
-      }
-    }
-
-    foreach (job_queue, i) {
-      Job* job = array_get(job_queue, i);
-      if (job->status == EXITED) {
-        printlogf("\n[mailjob %s] about to run mailjob (status %s)\n\n",
-                  job->ident, job_status_names[job->status]);
-        run_mailjob(job);
       }
     }
 
