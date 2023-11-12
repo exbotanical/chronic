@@ -170,7 +170,7 @@ void scan_crontabs_test() {
   setup_test_file(usr_dirname, "user3", "* * * * * echo 'test3'\n");
 
   DirConfig usr_dir;
-  usr_dir.name = usr_dirname;
+  usr_dir.path = usr_dirname;
   usr_dir.is_root = false;
 
   hash_table* db = ht_init(0);
@@ -233,7 +233,7 @@ void update_db_test(void) {
   setup_test_file(usr_dirname, "user2", "* * * * * echo 'test2'\n");
 
   DirConfig usr_dir;
-  usr_dir.name = usr_dirname;
+  usr_dir.path = usr_dirname;
   usr_dir.is_root = false;
 
   char* sys_dirname = setup_test_directory();
@@ -241,7 +241,7 @@ void update_db_test(void) {
   setup_test_file(sys_dirname, "root2", "* * * * * echo 'test2'\n");
 
   DirConfig sys_dir;
-  sys_dir.name = sys_dirname;
+  sys_dir.path = sys_dirname;
   sys_dir.is_root = true;
 
   hash_table* db = ht_init(0);

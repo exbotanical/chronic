@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <uuid/uuid.h>
 
 #include "constants.h"
 #include "cronentry.h"
@@ -14,22 +13,19 @@
 #include "opt-constants.h"
 #include "util.h"
 
+// Mutex + cond var for the reaper daemon thread.
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 
-// need to free
-static char* create_uuid(void) {
-  char uuid[UUID_STR_LEN];
-
-  uuid_t bin_uuid;
-  uuid_generate_random(bin_uuid);
-  uuid_unparse(bin_uuid, uuid);
-
-  return s_copy(uuid);
-}
-
-// TODO: pass entry by value? Otherwise if entry is freed before we call fork,
-// we're fucked
+/**
+ * Creates a new job of type CRON.
+ *
+ * @param entry The entry which this job will represent.
+ * @return Job*
+ *
+ * TODO: pass entry by value? Otherwise if entry is freed before we call
+ * fork, we're fucked.
+ */
 static Job* new_cronjob(CronEntry* entry) {
   Job* job = xmalloc(sizeof(Job));
   job->ret = -1;
@@ -37,7 +33,7 @@ static Job* new_cronjob(CronEntry* entry) {
   job->state = PENDING;
   job->cmd = s_copy(entry->cmd);  // TODO: free
   job->ident = create_uuid();
-  job->type = CMD;
+  job->type = CRON;
 
   ht_record* r = ht_search(entry->parent->vars, MAILTO_ENVVAR);
   job->mailto = s_copy(r ? r->value : entry->parent->uname);
@@ -45,6 +41,12 @@ static Job* new_cronjob(CronEntry* entry) {
   return job;
 }
 
+/**
+ * Creates a new job of type MAIL.
+ *
+ * @param og_job The original job about which this MAIL job is reporting.
+ * @return Job*
+ */
 static Job* new_mailjob(Job* og_job) {
   Job* job = xmalloc(sizeof(Job));
   job->ret = -1;
@@ -63,7 +65,17 @@ static Job* new_mailjob(Job* og_job) {
   return job;
 }
 
-static bool await_job(pid_t pid, int* status) {
+/**
+ * Checks for a return status on a RUNNING job's process.
+ *
+ * @param pid The process id to check.
+ * @param status An int pointer into which the job's return status will be
+ * stored, if applicable.
+ * @return true when the job has finished and the status pointer has been set.
+ * @return false when the job has not finished yet. The status pointer was
+ * unused (so don't use it!).
+ */
+static bool check_job(pid_t pid, int* status) {
   int r = waitpid(pid, status, WNOHANG);
 
   printlogf("[pid=%d] waitpid result is %d\n", pid, r);
@@ -84,11 +96,14 @@ static bool await_job(pid_t pid, int* status) {
 static unsigned int temporary_mail_count = 0;
 
 // TODO: [bash] <defunct>
-// ps aux | grep './chronic' | grep -v 'grep' | awk '{print $2}' | wc -l
-// ps aux | grep './chronic' | grep -v 'grep' | awk '{print $2}' | xargs kill
-static void run_mailjob(Job* og_job) {
-  Job* job = new_mailjob(og_job);
-  array_push(job_queue, job);
+/**
+ * Creates and runs a MAIL job to report the given EXITED job `exited_job`.
+ *
+ * @param exited_job The EXITED job to report in the MAIL job.
+ */
+static void run_mailjob(Job* exited_job) {
+  Job* job = new_mailjob(exited_job);
+  array_push(mail_queue, job);
 
   printlogf("[job %s] going to run mail cmd: %s\n", job->ident, job->cmd);
 
@@ -110,17 +125,22 @@ static void run_mailjob(Job* og_job) {
       perror("pclose");
       exit(EXIT_FAILURE);
     }
+
+    exit(0);
   }
+  job->state = RUNNING;
 }
 
-// void enqueue_job(CronEntry* entry) {
-//   Job* job = new_cronjob(entry);
-//   array_push(job_queue, job);
-// }
-
-void run_cronjob(CronEntry* entry) {
+/**
+ * Execute a cronjob for the given entry.
+ * @param entry
+ */
+static void run_cronjob(CronEntry* entry) {
   Job* job = new_cronjob(entry);
+
+  pthread_mutex_lock(&mutex);
   array_push(job_queue, job);
+  pthread_mutex_unlock(&mutex);
 
   char* home = ht_get(entry->parent->vars, HOMEDIR_ENVVAR);
   char* shell = ht_get(entry->parent->vars, SHELL_ENVVAR);
@@ -150,7 +170,6 @@ void run_cronjob(CronEntry* entry) {
   job->state = RUNNING;
 }
 
-// ps aux | grep './chronic' | awk '{print $2}' | xargs kill
 static void reap_job(Job* job) {
   switch (job->state) {
     case PENDING:
@@ -159,28 +178,31 @@ static void reap_job(Job* job) {
       break;
     case RUNNING: {
       int status;
-      if (await_job(job->pid, &status)) {
+      if (check_job(job->pid, &status)) {
         printlogf("[job %s] transition RUNNING->EXITED (pid=%d, status=%d\n",
                   job->ident, job->pid, status);
 
         job->ret = status;
         job->state = EXITED;
         job->pid = -1;
-
-        if (job->type == CMD) {
-          // run_mailjob(job);
-        }
       }
     }
   }
 }
 
+/**
+ * Reaps RUNNING jobs and keeps the process space clean.
+ *
+ * @param _arg Mandatory (but thus far unused) void pointer thread argument
+ * @return void* Ditto ^
+ */
 static void* reap_routine(void* _arg) {
   while (true) {
     pthread_mutex_lock(&mutex);
     pthread_cond_wait(&cond, &mutex);
 
     printlogf("in reaper thread\n");
+
     foreach (job_queue, i) {
       Job* job = array_get(job_queue, i);
       // TODO: null checks everywhere ^
@@ -190,6 +212,20 @@ static void* reap_routine(void* _arg) {
       // we'll end up with zombley processes
       if (job->state == EXITED) {
         array_remove(job_queue, i);
+        if (job->type == CRON) {
+          run_mailjob(job);
+        }
+      }
+    }
+
+    foreach (mail_queue, i) {
+      Job* job = array_get(mail_queue, i);
+      printf("\nCHECKING MAIL JOB\n\n");
+      reap_job(job);
+
+      if (job->state == EXITED) {
+        printlogf("[mail %s] finally exited\n", job->ident);
+        array_remove(mail_queue, i);
       }
     }
 
@@ -212,4 +248,27 @@ void signal_reap_routine(void) {
   pthread_mutex_lock(&mutex);
   pthread_cond_signal(&cond);
   pthread_mutex_unlock(&mutex);
+}
+
+void run_jobs(hash_table* db, time_t ts) {
+  // We must iterate the capacity here because hash table records are not
+  // stored contiguously
+  if (db->count > 0) {
+    for (unsigned int i = 0; i < (unsigned int)db->capacity; i++) {
+      ht_record* r = db->records[i];
+
+      // If there's no record in this slot, continue
+      if (!r) {
+        continue;
+      }
+
+      Crontab* ct = r->value;
+      foreach (ct->entries, i) {
+        CronEntry* entry = array_get(ct->entries, i);
+        if (entry->next == ts) {
+          run_cronjob(entry);
+        }
+      }
+    }
+  }
 }

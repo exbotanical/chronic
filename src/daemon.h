@@ -3,6 +3,11 @@
 
 #include "util.h"
 
+/**
+ * Daemonizes the current running process and detaches it from the TTY.
+ *
+ * @return Retval
+ */
 Retval daemonize();
 
 #endif /* DAEMON_H */

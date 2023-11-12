@@ -11,7 +11,7 @@ CronEntry* new_cron_entry(char* raw, time_t curr, Crontab* ct) {
 
   // TODO: Lift out
   if (parse_entry(entry, raw) != OK) {
-    printlogf("Failed to parse entry line %s\n", raw);
+    printlogf("[ERROR] Failed to parse entry line %s\n", raw);
     return NULL;
   }
 

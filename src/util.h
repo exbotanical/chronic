@@ -26,4 +26,19 @@ inline static unsigned short get_sleep_duration(short interval, time_t now) {
   return sleep_time;
 }
 
+/**
+ * Converts the given time_t into a stringified timestamp.
+ *
+ * @param t
+ * @return char*
+ */
+char *to_time_str(time_t ts);
+
+/**
+ * Generates a v4 UUID.
+ *
+ * TODO: need to free
+ */
+char *create_uuid(void);
+
 #endif /* UTIL_H */

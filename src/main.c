@@ -22,7 +22,7 @@ pid_t daemon_pid;
 char hostname[SMALL_BUFFER];
 
 array_t* job_queue;
-// array_t* mail_queue;
+array_t* mail_queue;
 
 const char* job_state_names[] = {X(PENDING), X(RUNNING), X(EXITED)};
 
@@ -56,6 +56,7 @@ int main(int argc, char** argv) {
   logger_init(&opts);
 
   job_queue = array_init();
+  mail_queue = array_init();
   daemon_pid = getpid();
 
   hash_table* db = ht_init(0);
@@ -67,8 +68,8 @@ int main(int argc, char** argv) {
 
   time_t current_iter_time;
 
-  DirConfig sys = {.is_root = true, .name = SYS_CRONTABS_DIR};
-  DirConfig usr = {.is_root = false, .name = CRONTABS_DIR};
+  DirConfig sys = {.is_root = true, .path = SYS_CRONTABS_DIR};
+  DirConfig usr = {.is_root = false, .path = CRONTABS_DIR};
 
   update_db(db, start_time, &usr, NULL);
   // TODO: sys
@@ -90,26 +91,7 @@ int main(int argc, char** argv) {
     printlogf("Current iter time: %s (rounded to %s)\n",
               to_time_str(current_iter_time), to_time_str(rounded_timestamp));
 
-    // We must iterate the capacity here because hash table records are not
-    // stored contiguously
-    if (db->count > 0) {
-      for (unsigned int i = 0; i < (unsigned int)db->capacity; i++) {
-        ht_record* r = db->records[i];
-
-        // If there's no record in this slot, continue
-        if (!r) {
-          continue;
-        }
-
-        Crontab* ct = r->value;
-        foreach (ct->entries, i) {
-          CronEntry* entry = array_get(ct->entries, i);
-          if (entry->next == rounded_timestamp) {
-            run_cronjob(entry);
-          }
-        }
-      }
-    }
+    run_jobs(db, rounded_timestamp);
 
     update_db(db, current_iter_time, &usr, NULL);
   }

@@ -10,9 +10,8 @@
 
 #include "constants.h"
 #include "libutil/libutil.h"
+#include "opt-constants.h"
 
-// TODO: Allow override
-#define TIMESTAMP_FMT "%Y-%m-%d %H:%M:%S"
 #define LOG_HEADER TIMESTAMP_FMT " %%s " DAEMON_IDENT ": "
 
 static bool use_syslog = false;
@@ -93,12 +92,4 @@ void logger_init(CliOptions *opts) {
     // TODO: check if syslog, else try journal, and finally LOG_CONS
     openlog(DAEMON_IDENT, LOG_CONS | LOG_PID, LOG_CRON);
   }
-}
-
-char *to_time_str(time_t t) {
-  char msg[512];
-  struct tm *time_info = localtime(&t);
-  strftime(msg, sizeof(msg), TIMESTAMP_FMT, time_info);
-
-  return fmt_str("%s", msg);
 }

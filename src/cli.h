@@ -3,6 +3,9 @@
 
 #include <stdbool.h>
 
+/**
+ * CLI configuration options.
+ */
 typedef struct {
   bool use_syslog;
   char* log_file;
@@ -10,6 +13,9 @@ typedef struct {
 
 extern CliOptions opts;
 
+/**
+ * Initializes the CLI configuration.
+ */
 void cli_init(int argc, char** argv);
 
 #endif /* CLI_H */

@@ -3,6 +3,12 @@
 #include "commander/commander.h"
 #include "constants.h"
 
+/**
+ * Sets the log file CLI option.
+ *
+ * Optionally specify a path to which logs will be written.
+ * Otherwise, syslog or a comparable facility will be utilized.
+ */
 static void setopt_logfile(command_t* self) {
   opts.log_file = (char*)self->arg;
 }

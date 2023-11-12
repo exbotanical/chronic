@@ -31,6 +31,7 @@ extern pid_t daemon_pid;
 extern char hostname[SMALL_BUFFER];
 
 extern array_t *job_queue;
+extern array_t *mail_queue;
 
 extern const char *job_state_names[];
 

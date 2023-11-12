@@ -16,13 +16,7 @@
 #include "parser.h"
 #include "util.h"
 
-/*
- * Because crontab/at files may be owned by their respective users we
- * take extreme care in opening them.  If the OS lacks the O_NOFOLLOW
- * we will just have to live without it.  In order for this to be an
- * issue an attacker would have to subvert group CRON_GROUP.
- * TODO: comment
- */
+// Some systems won't have this option and we'll just have to live without it.
 #ifndef O_NOFOLLOW
 #define O_NOFOLLOW 0
 #endif
@@ -30,6 +24,16 @@
 #define MAXENTRIES 256
 #define RW_BUFFER 1024
 
+/**
+ * Returns true if the file represented by the stat entity is not owned by the
+ * user (represented by the pw entity).
+ *
+ * @param statbuf The stat struct for the file we're evaluating.
+ * @param pw The user's passwd entry.
+ * @param uname The username.
+ * @return true The file is NOT owned by the given user.
+ * @return false The file IS owned by the given user - yay!
+ */
 static bool file_not_owned_by(struct stat* statbuf, struct passwd* pw,
                               char* uname) {
   return statbuf->st_uid != ROOT_UID &&
@@ -37,9 +41,17 @@ static bool file_not_owned_by(struct stat* statbuf, struct passwd* pw,
           strcmp(uname, pw->pw_name) != 0);
 }
 
+/**
+ * Modifies and finalizes the given crontab's environment data by adding any
+ * missing env vars. For example, we check for the user's home directory, shell,
+ * etc and set those.
+ *
+ * @param ct The crontab whose environment we're finalizing.
+ */
 static void complete_env(Crontab* ct) {
   hash_table* vars = ct->vars;
 
+// We don't want to have to create users for unit tests.
 #ifndef UNIT_TEST
   struct passwd* pw = getpwnam(ct->uname);
   if (pw) {
@@ -60,16 +72,19 @@ static void complete_env(Crontab* ct) {
     }
   } else {
     printlogf(
-        "Something went really awry and uname=%s wasn't found in the system "
-        "user db\n",
+        "[ERROR] Something went really awry and uname=%s wasn't found in the "
+        "system user db\n",
         ct->uname);
   }
 #endif
 
   // TODO: We could totally hoist this logic - the var matching function
   // actually returns the full key=value string in the first element of the
-  // matches array I was just lazy and really wanted to get the crond up and
-  // running
+  // matches array. I was just lazy and really wanted to get the crond up and
+  // running.
+
+  // Fill out the envp using the vars map. We're going to need this later and
+  // forevermore, so we might as well get it out of the way upfront.
   if (vars->count > 0) {
     ct->envp = malloc(sizeof(char*) * vars->count + 1);
 
@@ -82,15 +97,16 @@ static void complete_env(Crontab* ct) {
       idx++;
     }
 
+    // `execle` requires it to be NULL-terminated
     ct->envp[idx] = NULL;
   }
 }
 
-array_t* get_filenames(char* dpath) {
+array_t* get_filenames(char* dirpath) {
   DIR* dir;
 
-  if ((dir = opendir(dpath)) != NULL) {
-    printlogf("scanning dir %s\n", dpath);
+  if ((dir = opendir(dirpath)) != NULL) {
+    printlogf("scanning dir %s\n", dirpath);
     struct dirent* den;
 
     array_t* file_names = array_init();
@@ -101,7 +117,7 @@ array_t* get_filenames(char* dpath) {
         continue;
       }
 
-      printlogf("found file %s/%s\n", dpath, den->d_name);
+      printlogf("found file %s/%s\n", dirpath, den->d_name);
       array_push(file_names, s_copy(den->d_name));
     }
 
@@ -109,7 +125,7 @@ array_t* get_filenames(char* dpath) {
     return file_names;
   } else {
     perror("opendir");
-    printlogf("unable to scan dir %s\n", dpath);
+    printlogf("unable to scan dir %s\n", dirpath);
   }
 
   return NULL;
@@ -252,15 +268,15 @@ Crontab* new_crontab(int crontab_fd, bool is_root, time_t curr_time,
 
 void scan_crontabs(hash_table* old_db, hash_table* new_db, DirConfig dir_conf,
                    time_t curr) {
-  array_t* fnames = get_filenames(dir_conf.name);
+  array_t* fnames = get_filenames(dir_conf.path);
   // If no files, fall through to db replacement
   // This will handle removal of any files that were deleted during runtime
   if (has_elements(fnames)) {
     foreach (fnames, i) {
       char* fname = array_get(fnames, i);
       char* fpath;
-      if (!(fpath = fmt_str("%s/%s", dir_conf.name, fname))) {
-        printlogf("failed to concatenate as %s/%s\n", dir_conf.name, fname);
+      if (!(fpath = fmt_str("%s/%s", dir_conf.path, fname))) {
+        printlogf("failed to concatenate as %s/%s\n", dir_conf.path, fname);
         continue;
       }
       Crontab* ct = (Crontab*)ht_get(old_db, fpath);
