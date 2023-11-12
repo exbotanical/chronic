@@ -10,6 +10,9 @@ SETUP_PATH="$ROOT_DIR/utils/setup.bash"
 ONE_MIN_IN_SECS=60
 
 describe 'chronic cron daemon'
+  # Required - Docker doesn't save running processes so we need to start the mail server here
+  service postfix start
+
   # shellcheck source=utils/setup.bash
   . "$SETUP_PATH"
 
@@ -101,5 +104,15 @@ describe 'chronic cron daemon'
       assert equal "$(wc -l <  "/tmp/$uname_1.5min")" 1
       assert equal $(validate_timestamps "/tmp/$uname_1.5min" 5) 0
     }
+  ti
+
+  it 'sends user mail'
+    uname_1_mail_count="$(cat $MAIL_DIR/$uname_1 | grep 'Subject:' | wc -l 2>/dev/null)"
+    uname_2_mail_count="$(cat $MAIL_DIR/$uname_2 | grep 'Subject:' | wc -l 2>/dev/null)"
+
+    assert gt $uname_1_mail_count 1
+    assert gt $uname_2_mail_count 1
+
+    # TODO: Assert on actual mail contents once we finalize the logic there
   ti
 end_describe

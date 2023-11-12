@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 USER_CRONDIR='/var/spool/cron/crontabs'
+MAIL_DIR='/var/spool/mail'
 
 mk_basic_cron_cmd () {
   local uname="$1"
@@ -37,7 +38,8 @@ teardown_user () {
   teardown_user_crontab $uname
 
   userdel -r $uname && \
-  rm /tmp/$uname*
+  rm /tmp/$uname* && \
+  rm $MAIL_DIR/$uname
 }
 
 setup_user_crondir () {

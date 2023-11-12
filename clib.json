@@ -1,6 +1,17 @@
 {
-  "name": "cron",
-  "version": "0.1.0",
+  "name": "chronic",
+  "version": "0.0.1",
+  "author": "Matthew Zito",
+  "repo": "exbotanical/chronic",
+  "license": "MIT",
+  "description": "A cron daemon for modern UNIX systems",
+  "keywords": [
+    "cron",
+    "daemon",
+    "scheduler",
+    "job",
+    "task runner"
+  ],
   "dependencies": {
     "exbotanical/libutil": "*",
     "exbotanical/libhash": "*",
@@ -9,5 +20,6 @@
   "development": {
     "thlorenz/tap.c": "*"
   },
+  // TODO: setup installer
   "src": []
 }
