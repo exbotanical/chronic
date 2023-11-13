@@ -20,11 +20,11 @@ describe 'chronic cron daemon'
   uname_2='demian'
   uname_3='isao'
 
-  trap 'teardown_user "$uname_1" 2>/dev/null && teardown_user "$uname_2" 2>/dev/null && teardown_user "$uname_3" 2>/dev/null && teardown_user_crondir 2>/dev/null' EXIT
+  trap 'teardown_user "$uname_1" 2>/dev/null; teardown_user "$uname_2" 2>/dev/null; teardown_user "$uname_3" 2>/dev/null; teardown_user_crondir 2>/dev/null' EXIT
 
   # Wait for an even minute minus 1 second so we catch the next run
   # 10# to force base10 and avoid `bash: 60 - 08: value too great for base (error token is "08")`
-  # sleep $((ONE_MIN_IN_SECS - 10#$(date +%S) - 1))
+  sleep $((ONE_MIN_IN_SECS - 10#$(date +%S) - 1))
 
   now="$(date -u +'%Y-%m-%dT%H:%M:%S')"
   # Add an additional minute because the daemon will not see any crontabs first pass and will sleep until the next
