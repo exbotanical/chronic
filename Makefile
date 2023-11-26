@@ -23,7 +23,6 @@ TESTS := $(wildcard $(TESTDIR)/*.c)
 $(PROG):
 	$(CC) $(CFLAGS) $(SRC) $(DEPS) $(LIBS) -Ideps -Isrc -o $(PROG)
 
-# Use make -s test 2>/dev/null to see only test results
 test:
 	$(MAKE) unit_test
 
@@ -34,7 +33,7 @@ unit_test:
 
 integ_test: $(PROG)
 	./$(TESTDIR)/integ/utils/run.bash
-	# $(MAKE) clean
+	$(MAKE) clean
 
 clean:
 	rm -f $(UNIT_TARGET) $(PROG) .log
@@ -42,4 +41,4 @@ clean:
 lint:
 	$(LINTER) -i $(SRC) $(wildcard $(TESTDIR)/*/*.c)
 
-.PHONY: test unit_test clean lint
+.PHONY: test unit_test integ_test clean lint

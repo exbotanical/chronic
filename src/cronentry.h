@@ -13,19 +13,19 @@ typedef struct {
   /**
    * The pre-parsed cron expression.
    */
-  cron_expr *expr;
+  cron_expr   *expr;
   /**
    * The original cron schedule specification in the entry.
    */
-  char *schedule;
+  char        *schedule;
   /**
    * The command specified by the entry.
    */
-  char *cmd;
+  char        *cmd;
   /**
    * The next execution time, relative to the current crond iteration.
    */
-  time_t next;
+  time_t       next;
   /**
    * A unique identifier for the entry. Used for logging and non-critical
    * functions.
@@ -34,7 +34,7 @@ typedef struct {
   /**
    * A pointer to the entry's parent crontab.
    */
-  Crontab *parent;
+  Crontab     *parent;
 } CronEntry;
 
 /**

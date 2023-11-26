@@ -17,7 +17,7 @@ typedef struct {
   /**
    * Does this directory house system i.e. root crontabs?
    */
-  bool is_root;
+  bool  is_root;
   /**
    * The absolute path of the directory.
    */
@@ -33,15 +33,15 @@ typedef struct {
   /**
    * The last time this crontab file was modified.
    */
-  time_t mtime;
+  time_t      mtime;
   /**
    * The owning user's username (and name of the crontab file).
    */
-  char *uname;
+  char       *uname;
   /**
    * An array of this crontab's entries.
    */
-  array_t *entries;
+  array_t    *entries;
   /**
    * A mapping of variables (key/value pairs) set in the crontab.
    */
@@ -50,7 +50,7 @@ typedef struct {
    * A char* array of vars, concatenated such that each string is represented as
    * "key=value" literals.
    */
-  char **envp;
+  char      **envp;
 } Crontab;
 
 /**
@@ -72,8 +72,13 @@ array_t *get_filenames(char *dirpath);
  * @param uname The username (and filename).
  * @return Crontab*
  */
-Crontab *new_crontab(int crontab_fd, bool is_root, time_t curr_time,
-                     time_t mtime, char *uname);
+Crontab *new_crontab(
+  int    crontab_fd,
+  bool   is_root,
+  time_t curr_time,
+  time_t mtime,
+  char  *uname
+);
 
 /**
  * Scans all crontabs in the given directory and updates them if needed.
@@ -85,8 +90,12 @@ Crontab *new_crontab(int crontab_fd, bool is_root, time_t curr_time,
  *
  * TODO: static
  */
-void scan_crontabs(hash_table *old_db, hash_table *new_db, DirConfig dir_conf,
-                   time_t curr);
+void scan_crontabs(
+  hash_table *old_db,
+  hash_table *new_db,
+  DirConfig   dir_conf,
+  time_t      curr
+);
 
 /**
  * Updates the crontab database by scanning all files that have been modified.

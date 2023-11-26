@@ -47,15 +47,15 @@ typedef struct {
   /**
    * A unique identifier for the job (UUID v4).
    */
-  char *ident;
+  char    *ident;
   /**
    * The command to be executed.
    */
-  char *cmd;
+  char    *cmd;
   /**
    * The process id of the job when running. Starts as -1.
    */
-  pid_t pid;
+  pid_t    pid;
   /**
    * The current job state.
    */
@@ -65,15 +65,15 @@ typedef struct {
    * This is set by the MAILTO variable in the corresponding crontab.
    * If MAILTO is not present, this will be set to the owning user's username.
    */
-  char *mailto;
+  char    *mailto;
   /**
    * The job type.
    */
-  JobType type;
+  JobType  type;
   /**
    * The return status of the job, once executed. Starts as -1.
    */
-  int ret;
+  int      ret;
 } Job;
 
 /**

@@ -12,6 +12,8 @@
     "job",
     "task runner"
   ],
+  "install": "echo TODO",
+  "uninstall": "echo TODO",
   "dependencies": {
     "exbotanical/libutil": "*",
     "exbotanical/libhash": "*",
@@ -19,7 +21,5 @@
   },
   "development": {
     "thlorenz/tap.c": "*"
-  },
-  // TODO: setup installer
-  "src": []
+  }
 }

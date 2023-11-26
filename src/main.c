@@ -19,7 +19,7 @@
 #include "util.h"
 
 pid_t daemon_pid;
-char hostname[SMALL_BUFFER];
+char  hostname[SMALL_BUFFER];
 
 array_t* job_queue;
 array_t* mail_queue;
@@ -27,11 +27,13 @@ array_t* mail_queue;
 const char* job_state_names[] = {X(PENDING), X(RUNNING), X(EXITED)};
 
 // Desired interval in seconds between loop iterations
-const short loop_interval = 60;
+const short loop_interval     = 60;
 
-CliOptions opts = {0};
+CliOptions opts               = {0};
 
-static void set_hostname() {
+static void
+set_hostname (void)
+{
   if (gethostname(hostname, sizeof(hostname)) == 0) {
     hostname[sizeof(hostname) - 1] = 0;
   } else {
@@ -39,7 +41,9 @@ static void set_hostname() {
   }
 }
 
-int main(int argc, char** argv) {
+int
+main (int argc, char** argv)
+{
   cli_init(argc, argv);
 
   set_hostname();
@@ -53,18 +57,21 @@ int main(int argc, char** argv) {
   }
 
   // TODO: handle signals
-  logger_init(&opts);
+  logger_init();
 
-  job_queue = array_init();
-  mail_queue = array_init();
-  daemon_pid = getpid();
+  job_queue         = array_init();
+  mail_queue        = array_init();
+  daemon_pid        = getpid();
 
-  hash_table* db = ht_init(0);
+  hash_table* db    = ht_init(0);
 
   time_t start_time = time(NULL);
 
-  printlogf("cron daemon (pid=%d) started at %s\n", daemon_pid,
-            to_time_str(start_time));
+  printlogf(
+    "cron daemon (pid=%d) started at %s\n",
+    daemon_pid,
+    to_time_str(start_time)
+  );
 
   time_t current_iter_time;
 
@@ -85,11 +92,14 @@ int main(int argc, char** argv) {
     printlogf("Sleeping for %d seconds...\n", sleep_dur);
     sleep(sleep_dur);
 
-    current_iter_time = time(NULL);
+    current_iter_time        = time(NULL);
     time_t rounded_timestamp = round_ts(current_iter_time, loop_interval);
 
-    printlogf("Current iter time: %s (rounded to %s)\n",
-              to_time_str(current_iter_time), to_time_str(rounded_timestamp));
+    printlogf(
+      "Current iter time: %s (rounded to %s)\n",
+      to_time_str(current_iter_time),
+      to_time_str(rounded_timestamp)
+    );
 
     run_jobs(db, rounded_timestamp);
 

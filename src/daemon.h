@@ -8,6 +8,6 @@
  *
  * @return Retval
  */
-Retval daemonize();
+Retval daemonize(void);
 
 #endif /* DAEMON_H */

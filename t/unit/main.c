@@ -5,16 +5,18 @@
 #include "tests.h"
 
 // Externs initialized in main
-CliOptions opts = {0};
+CliOptions opts               = {0};
 
-char hostname[SMALL_BUFFER] = "unit_test";
+char hostname[SMALL_BUFFER]   = "unit_test";
 
-array_t* job_queue = NULL;
-array_t* mail_queue = NULL;
+array_t* job_queue            = NULL;
+array_t* mail_queue           = NULL;
 
 const char* job_state_names[] = {0};
 
-int main(int argc, char** argv) {
+int
+main (int argc, char** argv)
+{
   plan(118);
 
   run_parser_tests();

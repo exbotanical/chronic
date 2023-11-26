@@ -15,7 +15,7 @@
 
 // Mutex + cond var for the reaper daemon thread.
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+pthread_cond_t  cond  = PTHREAD_COND_INITIALIZER;
 
 /**
  * Creates a new job of type CRON.
@@ -26,17 +26,19 @@ pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
  * TODO: pass entry by value? Otherwise if entry is freed before we call
  * fork, we're fucked.
  */
-static Job* new_cronjob(CronEntry* entry) {
-  Job* job = xmalloc(sizeof(Job));
-  job->ret = -1;
-  job->pid = -1;
-  job->state = PENDING;
-  job->cmd = s_copy(entry->cmd);  // TODO: free
-  job->ident = create_uuid();
-  job->type = CRON;
+static Job*
+new_cronjob (CronEntry* entry)
+{
+  Job* job     = xmalloc(sizeof(Job));
+  job->ret     = -1;
+  job->pid     = -1;
+  job->state   = PENDING;
+  job->cmd     = s_copy(entry->cmd);  // TODO: free
+  job->ident   = create_uuid();
+  job->type    = CRON;
 
   ht_record* r = ht_search(entry->parent->vars, MAILTO_ENVVAR);
-  job->mailto = s_copy(r ? r->value : entry->parent->uname);
+  job->mailto  = s_copy(r ? r->value : entry->parent->uname);
 
   return job;
 }
@@ -47,18 +49,27 @@ static Job* new_cronjob(CronEntry* entry) {
  * @param og_job The original job about which this MAIL job is reporting.
  * @return Job*
  */
-static Job* new_mailjob(Job* og_job) {
-  Job* job = xmalloc(sizeof(Job));
-  job->ret = -1;
-  job->pid = -1;
-  job->state = PENDING;
-  job->ident = create_uuid();
-  job->type = MAIL;
+static Job*
+new_mailjob (Job* og_job)
+{
+  Job* job    = xmalloc(sizeof(Job));
+  job->ret    = -1;
+  job->pid    = -1;
+  job->state  = PENDING;
+  job->ident  = create_uuid();
+  job->type   = MAIL;
   job->mailto = og_job->mailto;
 
   char mail_cmd[MED_BUFFER];
-  sprintf(mail_cmd, MAILCMD_FMT, MAILCMD_PATH, DAEMON_IDENT, hostname,
-          og_job->cmd, og_job->mailto);
+  sprintf(
+    mail_cmd,
+    MAILCMD_FMT,
+    MAILCMD_PATH,
+    DAEMON_IDENT,
+    hostname,
+    og_job->cmd,
+    og_job->mailto
+  );
 
   job->cmd = s_copy(mail_cmd);  // TODO: free
 
@@ -75,7 +86,9 @@ static Job* new_mailjob(Job* og_job) {
  * @return false when the job has not finished yet. The status pointer was
  * unused (so don't use it!).
  */
-static bool check_job(pid_t pid, int* status) {
+static bool
+check_job (pid_t pid, int* status)
+{
   int r = waitpid(pid, status, WNOHANG);
 
   printlogf("[pid=%d] waitpid result is %d\n", pid, r);
@@ -101,7 +114,9 @@ static unsigned int temporary_mail_count = 0;
  *
  * @param exited_job The EXITED job to report in the MAIL job.
  */
-static void run_mailjob(Job* exited_job) {
+static void
+run_mailjob (Job* exited_job)
+{
   Job* job = new_mailjob(exited_job);
   array_push(mail_queue, job);
 
@@ -118,8 +133,13 @@ static void run_mailjob(Job* exited_job) {
       exit(EXIT_FAILURE);
     }
 
-    fprintf(mail_pipe, fmt_str("This is the body of the email (num %d).\n",
-                               ++temporary_mail_count));
+    fprintf(
+      mail_pipe,
+      fmt_str(
+        "This is the body of the email (num %d).\n",
+        ++temporary_mail_count
+      )
+    );
 
     if (pclose(mail_pipe) == -1) {
       perror("pclose");
@@ -135,14 +155,16 @@ static void run_mailjob(Job* exited_job) {
  * Execute a cronjob for the given entry.
  * @param entry
  */
-static void run_cronjob(CronEntry* entry) {
+static void
+run_cronjob (CronEntry* entry)
+{
   Job* job = new_cronjob(entry);
 
   pthread_mutex_lock(&mutex);
   array_push(job_queue, job);
   pthread_mutex_unlock(&mutex);
 
-  char* home = ht_get(entry->parent->vars, HOMEDIR_ENVVAR);
+  char* home  = ht_get(entry->parent->vars, HOMEDIR_ENVVAR);
   char* shell = ht_get(entry->parent->vars, SHELL_ENVVAR);
 
   if ((job->pid = fork()) == 0) {
@@ -152,9 +174,14 @@ static void run_cronjob(CronEntry* entry) {
     dup2(STDERR_FILENO, STDOUT_FILENO);
 
     printlogf(
-        "[job %s] Writing log from child process pid=%d homedir=%s shell=%s "
-        "cmd=%s\n",
-        job->ident, getpid(), home, shell, job->cmd);
+      "[job %s] Writing log from child process pid=%d homedir=%s shell=%s "
+      "cmd=%s\n",
+      job->ident,
+      getpid(),
+      home,
+      shell,
+      job->cmd
+    );
 
     chdir(home);
 
@@ -170,21 +197,26 @@ static void run_cronjob(CronEntry* entry) {
   job->state = RUNNING;
 }
 
-static void reap_job(Job* job) {
+static void
+reap_job (Job* job)
+{
   switch (job->state) {
     case PENDING:
     case EXITED:
-    default:
-      break;
+    default: break;
     case RUNNING: {
       int status;
       if (check_job(job->pid, &status)) {
-        printlogf("[job %s] transition RUNNING->EXITED (pid=%d, status=%d\n",
-                  job->ident, job->pid, status);
+        printlogf(
+          "[job %s] transition RUNNING->EXITED (pid=%d, status=%d\n",
+          job->ident,
+          job->pid,
+          status
+        );
 
-        job->ret = status;
+        job->ret   = status;
         job->state = EXITED;
-        job->pid = -1;
+        job->pid   = -1;
       }
     }
   }
@@ -196,7 +228,9 @@ static void reap_job(Job* job) {
  * @param _arg Mandatory (but thus far unused) void pointer thread argument
  * @return void* Ditto ^
  */
-static void* reap_routine(void* _arg) {
+static void*
+reap_routine (void* _arg)
+{
   while (true) {
     pthread_mutex_lock(&mutex);
     pthread_cond_wait(&cond, &mutex);
@@ -235,22 +269,28 @@ static void* reap_routine(void* _arg) {
   return NULL;
 }
 
-void init_reap_routine(void) {
-  pthread_t reaper_thread_id;
+void
+init_reap_routine (void)
+{
+  pthread_t      reaper_thread_id;
   pthread_attr_t attr;
-  int rc = pthread_attr_init(&attr);
+  int            rc = pthread_attr_init(&attr);
   rc = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
   pthread_create(&reaper_thread_id, &attr, &reap_routine, NULL);
 }
 
-void signal_reap_routine(void) {
+void
+signal_reap_routine (void)
+{
   pthread_mutex_lock(&mutex);
   pthread_cond_signal(&cond);
   pthread_mutex_unlock(&mutex);
 }
 
-void run_jobs(hash_table* db, time_t ts) {
+void
+run_jobs (hash_table* db, time_t ts)
+{
   // We must iterate the capacity here because hash table records are not
   // stored contiguously
   if (db->count > 0) {
