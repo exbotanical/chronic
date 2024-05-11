@@ -13,12 +13,11 @@
 #include "cli.h"
 #include "log.h"
 
-#define DEV_NULL_DEVICE "/dev/null"
-#define TERMINAL_DEVICE "/dev/tty"
+#define DEV_NULL "/dev/null"
+#define DEV_TTY  "/dev/tty"
 
 Retval
-daemonize (void)
-{
+daemonize (void) {
   // Fork a new process
   pid_t pid;
   if ((pid = fork()) < 0) {
@@ -37,9 +36,9 @@ daemonize (void)
   // ...and redirect them to /dev/null to prevent side-effects of unintended
   // writes to them (in case of accidental opens)
   int i;
-  if ((i = open(DEV_NULL_DEVICE, O_RDWR)) < 0) {
+  if ((i = open(DEV_NULL, O_RDWR)) < 0) {
     perror("open"
-           " " DEV_NULL_DEVICE);
+           " " DEV_NULL);
     return ERR;
   }
   dup2(i, STDIN_FILENO);
@@ -64,7 +63,7 @@ daemonize (void)
   // TODO: use double-fork instead? (orphaned process cannot acquire
   // controlling terminal)
   int fd;
-  if ((fd = open(TERMINAL_DEVICE, O_RDWR)) >= 0) {
+  if ((fd = open(DEV_TTY, O_RDWR)) >= 0) {
     ioctl(fd, TIOCNOTTY, 0);
     close(fd);
   }
@@ -73,15 +72,13 @@ daemonize (void)
 }
 
 void
-daemon_lock (void)
-{
+daemon_lock (void) {
   // TODO:
 }
 
 // TODO:
 void
-initsignals (void)
-{
+initsignals (void) {
   struct sigaction sa;
   int              n;
 

@@ -6,8 +6,7 @@
 #include "tests.h"
 
 void
-strip_comment_test (void)
-{
+strip_comment_test (void) {
   typedef struct {
     char* input;
     char* expect;
@@ -21,8 +20,7 @@ strip_comment_test (void)
     {.input = "",            .expect = ""    },
   };
 
-  ITER_CASES_TEST(tests, TestCase)
-  {
+  ITER_CASES_TEST(tests, TestCase) {
     TestCase tc = tests[i];
 
     char* s     = s_copy(tc.input);
@@ -35,8 +33,7 @@ strip_comment_test (void)
 }
 
 void
-until_nth_of_char_test (void)
-{
+until_nth_of_char_test (void) {
   typedef struct {
     char* input;
     char  delim;
@@ -51,8 +48,7 @@ until_nth_of_char_test (void)
     {.input = " RET",          .delim = 'x', .num = 1, .expect = NULL  },
   };
 
-  ITER_CASES_TEST(tests, TestCase)
-  {
+  ITER_CASES_TEST(tests, TestCase) {
     TestCase tc = tests[i];
 
     char* s     = s_copy(tc.input);
@@ -65,8 +61,7 @@ until_nth_of_char_test (void)
 }
 
 void
-parse_cmd_test (void)
-{
+parse_cmd_test (void) {
   typedef struct {
     char* input;
     int   spaces_until_cmd;
@@ -90,8 +85,7 @@ parse_cmd_test (void)
   };
 
   char* expected = "/bin/sh command";
-  ITER_CASES_TEST(tests, TestCase)
-  {
+  ITER_CASES_TEST(tests, TestCase) {
     TestCase  tc = tests[i];
     CronEntry entry;
 
@@ -110,8 +104,7 @@ parse_cmd_test (void)
 }
 
 void
-parse_entry_test (void)
-{
+parse_entry_test (void) {
   typedef struct {
     char* input;
     bool  expect_err;
@@ -127,8 +120,7 @@ parse_entry_test (void)
   };
 
   char* expected = "/bin/sh command";
-  ITER_CASES_TEST(tests, TestCase)
-  {
+  ITER_CASES_TEST(tests, TestCase) {
     TestCase  tc = tests[i];
     CronEntry entry;
 
@@ -144,8 +136,7 @@ parse_entry_test (void)
 }
 
 void
-is_comment_line_test (void)
-{
+is_comment_line_test (void) {
   typedef struct {
     char* input;
     bool  ret;
@@ -160,8 +151,7 @@ is_comment_line_test (void)
     {.input = " ",                       .ret = false},
   };
 
-  ITER_CASES_TEST(tests, TestCase)
-  {
+  ITER_CASES_TEST(tests, TestCase) {
     TestCase tc = tests[i];
 
     bool ret    = is_comment_line(tc.input);
@@ -171,8 +161,7 @@ is_comment_line_test (void)
 }
 
 void
-should_parse_line_test (void)
-{
+should_parse_line_test (void) {
   typedef struct {
     char* input;
     bool  ret;
@@ -188,8 +177,7 @@ should_parse_line_test (void)
     {.input = "not_a_comment",           .ret = true },
   };
 
-  ITER_CASES_TEST(tests, TestCase)
-  {
+  ITER_CASES_TEST(tests, TestCase) {
     TestCase tc = tests[i];
 
     bool ret    = should_parse_line(tc.input);
@@ -199,8 +187,7 @@ should_parse_line_test (void)
 }
 
 void
-run_parser_tests (void)
-{
+run_parser_tests (void) {
   strip_comment_test();
   until_nth_of_char_test();
   parse_cmd_test();

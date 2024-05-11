@@ -19,22 +19,19 @@ static hash_table *regex_cache;
 static pthread_once_t init_regex_cache_once = PTHREAD_ONCE_INIT;
 
 static void
-init_regex_cache (void)
-{
+init_regex_cache (void) {
   regex_cache = ht_init(0 /* TODO: */);
 }
 
 static hash_table *
-get_regex_cache (void)
-{
+get_regex_cache (void) {
   pthread_once(&init_regex_cache_once, init_regex_cache);
 
   return regex_cache;
 }
 
 static pcre *
-regex_compile (const char *pattern)
-{
+regex_compile (const char *pattern) {
   const char *error;
   int         erroffset;
 
@@ -53,8 +50,7 @@ regex_compile (const char *pattern)
 }
 
 static pcre *
-regex_cache_get (hash_table *cache, const char *pattern)
-{
+regex_cache_get (hash_table *cache, const char *pattern) {
   ht_record *r = ht_search(cache, pattern);
   if (r) {
     return r->value;
@@ -71,8 +67,7 @@ regex_cache_get (hash_table *cache, const char *pattern)
 }
 
 array_t *
-regex_matches (pcre *re, char *cmp)
-{
+regex_matches (pcre *re, char *cmp) {
   int rc = pcre_exec(re, NULL, cmp, strlen(cmp), 0, 0, ovector, ovecsize);
   if (rc >= 0) {
     array_t *matches = array_init();
@@ -103,8 +98,7 @@ regex_matches (pcre *re, char *cmp)
 
 // ??? typedef enum { Match, NoMatch } MatchResult;
 bool
-match_variable (char *line, hash_table *vars)
-{
+match_variable (char *line, hash_table *vars) {
   pcre *re = regex_cache_get(get_regex_cache(), VARIABLE_PATTERN);
   if (!re) {
     printf("an error occurred when compiling regex\n");

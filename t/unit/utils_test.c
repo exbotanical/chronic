@@ -3,8 +3,7 @@
 #include "util.h"
 
 void
-round_ts_test (void)
-{
+round_ts_test (void) {
   typedef struct {
     time_t         ts;
     unsigned short unit;
@@ -18,8 +17,7 @@ round_ts_test (void)
     {.ts = 53,  .unit = 1,   .expect = 53 },
   };
 
-  ITER_CASES_TEST(tests, TestCase)
-  {
+  ITER_CASES_TEST(tests, TestCase) {
     TestCase tc = tests[i];
 
     ok(
@@ -33,8 +31,7 @@ round_ts_test (void)
 }
 
 void
-get_sleep_duration_test ()
-{
+get_sleep_duration_test () {
   typedef struct {
     unsigned short ival;
     time_t         now;
@@ -52,8 +49,7 @@ get_sleep_duration_test ()
     {.ival = 60, .now = 1697811728200, .expect = 20},
   };
 
-  ITER_CASES_TEST(tests, TestCase)
-  {
+  ITER_CASES_TEST(tests, TestCase) {
     TestCase tc           = tests[i];
 
     unsigned short actual = get_sleep_duration(tc.ival, tc.now);
@@ -70,8 +66,7 @@ get_sleep_duration_test ()
 }
 
 void
-run_time_tests (void)
-{
+run_time_tests (void) {
   round_ts_test();
   get_sleep_duration_test();
 }

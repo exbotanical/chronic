@@ -5,8 +5,7 @@
 #include "tests.h"
 
 void
-match_variable_test ()
-{
+match_variable_test () {
   typedef struct {
     char* key;
     char* value;
@@ -37,8 +36,7 @@ match_variable_test ()
 
   hash_table* ht = ht_init(0);
 
-  ITER_CASES_TEST(tests, TestCase)
-  {
+  ITER_CASES_TEST(tests, TestCase) {
     TestCase tc = tests[i];
     if (tc.invalid_str) {
       char* input = s_copy(tc.invalid_str);
@@ -66,7 +64,6 @@ match_variable_test ()
 }
 
 void
-run_regexpr_tests (void)
-{
+run_regexpr_tests (void) {
   match_variable_test();
 }

@@ -27,8 +27,7 @@ pthread_cond_t  cond  = PTHREAD_COND_INITIALIZER;
  * fork, we're fucked.
  */
 static Job*
-new_cronjob (CronEntry* entry)
-{
+new_cronjob (CronEntry* entry) {
   Job* job     = xmalloc(sizeof(Job));
   job->ret     = -1;
   job->pid     = -1;
@@ -50,8 +49,7 @@ new_cronjob (CronEntry* entry)
  * @return Job*
  */
 static Job*
-new_mailjob (Job* og_job)
-{
+new_mailjob (Job* og_job) {
   Job* job    = xmalloc(sizeof(Job));
   job->ret    = -1;
   job->pid    = -1;
@@ -87,8 +85,7 @@ new_mailjob (Job* og_job)
  * unused (so don't use it!).
  */
 static bool
-check_job (pid_t pid, int* status)
-{
+check_job (pid_t pid, int* status) {
   int r = waitpid(pid, status, WNOHANG);
 
   printlogf("[pid=%d] waitpid result is %d\n", pid, r);
@@ -115,8 +112,7 @@ static unsigned int temporary_mail_count = 0;
  * @param exited_job The EXITED job to report in the MAIL job.
  */
 static void
-run_mailjob (Job* exited_job)
-{
+run_mailjob (Job* exited_job) {
   Job* job = new_mailjob(exited_job);
   array_push(mail_queue, job);
 
@@ -156,8 +152,7 @@ run_mailjob (Job* exited_job)
  * @param entry
  */
 static void
-run_cronjob (CronEntry* entry)
-{
+run_cronjob (CronEntry* entry) {
   Job* job = new_cronjob(entry);
 
   pthread_mutex_lock(&mutex);
@@ -198,8 +193,7 @@ run_cronjob (CronEntry* entry)
 }
 
 static void
-reap_job (Job* job)
-{
+reap_job (Job* job) {
   switch (job->state) {
     case PENDING:
     case EXITED:
@@ -229,8 +223,7 @@ reap_job (Job* job)
  * @return void* Ditto ^
  */
 static void*
-reap_routine (void* _arg)
-{
+reap_routine (void* _arg) {
   while (true) {
     pthread_mutex_lock(&mutex);
     pthread_cond_wait(&cond, &mutex);
@@ -254,7 +247,7 @@ reap_routine (void* _arg)
 
     foreach (mail_queue, i) {
       Job* job = array_get(mail_queue, i);
-      printf("\nCHECKING MAIL JOB\n\n");
+      printlogf("\nCHECKING MAIL JOB\n\n");
       reap_job(job);
 
       if (job->state == EXITED) {
@@ -270,8 +263,7 @@ reap_routine (void* _arg)
 }
 
 void
-init_reap_routine (void)
-{
+init_reap_routine (void) {
   pthread_t      reaper_thread_id;
   pthread_attr_t attr;
   int            rc = pthread_attr_init(&attr);
@@ -281,16 +273,14 @@ init_reap_routine (void)
 }
 
 void
-signal_reap_routine (void)
-{
+signal_reap_routine (void) {
   pthread_mutex_lock(&mutex);
   pthread_cond_signal(&cond);
   pthread_mutex_unlock(&mutex);
 }
 
 void
-run_jobs (hash_table* db, time_t ts)
-{
+run_jobs (hash_table* db, time_t ts) {
   // We must iterate the capacity here because hash table records are not
   // stored contiguously
   if (db->count > 0) {

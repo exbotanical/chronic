@@ -10,14 +10,12 @@
  * Otherwise, syslog or a comparable facility will be utilized.
  */
 static void
-setopt_logfile (command_t* self)
-{
+setopt_logfile (command_t* self) {
   opts.log_file = (char*)self->arg;
 }
 
 void
-cli_init (int argc, char** argv)
-{
+cli_init (int argc, char** argv) {
   command_t cmd;
 
   command_init(&cmd, argv[0], CHRONIC_VERSION);

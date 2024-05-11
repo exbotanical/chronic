@@ -35,8 +35,7 @@
  * @return false The file IS owned by the given user - yay!
  */
 static bool
-file_not_owned_by (struct stat* statbuf, struct passwd* pw, char* uname)
-{
+file_not_owned_by (struct stat* statbuf, struct passwd* pw, char* uname) {
   return statbuf->st_uid != ROOT_UID
          && (pw == NULL || statbuf->st_uid != pw->pw_uid || strcmp(uname, pw->pw_name) != 0);
 }
@@ -49,8 +48,7 @@ file_not_owned_by (struct stat* statbuf, struct passwd* pw, char* uname)
  * @param ct The crontab whose environment we're finalizing.
  */
 static void
-complete_env (Crontab* ct)
-{
+complete_env (Crontab* ct) {
   hash_table* vars = ct->vars;
 
 // We don't want to have to create users for unit tests.
@@ -108,8 +106,7 @@ complete_env (Crontab* ct)
 }
 
 array_t*
-get_filenames (char* dirpath)
-{
+get_filenames (char* dirpath) {
   DIR* dir;
 
   if ((dir = opendir(dirpath)) != NULL) {
@@ -144,8 +141,7 @@ get_crontab_fd_if_valid (
   char*        uname,
   time_t       last_mtime,
   struct stat* statbuf
-)
-{
+) {
   int            not_ok     = OK - 1;
   struct passwd* pw         = NULL;
   int            crontab_fd = not_ok;
@@ -232,8 +228,7 @@ new_crontab (
   time_t curr_time,
   time_t mtime,
   char*  uname
-)
-{
+) {
   FILE* fd;
   if (!(fd = fdopen(crontab_fd, "r"))) {
     printlogf("fdopen on crontab_fd %d failed\n", crontab_fd);
@@ -301,8 +296,7 @@ scan_crontabs (
   hash_table* new_db,
   DirConfig   dir_conf,
   time_t      curr
-)
-{
+) {
   array_t* fnames = get_filenames(dir_conf.path);
   // If no files, fall through to db replacement
   // This will handle removal of any files that were deleted during runtime
@@ -391,8 +385,7 @@ scan_crontabs (
 }
 
 void
-update_db (hash_table* db, time_t curr, DirConfig* dir_conf, ...)
-{
+update_db (hash_table* db, time_t curr, DirConfig* dir_conf, ...) {
   // We HAVE to make a brand new db each time, else we will not be able to
   // tell if a file was deleted
   hash_table* new_db = ht_init(0);

@@ -9,8 +9,7 @@
 #include "util.h"
 
 static char*
-setup_test_directory ()
-{
+setup_test_directory () {
   char template[] = "/tmp/tap_test_dir.XXXXXX";
   // Need to copy because mkdtemp overwrites ^ which is locally scoped
   char* dirname   = s_copy(mkdtemp(template));
@@ -24,8 +23,11 @@ setup_test_directory ()
 }
 
 static void
-setup_test_file (const char* dirname, const char* filename, const char* content)
-{
+setup_test_file (
+  const char* dirname,
+  const char* filename,
+  const char* content
+) {
   char path[256];
   snprintf(path, sizeof(path), "%s/%s", dirname, filename);
 
@@ -47,8 +49,7 @@ modify_test_file (
   const char* dirname,
   const char* filename,
   const char* content
-)
-{
+) {
   char path[256];
   snprintf(path, sizeof(path), "%s/%s", dirname, filename);
 
@@ -64,14 +65,12 @@ modify_test_file (
 }
 
 static void
-cleanup_test_directory (char* dirname)
-{
+cleanup_test_directory (char* dirname) {
   rmdir(dirname);
 }
 
 static void
-cleanup_test_file (char* dirname, char* fname)
-{
+cleanup_test_file (char* dirname, char* fname) {
   char path[256];
   snprintf(path, sizeof(path), "%s/%s", dirname, fname);
   unlink(path);
@@ -79,14 +78,12 @@ cleanup_test_file (char* dirname, char* fname)
 
 // TODO: close?
 static int
-get_fd (char* fpath)
-{
+get_fd (char* fpath) {
   return open(fpath, O_RDONLY | O_NONBLOCK, 0);
 }
 
 static void
-validate_entry (CronEntry* entry, CronEntry* expected)
-{
+validate_entry (CronEntry* entry, CronEntry* expected) {
   is(expected->cmd, entry->cmd, "Expect cmd '%s'", expected->cmd);
   is(
     expected->schedule,
@@ -103,14 +100,12 @@ validate_entry (CronEntry* entry, CronEntry* expected)
 }
 
 static bool
-has_filename_comparator (void* el, void* compare_to)
-{
+has_filename_comparator (void* el, void* compare_to) {
   return s_equals((char*)el, compare_to);
 }
 
 void
-get_filenames_test ()
-{
+get_filenames_test () {
   char* dirname = setup_test_directory();
   setup_test_file(dirname, "file1.txt", NULL);
   setup_test_file(dirname, "file2.txt", NULL);
@@ -142,8 +137,7 @@ get_filenames_test ()
 }
 
 void
-new_crontab_test (void)
-{
+new_crontab_test (void) {
   unsigned int num_expected_entries = 4;
   char*        test_fpath           = "./t/fixtures/new_crontab_test";
 
@@ -159,12 +153,11 @@ new_crontab_test (void)
   array_t* entries  = ct->entries;
 
   CronEntry expected_entries[] = {
-    {.cmd = "script.sh",                    .schedule = "*/1 * * * *",  .parent = ct},
-    {.cmd = "exec.sh",                      .schedule = "*/2 * * * *",  .parent = ct},
-    {.cmd      = "echo whatever > /tmp/hi",
-     .schedule = "*/10 * * * *",
-     .parent   = ct                                                                 },
-    {.cmd = "date",                         .schedule = "*/15 * * * *", .parent = ct}
+    {.cmd = "script.sh",               .schedule = "*/1 * * * *",  .parent = ct},
+    {.cmd = "exec.sh",                 .schedule = "*/2 * * * *",  .parent = ct},
+    {.cmd = "echo whatever > /tmp/hi", .schedule = "*/10 * * * *", .parent = ct
+    },
+    {.cmd = "date",                    .schedule = "*/15 * * * *", .parent = ct}
   };
 
   ok(
@@ -219,8 +212,7 @@ new_crontab_test (void)
 }
 
 void
-scan_crontabs_test ()
-{
+scan_crontabs_test () {
   char* usr_dirname = setup_test_directory();
   setup_test_file(usr_dirname, "user1", "* * * * * echo 'test1'\n");
   setup_test_file(usr_dirname, "user2", "* * * * * echo 'test2'\n");
@@ -285,8 +277,7 @@ scan_crontabs_test ()
 }
 
 void
-update_db_test (void)
-{
+update_db_test (void) {
   char* usr_dirname = setup_test_directory();
   setup_test_file(usr_dirname, "user1", "* * * * * echo 'test1'\n");
   setup_test_file(usr_dirname, "user2", "* * * * * echo 'test2'\n");
@@ -361,8 +352,7 @@ update_db_test (void)
 }
 
 void
-run_crontab_tests (void)
-{
+run_crontab_tests (void) {
   get_filenames_test();
   new_crontab_test();
   scan_crontabs_test();

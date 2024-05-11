@@ -18,8 +18,7 @@ static bool use_syslog = false;
 
 // Logging utils vlog, printlogf based on those in M Dillon's dcron
 static void
-vlog (int fd, const char *fmt, va_list va)
-{
+vlog (int fd, const char *fmt, va_list va) {
   char         buf[LARGE_BUFFER];
   // Used to omit the header in the case of multi-line logs
   static short suppress_header = 0;
@@ -57,8 +56,7 @@ vlog (int fd, const char *fmt, va_list va)
 }
 
 static void
-logger_open (char *log_file)
-{
+logger_open (char *log_file) {
   int log_fd;
   if ((log_fd = open(log_file, O_WRONLY | O_CREAT | O_APPEND, OWNER_RW_PERMS)) >= 0) {
     fclose(stderr);
@@ -71,8 +69,7 @@ logger_open (char *log_file)
 }
 
 void
-printlogf (const char *fmt, ...)
-{
+printlogf (const char *fmt, ...) {
   va_list va;
 
   va_start(va, fmt);
@@ -81,8 +78,7 @@ printlogf (const char *fmt, ...)
 }
 
 void
-logger_init ()
-{
+logger_init () {
   // TODO: handle signals
   if (opts.log_file) {
     use_syslog = false;
@@ -104,8 +100,7 @@ logger_init ()
 }
 
 void
-logger_reopen (int sig)
-{
+logger_reopen (int sig) {
   if (getpid() == daemon_pid) {
     logger_open(opts.log_file);
     printlogf("[!] Re-opened log file due to signal\n");

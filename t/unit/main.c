@@ -15,8 +15,7 @@ array_t* mail_queue           = NULL;
 const char* job_state_names[] = {0};
 
 int
-main (int argc, char** argv)
-{
+main (int argc, char** argv) {
   plan(118);
 
   run_parser_tests();

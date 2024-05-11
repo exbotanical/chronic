@@ -32,8 +32,7 @@ const short loop_interval     = 60;
 CliOptions opts               = {0};
 
 static void
-set_hostname (void)
-{
+set_hostname (void) {
   if (gethostname(hostname, sizeof(hostname)) == 0) {
     hostname[sizeof(hostname) - 1] = 0;
   } else {
@@ -42,8 +41,7 @@ set_hostname (void)
 }
 
 int
-main (int argc, char** argv)
-{
+main (int argc, char** argv) {
   cli_init(argc, argv);
 
   set_hostname();

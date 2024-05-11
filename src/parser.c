@@ -15,8 +15,7 @@
 
 // TODO: static fns
 bool
-is_comment_line (const char* str)
-{
+is_comment_line (const char* str) {
   while (isspace((unsigned char)*str)) {
     str++;
   }
@@ -25,8 +24,7 @@ is_comment_line (const char* str)
 }
 
 bool
-should_parse_line (const char* line)
-{
+should_parse_line (const char* line) {
   if (strlen(line) < (SPACES_BEFORE_CMD * 2) + 1 || (*line == 0) || is_comment_line(line)) {
     return false;
   }
@@ -35,8 +33,7 @@ should_parse_line (const char* line)
 }
 
 char*
-until_nth_of_char (const char* str, char c, int n)
-{
+until_nth_of_char (const char* str, char c, int n) {
   int count = 0;
   while (*str) {
     if (*str == c && ++count == n) {
@@ -53,8 +50,7 @@ until_nth_of_char (const char* str, char c, int n)
 }
 
 void
-strip_comment (char* str)
-{
+strip_comment (char* str) {
   char* comment_start = strchr(str, '#');
 
   if (comment_start) {
@@ -63,8 +59,7 @@ strip_comment (char* str)
 }
 
 Retval
-parse_cmd (char* line, CronEntry* entry, int count)
-{
+parse_cmd (char* line, CronEntry* entry, int count) {
   char* line_cp = s_copy(line);
 
   entry->cmd = until_nth_of_char(line_cp, ' ', line_cp[0] == '@' ? 1 : count);
@@ -86,8 +81,7 @@ parse_cmd (char* line, CronEntry* entry, int count)
 }
 
 Retval
-parse_entry (CronEntry* entry, char* line)
-{
+parse_entry (CronEntry* entry, char* line) {
   char* line_cp = s_trim(line);
   strip_comment(line_cp);
 
@@ -112,8 +106,7 @@ parse_entry (CronEntry* entry, char* line)
 }
 
 ParseLineResult
-parse_line (char* ptr, int max_entries, hash_table* vars)
-{
+parse_line (char* ptr, int max_entries, hash_table* vars) {
   if (max_entries == 1) {
     return DONE;
   }
