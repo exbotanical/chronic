@@ -86,9 +86,7 @@ daemon_lock (void) {
     exit(EXIT_FAILURE);
   }
 
-  // TODO: rm file on exit
   if (flock(fd, LOCK_EX /* exclusive */ | LOCK_NB /* non-blocking */) < OK) {
-    // TODO: macro around logger to prevent logging before log file is opened
     printlogf("flock error %s\n", strerror(errno));
 
     int read_bytes = -1;
@@ -125,36 +123,26 @@ daemon_lock (void) {
   // Leave the file open and locked
 }
 
-// TODO:
+void
+daemon_quit () {
+  printlogf("received a kill signal; shutting down...\n");
+  logger_close();
+  unlink(LOCKFILE_PATH);
+  exit(EXIT_SUCCESS);
+}
+
 void
 setup_sig_handlers (void) {
   struct sigaction sa;
   int              n;
 
+  sigemptyset(&sa);
   // restart any system calls that were interrupted by signal
-  sa.sa_flags = SA_RESTART;
-
-  // If we're not using syslog, we want to ensure the log file is reopened
-  if (!opts.use_syslog) {
-    sa.sa_handler = logger_reopen;
-  } else {
-    sa.sa_handler = SIG_IGN;
+  sa.sa_flags   = SA_RESTART;
+  sa.sa_handler = daemon_quit;
+  if (sigaction(SIGINT, &sa, NULL) < OK || sigaction(SIGTERM, &sa, NULL)) {
+    printlogf("failed to setup signal handler: %s\n", strerror(errno));
+    exit(EXIT_FAILURE);
   }
-
-  if (sigaction(SIGHUP, &sa, NULL) != 0) {
-    n = errno;
-    printlogf(
-      "failed to initialize SIGHUP signal handler; reason: %s",
-      strerror(errno)
-    );
-    exit(n);
-  }
-
-  // sa.sa_flags   = SA_RESTART;
-  // sa.sa_handler = waitmailjob;
-  // if (sigaction(SIGCHLD, &sa, NULL) != 0) {
-  //   n = errno;
-  //   printlogf("failed to start SIGCHLD handling, reason: %s",
-  //   strerror(errno)); exit(n);
-  // }
+  // TODO: reap on sigchld
 }

@@ -44,10 +44,7 @@ set_hostname (void) {
 int
 main (int argc, char** argv) {
   cli_init(argc, argv);
-
   set_hostname();
-
-  // TODO: check if instance already running
 
   // Become a daemon process
   if (daemonize() != OK) {
@@ -55,9 +52,8 @@ main (int argc, char** argv) {
     exit(EXIT_FAILURE);
   }
 
-  // TODO: handle signals
   logger_init();
-  daemon_lock();
+  daemon_lock();  // TODO: check before daemonize
   setup_sig_handlers();
 
   job_queue         = array_init();

@@ -12,11 +12,6 @@
 void logger_init();
 
 /**
- * Signal handler to re-open the log file when closed or deleted.
- */
-void logger_reopen(int sig);
-
-/**
  * Printf but for logs! Prints to the log fd we've configured in
  * `logger_init`.
  *
@@ -24,5 +19,7 @@ void logger_reopen(int sig);
  * @param ... Everything else
  */
 void printlogf(const char *fmt, ...);
+
+void logger_close(void);
 
 #endif /* LOG_H */

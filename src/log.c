@@ -12,9 +12,15 @@
 #include "libutil/libutil.h"
 #include "opt-constants.h"
 
+#define LOG_GUARD     \
+  if (log_fd == -1) { \
+    return;           \
+  }
+
 #define LOG_HEADER TIMESTAMP_FMT " %%s " DAEMON_IDENT ": "
 
 static bool use_syslog = false;
+static int  log_fd     = -1;
 
 // Logging utils vlog, printlogf based on those in M Dillon's dcron
 static void
@@ -57,29 +63,28 @@ vlog (int fd, const char *fmt, va_list va) {
 
 static void
 logger_open (char *log_file) {
-  int log_fd;
   if ((log_fd = open(log_file, O_WRONLY | O_CREAT | O_APPEND, OWNER_RW_PERMS)) >= 0) {
     fclose(stderr);
     dup2(log_fd, STDERR_FILENO);
   } else {
     perror("open");
-    // fdprintf();
     exit(errno);
   }
 }
 
 void
 printlogf (const char *fmt, ...) {
+  LOG_GUARD
   va_list va;
 
   va_start(va, fmt);
-  vlog(STDERR_FILENO, fmt, va);
+  vlog(log_fd, fmt, va);
   va_end(va);
 }
 
+// TODO: detect if closed
 void
 logger_init () {
-  // TODO: handle signals
   if (opts.log_file) {
     use_syslog = false;
 
@@ -100,9 +105,7 @@ logger_init () {
 }
 
 void
-logger_reopen (int sig) {
-  if (getpid() == daemon_pid) {
-    logger_open(opts.log_file);
-    printlogf("[!] Re-opened log file due to signal\n");
-  }
+logger_close (void) {
+  LOG_GUARD
+  close(log_fd);
 }
