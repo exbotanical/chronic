@@ -10,4 +10,9 @@
  */
 Retval daemonize(void);
 
+// TODO: docs
+void daemon_lock(void);
+
+void setup_sig_handlers(void);
+
 #endif /* DAEMON_H */

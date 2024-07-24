@@ -212,3 +212,17 @@ reap(j) {
   email_user(output, j)
 }
 ```
+
+---
+
+1. Initialize
+   1. Check lockfile
+      1. if can open file
+         1. if locked, fatal
+         2. else, create lock
+      2. else, fatal
+   2. set locale?
+   3. read cli args
+   4. setup logger
+   5. setup signal handling
+   6. daemonize

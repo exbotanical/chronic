@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/file.h>  // For flock
 #include <syslog.h>
 #include <unistd.h>
 
@@ -56,6 +57,8 @@ main (int argc, char** argv) {
 
   // TODO: handle signals
   logger_init();
+  daemon_lock();
+  setup_sig_handlers();
 
   job_queue         = array_init();
   mail_queue        = array_init();

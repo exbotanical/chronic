@@ -115,4 +115,17 @@ describe 'chronic cron daemon'
 
     # TODO: Assert on actual mail contents once we finalize the logic there
   ti
+
+  it 'fast fails when another instance is already running'
+    ./chronic -L .log2
+    assert grep "$(cat .log2)" 'crond: flock error'
+  ti
+
+  # Must be the last test, as we need to kill the main instance.
+  it 'releases the lock when it dies'
+    kill $(get_chronic_pid) 2> /dev/null
+    ./chronic -L .log3
+    assert grep "$(cat .log3)" 'started at'
+    kill $(get_chronic_pid) &> /dev/null
+  ti
 end_describe

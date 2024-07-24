@@ -6,6 +6,8 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -13,8 +15,10 @@
 #include "cli.h"
 #include "log.h"
 
-#define DEV_NULL "/dev/null"
-#define DEV_TTY  "/dev/tty"
+#define DEV_NULL           "/dev/null"
+#define DEV_TTY            "/dev/tty"
+#define LOCKFILE_BUFFER_SZ 512
+#define LOCKFILE_PATH      "/var/run/crond.pid"
 
 Retval
 daemonize (void) {
@@ -73,12 +77,57 @@ daemonize (void) {
 
 void
 daemon_lock (void) {
-  // TODO:
+  int  fd;
+  char buf[LOCKFILE_BUFFER_SZ];
+
+  // Initially, we set the perms to be r/w by owner only to prevent race conds.
+  if ((fd = open(LOCKFILE_PATH, O_RDWR | O_CREAT, 0600)) == -1) {
+    printlogf("failed to open/create %s: %s", LOCKFILE_PATH, strerror(errno));
+    exit(EXIT_FAILURE);
+  }
+
+  // TODO: rm file on exit
+  if (flock(fd, LOCK_EX /* exclusive */ | LOCK_NB /* non-blocking */) < OK) {
+    // TODO: macro around logger to prevent logging before log file is opened
+    printlogf("flock error %s\n", strerror(errno));
+
+    int read_bytes = -1;
+    if ((read_bytes = read(fd, buf, sizeof(buf) - 1) < OK)) {
+      printlogf("read error %s\n", strerror(errno));
+    }
+    close(fd);
+
+    if (read_bytes > 0) {
+      errno = 0;
+      char* endptr;
+      long  pid = strtol(buf, endptr, 10);
+      if (errno != 0 || (endptr && endptr != '\n')) {
+        printlogf("cannot acquire dedupe lock; unable to determine if that's "
+                  "because there's already a running instance\n");
+      } else {
+        printlogf(
+          "cannot acquire dedupe lock; there's already a running instance "
+          "with pid %ld\n",
+          pid
+        );
+      }
+    }
+
+    exit(EXIT_FAILURE);
+  }
+
+  fchmod(fd, 0644);
+
+  lseek(fd, (off_t)0, SEEK_SET);
+  sprintf(buf, "%d\n", getpid());
+  int bytes_writ = write(fd, buf, strlen(buf));
+  ftruncate(fd, bytes_writ);
+  // Leave the file open and locked
 }
 
 // TODO:
 void
-initsignals (void) {
+setup_sig_handlers (void) {
   struct sigaction sa;
   int              n;
 

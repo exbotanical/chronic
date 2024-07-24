@@ -35,7 +35,7 @@ integ_test: $(PROG)
 	$(MAKE) clean
 
 clean:
-	rm -f $(UNIT_TARGET) $(PROG) .log
+	rm -f $(UNIT_TARGET) $(PROG) .log*
 
 lint:
 	$(LINTER) -i $(SRC) $(wildcard $(TESTDIR)/*/*.c)

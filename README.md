@@ -8,3 +8,9 @@ Very much in-progress. Right now I'm just trying to get the main algorithm worki
 - setup sys cron handling
 - add logic around per-user permissions
 - add actual crontab bin
+
+
+## Development
+
+1. Make scripts executable `chmod -R u+x ./scripts`
+2. Run boot-dev script `./scripts/boot-dev.sh`

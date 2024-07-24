@@ -27,3 +27,7 @@ validate_timestamps () {
   done < "$file"
   echo 0
 }
+
+get_chronic_pid () {
+  ps aux | grep './chronic' |  grep -vE 'grep' | awk '{ print $2 }'
+}
