@@ -3,9 +3,9 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/file.h>  // For flock
 #include <syslog.h>
 #include <unistd.h>
 
@@ -17,10 +17,12 @@
 #include "job.h"
 #include "log.h"
 #include "opt-constants.h"
+#include "usr.h"
 #include "util.h"
 
-pid_t daemon_pid;
-char  hostname[SMALL_BUFFER];
+pid_t  daemon_pid;
+char   hostname[SMALL_BUFFER];
+user_t usr;
 
 array_t* job_queue;
 array_t* mail_queue;
@@ -31,6 +33,7 @@ const char* job_state_names[] = {X(PENDING), X(RUNNING), X(EXITED)};
 const short loop_interval     = 60;
 
 CliOptions opts               = {0};
+user_t     usr                = {0};
 
 static void
 set_hostname (void) {
@@ -53,7 +56,19 @@ main (int argc, char** argv) {
   }
 
   logger_init();
+
+  usr.uid   = getuid();
+  usr.root  = usr.uid == 0;
+  usr.uname = getpwuid(usr.uid)->pw_name;
+  printlogf(
+    "running as %s (uid=%d, root=%s)\n",
+    usr.uname,
+    usr.uid,
+    usr.root ? "y" : "n"
+  );
+
   daemon_lock();  // TODO: check before daemonize
+
   setup_sig_handlers();
 
   job_queue         = array_init();
@@ -72,11 +87,10 @@ main (int argc, char** argv) {
 
   time_t current_iter_time;
 
-  DirConfig sys = {.is_root = true, .path = SYS_CRONTABS_DIR};
-  DirConfig usr = {.is_root = false, .path = CRONTABS_DIR};
+  DirConfig sys_dir = {.is_root = true, .path = SYS_CRONTABS_DIR};
+  DirConfig usr_dir = {.is_root = false, .path = CRONTABS_DIR};
 
-  update_db(db, start_time, &usr, NULL);
-  // TODO: sys
+  update_db(db, start_time, &usr_dir, &sys_dir, NULL);
   init_reap_routine();
 
   while (true) {
@@ -100,7 +114,7 @@ main (int argc, char** argv) {
 
     run_jobs(db, rounded_timestamp);
 
-    update_db(db, current_iter_time, &usr, NULL);
+    update_db(db, current_iter_time, &usr_dir, &sys_dir, NULL);
   }
 
   exit(1);

@@ -1,7 +1,7 @@
 *.so
 *.o
 main
-*.log
+.log*
 chronic
 jobs
 *.vscode

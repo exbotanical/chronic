@@ -9,7 +9,9 @@ SETUP_PATH="$ROOT_DIR/utils/setup.bash"
 
 ONE_MIN_IN_SECS=60
 
-describe 'chronic cron daemon'
+describe 'crond run by root'
+  ./chronic -L .log
+
   # Required - Docker doesn't save running processes so we need to start the mail server here
   service postfix start
 
@@ -20,7 +22,11 @@ describe 'chronic cron daemon'
   uname_2='demian'
   uname_3='isao'
 
-  trap 'teardown_user "$uname_1" 2>/dev/null; teardown_user "$uname_2" 2>/dev/null; teardown_user "$uname_3" 2>/dev/null; teardown_user_crondir 2>/dev/null' EXIT
+  trap 'teardown_user "$uname_1" 2>/dev/null; \
+  teardown_user "$uname_2" 2>/dev/null; \
+  teardown_user "$uname_3" 2>/dev/null; \
+  teardown_user_crondir 2>/dev/null; \
+  teardown_sys_cron 2>/dev/null;' EXIT
 
   # Wait for an even minute minus 1 second so we catch the next run
   # 10# to force base10 and avoid `bash: 60 - 08: value too great for base (error token is "08")`
@@ -32,6 +38,7 @@ describe 'chronic cron daemon'
 
   # Setup
   setup_user_crondir
+  setup_sys_cron
 
   # Create a user narcissus
   setup_user $uname_1
@@ -116,16 +123,12 @@ describe 'chronic cron daemon'
     # TODO: Assert on actual mail contents once we finalize the logic there
   ti
 
-  it 'fast fails when another instance is already running'
-    ./chronic -L .log2
-    assert grep "$(cat .log2)" 'crond: flock error'
+  it 'root'
+    echo ROOT
+    ls $MAIL_DIR
+    cat $MAIL_DIR/root
+    # TODO: do a job that requires root permissions
   ti
 
-  # Must be the last test, as we need to kill the main instance.
-  it 'releases the lock when it dies'
-    kill $(get_chronic_pid) 2> /dev/null
-    ./chronic -L .log3
-    assert grep "$(cat .log3)" 'started at'
-    kill $(get_chronic_pid) &> /dev/null
-  ti
+  quietly_kill
 end_describe

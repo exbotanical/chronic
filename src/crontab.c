@@ -1,6 +1,7 @@
 #include "crontab.h"
 
 #include <dirent.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <pwd.h>
 #include <stdarg.h>
@@ -8,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include "constants.h"
 #include "cronentry.h"
@@ -25,19 +27,17 @@
 #define RW_BUFFER  1024
 
 /**
- * Returns true if the file represented by the stat entity is not owned by the
+ * Returns true if the file represented by the stat entity is owned by the
  * user (represented by the pw entity).
  *
  * @param statbuf The stat struct for the file we're evaluating.
  * @param pw The user's passwd entry.
- * @param uname The username.
- * @return true The file is NOT owned by the given user.
- * @return false The file IS owned by the given user - yay!
+ * @return true The file IS owned by the given user.
+ * @return false The file IS NOT owned by the given user.
  */
 static bool
-file_not_owned_by (struct stat* statbuf, struct passwd* pw, char* uname) {
-  return statbuf->st_uid != ROOT_UID
-         && (pw == NULL || statbuf->st_uid != pw->pw_uid || strcmp(uname, pw->pw_name) != 0);
+is_file_owner (struct stat* statbuf, struct passwd* pw) {
+  return statbuf->st_uid == pw->pw_uid;
 }
 
 /**
@@ -157,7 +157,7 @@ get_crontab_fd_if_valid (
   // Open in readonly, non-blocking mode. Don't follow symlinks.
   // Not following symlinks is largely for security
   if ((crontab_fd = open(fpath, O_RDONLY | O_NONBLOCK | O_NOFOLLOW, 0)) < OK) {
-    printlogf("cannot read %s\n", fpath);
+    printlogf("cannot read %s (reason=%s)\n", fpath, strerror(errno));
     goto dont_process;
   }
 
@@ -173,7 +173,6 @@ get_crontab_fd_if_valid (
 
 #ifndef UNIT_TEST
   int file_perms = statbuf->st_mode & ALL_PERMS;
-
   if (file_perms != OWNER_RW_PERMS) {
     printlogf(
       "file %s has invalid permissions (should be r/w by owner only but got "
@@ -184,13 +183,25 @@ get_crontab_fd_if_valid (
     goto dont_process;
   }
 
-  // For non-root, check that the given user matches the file owner
-  if (file_not_owned_by(statbuf, pw, uname)) {
+  // Verify that the user the file is named after actually owns said file,
+  // unless we're root.
+  if (!usr.root && !is_file_owner(statbuf, pw)) {
     printlogf(
       "file %s not owned by specified user %s (it's owned by %s)\n",
       fpath,
       uname,
       pw->pw_name
+    );
+    goto dont_process;
+  }
+
+  // This time we're checking that the user who executed this program matches
+  // the crontab owner, unless we're root;.
+  if (!usr.root && pw->pw_uid != usr.uid) {
+    printlogf(
+      "current user %s must own this crontab (%s) or be root to schedule it\n ",
+      uname,
+      fpath
     );
     goto dont_process;
   }
@@ -350,7 +361,6 @@ scan_crontabs (
         }
 
         // not modified, just renew the entries
-        // TODO: research whether we should adjust the precision of our mtime
         if (ct->mtime >= statbuf.st_mtime) {
           printlogf(
             "existing file %s not modified, renewing entries if any\n",

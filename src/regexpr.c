@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "libutil/libutil.h"
+#include "log.h"
 
 static const char *VARIABLE_PATTERN
   = "^([a-zA-Z_-][a-zA-Z0-9_-]*)=\"([^\"]*)\"(?<! )$";
@@ -14,13 +15,12 @@ static const char *VARIABLE_PATTERN
 static int ovecsize = 30;
 static int ovector[30];  // TODO:
 
-static hash_table *regex_cache;
-
 static pthread_once_t init_regex_cache_once = PTHREAD_ONCE_INIT;
+static hash_table    *regex_cache;
 
 static void
 init_regex_cache (void) {
-  regex_cache = ht_init(0 /* TODO: */);
+  regex_cache = ht_init(1);
 }
 
 static hash_table *
@@ -101,9 +101,8 @@ bool
 match_variable (char *line, hash_table *vars) {
   pcre *re = regex_cache_get(get_regex_cache(), VARIABLE_PATTERN);
   if (!re) {
-    printf("an error occurred when compiling regex\n");
-    // TODO: really exit here?
-    exit(1);
+    printlogf("an error occurred when compiling regex\n");
+    exit(EXIT_FAILURE);
   }
 
   array_t *matches = regex_matches(re, line);

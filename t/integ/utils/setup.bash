@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+SYS_CRONDIR='/etc/cron.d'
 USER_CRONDIR='/var/spool/cron/crontabs'
 MAIL_DIR='/var/spool/mail'
 
@@ -48,9 +49,11 @@ setup_user_crondir () {
 
 setup_user_crontab () {
   local uname="$1"
+  local f="$USER_CRONDIR/$uname"
 
-  touch "$USER_CRONDIR/$uname" && \
-  chmod 600 "$USER_CRONDIR/$uname"
+  touch "$f" && \
+  chmod 600 "$f" && \
+  chown "$uname:$uname" "$f"
 }
 
 teardown_user_crontab () {
@@ -61,4 +64,16 @@ teardown_user_crontab () {
 
 teardown_user_crondir () {
   rmdir "$USER_CRONDIR"
+}
+
+setup_sys_cron () {
+  mkdir -p "$SYS_CRONDIR"
+  touch "$SYS_CRONDIR/root"
+  chmod 600 "$SYS_CRONDIR/root"
+  echo "$(mk_basic_cron_cmd root 1)" >> "$SYS_CRONDIR/root"
+}
+
+teardown_sys_cron () {
+  rm -rf "$SYS_CRONDIR"
+  rm /tmp/root*
 }

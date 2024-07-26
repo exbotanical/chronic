@@ -188,21 +188,19 @@ run_cronjob (CronEntry* entry) {
   }
 
   printlogf("[job %s] New running job with pid %d\n", job->ident, job->pid);
-
   job->state = RUNNING;
 }
 
 static void
 reap_job (Job* job) {
   switch (job->state) {
-    case PENDING:
-    case EXITED:
-    default: break;
+    case PENDING: break;
+    case EXITED: break;
     case RUNNING: {
       int status;
       if (check_job(job->pid, &status)) {
         printlogf(
-          "[job %s] transition RUNNING->EXITED (pid=%d, status=%d\n",
+          "[job %s] transition RUNNING->EXITED (pid=%d, status=%d)\n",
           job->ident,
           job->pid,
           status
@@ -213,6 +211,7 @@ reap_job (Job* job) {
         job->pid   = -1;
       }
     }
+    default: break;
   }
 }
 
@@ -247,7 +246,6 @@ reap_routine (void* _arg) {
 
     foreach (mail_queue, i) {
       Job* job = array_get(mail_queue, i);
-      printlogf("\nCHECKING MAIL JOB\n\n");
       reap_job(job);
 
       if (job->state == EXITED) {

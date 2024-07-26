@@ -5,6 +5,7 @@
 
 #include "libhash/libhash.h"
 #include "libutil/libutil.h"
+#include "usr.h"
 
 #define ROOT_UNAME      "root"
 #define ROOT_UID        0
@@ -27,8 +28,12 @@
 #define CHRONIC_VERSION "0.0.1"
 #define DAEMON_IDENT    "crond"
 
-extern pid_t daemon_pid;
-extern char  hostname[SMALL_BUFFER];
+#define DEV_NULL        "/dev/null"
+#define DEV_TTY         "/dev/tty"
+
+extern pid_t  daemon_pid;
+extern char   hostname[SMALL_BUFFER];
+extern user_t usr;
 
 extern array_t *job_queue;
 extern array_t *mail_queue;

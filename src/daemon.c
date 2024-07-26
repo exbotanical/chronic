@@ -4,21 +4,40 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/file.h>  // For flock
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
 #include "cli.h"
+#include "constants.h"
+#include "libutil/libutil.h"
 #include "log.h"
 
-#define DEV_NULL           "/dev/null"
-#define DEV_TTY            "/dev/tty"
-#define LOCKFILE_BUFFER_SZ 512
-#define LOCKFILE_PATH      "/var/run/crond.pid"
+#define LOCKFILE_BUFFER_SZ    512
+#define SYS_LOCKFILE_PATH     "/var/run/crond.pid"
+#define USR_LOCKFILE_PATH_FMT "/tmp/%s.crond.pid"
+
+static pthread_once_t init_lockfile_path_once = PTHREAD_ONCE_INIT;
+static char*          lockfile_path;
+
+static void
+init_lockfile_path (void) {
+  lockfile_path
+    = usr.root ? SYS_LOCKFILE_PATH : fmt_str(USR_LOCKFILE_PATH_FMT, usr.uname);
+}
+
+static char*
+get_lockfile_path (void) {
+  pthread_once(&init_lockfile_path_once, init_lockfile_path);
+
+  return lockfile_path;
+}
 
 Retval
 daemonize (void) {
@@ -79,10 +98,14 @@ void
 daemon_lock (void) {
   int  fd;
   char buf[LOCKFILE_BUFFER_SZ];
+  bool is_root;
 
-  // Initially, we set the perms to be r/w by owner only to prevent race conds.
-  if ((fd = open(LOCKFILE_PATH, O_RDWR | O_CREAT, 0600)) == -1) {
-    printlogf("failed to open/create %s: %s", LOCKFILE_PATH, strerror(errno));
+  char* lp = get_lockfile_path();
+  printlogf("lockfile path: %s\n", lp);
+  // Initially, we set the perms to be r/w by owner only to prevent race
+  // conds.
+  if ((fd = open(lp, O_RDWR | O_CREAT, 0600)) == -1) {
+    printlogf("failed to open/create %s: %s", lp, strerror(errno));
     exit(EXIT_FAILURE);
   }
 
@@ -98,7 +121,7 @@ daemon_lock (void) {
     if (read_bytes > 0) {
       errno = 0;
       char* endptr;
-      long  pid = strtol(buf, endptr, 10);
+      long  pid = strtol(buf, &endptr, 10);
       if (errno != 0 || (endptr && endptr != '\n')) {
         printlogf("cannot acquire dedupe lock; unable to determine if that's "
                   "because there's already a running instance\n");
@@ -127,7 +150,8 @@ void
 daemon_quit () {
   printlogf("received a kill signal; shutting down...\n");
   logger_close();
-  unlink(LOCKFILE_PATH);
+  unlink(get_lockfile_path());
+
   exit(EXIT_SUCCESS);
 }
 
@@ -136,7 +160,7 @@ setup_sig_handlers (void) {
   struct sigaction sa;
   int              n;
 
-  sigemptyset(&sa);
+  sigemptyset(&sa.sa_mask);
   // restart any system calls that were interrupted by signal
   sa.sa_flags   = SA_RESTART;
   sa.sa_handler = daemon_quit;

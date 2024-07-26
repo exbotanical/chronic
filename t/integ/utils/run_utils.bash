@@ -58,10 +58,3 @@ not_test_file () {
 
 	return $ret
 }
-
-quietly_kill () {
-  pid="$(ps aux | grep './chronic' |  grep -vE 'grep' | awk '{ print $2 }')"
-  [[ -n $pid ]] && {
-    kill $1 2>/dev/null
-  }
-}

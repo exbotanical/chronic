@@ -31,3 +31,10 @@ validate_timestamps () {
 get_chronic_pid () {
   ps aux | grep './chronic' |  grep -vE 'grep' | awk '{ print $2 }'
 }
+
+quietly_kill () {
+  pid="$(get_chronic_pid)"
+  [[ -n $pid ]] && {
+    kill $pid 2>/dev/null
+  }
+}

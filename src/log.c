@@ -82,7 +82,6 @@ printlogf (const char *fmt, ...) {
   va_end(va);
 }
 
-// TODO: detect if closed
 void
 logger_init () {
   if (opts.log_file) {

@@ -20,11 +20,6 @@ run () {
     exit 1
   }
 
-  # It's a daemon; we don't need to bg it ourselves...
-  ./chronic -L .log
-
-  trap 'quietly_kill "$pid"' EXIT
-
 	declare -a tests=(
     $(ls $TESTING_DIR | filter not_test_file _shpec.bash)
   )

@@ -76,7 +76,6 @@ cleanup_test_file (char* dirname, char* fname) {
   unlink(path);
 }
 
-// TODO: close?
 static int
 get_fd (char* fpath) {
   return open(fpath, O_RDONLY | O_NONBLOCK, 0);
@@ -208,7 +207,7 @@ new_crontab_test (void) {
   }
 
   array_free_ptrs(expected_envp_entries);
-  // TODO: cleanup here and everywhere else lmao
+  close(crontab_fd);
 }
 
 void
