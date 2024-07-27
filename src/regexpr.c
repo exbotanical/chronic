@@ -20,7 +20,7 @@ static hash_table    *regex_cache;
 
 static void
 init_regex_cache (void) {
-  regex_cache = ht_init(1);
+  regex_cache = ht_init(1, NULL);
 }
 
 static hash_table *
@@ -51,7 +51,7 @@ regex_compile (const char *pattern) {
 
 static pcre *
 regex_cache_get (hash_table *cache, const char *pattern) {
-  ht_record *r = ht_search(cache, pattern);
+  ht_entry *r = ht_search(cache, pattern);
   if (r) {
     return r->value;
   }
@@ -113,7 +113,7 @@ match_variable (char *line, hash_table *vars) {
       s_copy(array_get(matches, 2))
     );
 
-    array_free_ptrs(matches);
+    array_free(matches, free);
 
     return true;
   }

@@ -22,24 +22,29 @@ pthread_cond_t  cond  = PTHREAD_COND_INITIALIZER;
  *
  * @param entry The entry which this job will represent.
  * @return Job*
- *
- * TODO: pass entry by value? Otherwise if entry is freed before we call
- * fork, we're fucked.
  */
 static Job*
 new_cronjob (CronEntry* entry) {
-  Job* job     = xmalloc(sizeof(Job));
-  job->ret     = -1;
-  job->pid     = -1;
-  job->state   = PENDING;
-  job->cmd     = s_copy(entry->cmd);  // TODO: free
-  job->ident   = create_uuid();
-  job->type    = CRON;
+  Job* job    = xmalloc(sizeof(Job));
+  job->ident  = create_uuid();
+  job->type   = CRON;
+  job->state  = PENDING;
+  job->cmd    = s_copy(entry->cmd);
+  job->ret    = -1;
+  job->pid    = -1;
 
-  ht_record* r = ht_search(entry->parent->vars, MAILTO_ENVVAR);
-  job->mailto  = s_copy(r ? r->value : entry->parent->uname);
+  ht_entry* r = ht_search(entry->parent->vars, MAILTO_ENVVAR);
+  job->mailto = s_copy(r ? r->value : entry->parent->uname);
 
   return job;
+}
+
+void
+free_cronjob (Job* job) {
+  free(job->cmd);
+  free(job->ident);
+  free(job->mailto);
+  free(job);
 }
 
 /**
@@ -51,12 +56,12 @@ new_cronjob (CronEntry* entry) {
 static Job*
 new_mailjob (Job* og_job) {
   Job* job    = xmalloc(sizeof(Job));
-  job->ret    = -1;
-  job->pid    = -1;
-  job->state  = PENDING;
   job->ident  = create_uuid();
   job->type   = MAIL;
-  job->mailto = og_job->mailto;
+  job->state  = PENDING;
+  job->mailto = s_copy(og_job->mailto);
+  job->ret    = -1;
+  job->pid    = -1;
 
   char mail_cmd[MED_BUFFER];
   sprintf(
@@ -69,9 +74,17 @@ new_mailjob (Job* og_job) {
     og_job->mailto
   );
 
-  job->cmd = s_copy(mail_cmd);  // TODO: free
+  job->cmd = s_copy(mail_cmd);
 
   return job;
+}
+
+void
+free_mailjob (Job* job) {
+  free(job->ident);
+  free(job->cmd);
+  free(job->mailto);
+  free(job);
 }
 
 /**
@@ -131,10 +144,7 @@ run_mailjob (Job* exited_job) {
 
     fprintf(
       mail_pipe,
-      fmt_str(
-        "This is the body of the email (num %d).\n",
-        ++temporary_mail_count
-      )
+      s_fmt("This is the body of the email (num %d).\n", ++temporary_mail_count)
     );
 
     if (pclose(mail_pipe) == -1) {
@@ -179,10 +189,9 @@ run_cronjob (CronEntry* entry) {
     );
 
     chdir(home);
+    int rc = execle(shell, shell, "-c", job->cmd, NULL, entry->parent->envp);
 
-    int r = execle(shell, shell, "-c", job->cmd, NULL, entry->parent->envp);
-
-    printlogf("execle failed with %d\n", r);
+    printlogf("execle failed with %d\n", rc);
     perror("execle");
     _exit(EXIT_FAILURE);
   }
@@ -240,6 +249,7 @@ reap_routine (void* _arg) {
         array_remove(job_queue, i);
         if (job->type == CRON) {
           run_mailjob(job);
+          free_cronjob(job);
         }
       }
     }
@@ -251,6 +261,7 @@ reap_routine (void* _arg) {
       if (job->state == EXITED) {
         printlogf("[mail %s] finally exited\n", job->ident);
         array_remove(mail_queue, i);
+        free_mailjob(job);
       }
     }
 
@@ -279,13 +290,13 @@ signal_reap_routine (void) {
 
 void
 run_jobs (hash_table* db, time_t ts) {
-  // We must iterate the capacity here because hash table records are not
+  // We must iterate the capacity here because hash table entries are not
   // stored contiguously
   if (db->count > 0) {
     for (unsigned int i = 0; i < (unsigned int)db->capacity; i++) {
-      ht_record* r = db->records[i];
+      ht_entry* r = db->entries[i];
 
-      // If there's no record in this slot, continue
+      // If there's no entry in this slot, continue
       if (!r) {
         continue;
       }

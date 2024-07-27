@@ -16,6 +16,7 @@
 
 #include "cli.h"
 #include "constants.h"
+#include "job.h"
 #include "libutil/libutil.h"
 #include "log.h"
 
@@ -29,7 +30,7 @@ static char*          lockfile_path;
 static void
 init_lockfile_path (void) {
   lockfile_path
-    = usr.root ? SYS_LOCKFILE_PATH : fmt_str(USR_LOCKFILE_PATH_FMT, usr.uname);
+    = usr.root ? SYS_LOCKFILE_PATH : s_fmt(USR_LOCKFILE_PATH_FMT, usr.uname);
 }
 
 static char*
@@ -151,6 +152,9 @@ daemon_quit () {
   printlogf("received a kill signal; shutting down...\n");
   logger_close();
   unlink(get_lockfile_path());
+  free(opts.log_file);
+  array_free(job_queue, (free_fn*)free_cronjob);
+  array_free(mail_queue, (free_fn*)free_mailjob);
 
   exit(EXIT_SUCCESS);
 }

@@ -7,10 +7,16 @@ extern "C" {
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
+
+#ifndef LIB_UTIL_ARRAY_CAPACITY_INCR
+#define LIB_UTIL_ARRAY_CAPACITY_INCR 4
+#endif
 
 typedef struct {
   void **state;
-  unsigned int len;
+  unsigned int size;
+  unsigned int capacity;
 } __array_t;
 
 /**
@@ -24,6 +30,7 @@ typedef void *callback_t(void *el, unsigned int index, array_t *array);
 typedef bool predicate_t(void *el, unsigned int index, array_t *array,
                          void *compare_to);
 typedef bool comparator_t(void *el, void *compare_to);
+typedef void free_fn(void *el);
 
 // An int comparator that implements the comparator_t interface
 bool int_comparator(int a, int b);
@@ -102,6 +109,11 @@ int array_find(array_t *array, comparator_t *comparator, void *compare_to);
 
 /**
  * array_push appends the given element to the end of the array.
+ *
+ * Set the `LIB_UTIL_ARRAY_CAPACITY_INCR` macro if you want to change the
+ * default capacity incrementor. i.e. if using the default (4), the array
+ * reallocates memory every 4 elements. If you know you'll be using more, you
+ * can increase this amount and maintain a more performant array.
  */
 bool array_push(array_t *array, void *el);
 
@@ -159,16 +171,10 @@ array_t *array_concat(array_t *arr1, array_t *arr2);
 
 /**
  * array_free frees the array and its internal state container. Safe to use
- * with an array of primitives.
+ * with an array of primitives. Accepts an optional function pointer if you want
+ * all values to be freed.
  */
-void array_free(array_t *array);
-
-/**
- * array_free_ptrs frees the array, its elements, and its internal state
- * container. NOT safe to use with an array of primitives; only for use with an
- * array whose elements are pointers.
- */
-void array_free_ptrs(array_t *array);
+void array_free(array_t *array, free_fn *free_fnptr);
 
 typedef struct {
   char *state;
@@ -219,7 +225,7 @@ void buffer_free(buffer_t *buf);
 /**
  * Returns a formatted string. Uses printf syntax.
  */
-char *fmt_str(char *fmt, ...);
+char *s_fmt(char *fmt, ...);
 
 /**
  * s_truncate truncates the given string `s` by `n` characters.
@@ -284,6 +290,26 @@ char *s_trim(const char *s);
  * Returns an array_t* of matches, if any, or NULL if erroneous.
  */
 array_t *s_split(const char *s, const char *delim);
+
+#ifndef READ_ALL_CHUNK_SZ
+#define READ_ALL_CHUNK_SZ 262144
+#endif
+
+typedef enum {
+  READ_ALL_OK = 0,          // Success
+  READ_ALL_INVALID = -1,    // Bad input
+  READ_ALL_ERR = -2,        // Stream err
+  READ_ALL_TOO_LARGE = -3,  // Input too large
+  READ_ALL_NOMEM = -4       // Out of memory
+} read_all_result;
+
+/**
+ * TODO:
+ *
+ * @param fd
+ * @return char*
+ */
+read_all_result read_all(FILE *fd, char **data_ptr, size_t *sz_ptr);
 
 #ifdef __cplusplus
 }

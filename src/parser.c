@@ -13,7 +13,6 @@
 // Basically whether we support seconds (7)
 #define SPACES_BEFORE_CMD 5
 
-// TODO: static fns
 bool
 is_comment_line (const char* str) {
   while (isspace((unsigned char)*str)) {
@@ -25,7 +24,8 @@ is_comment_line (const char* str) {
 
 bool
 should_parse_line (const char* line) {
-  if (strlen(line) < (SPACES_BEFORE_CMD * 2) + 1 || (*line == 0) || is_comment_line(line)) {
+  if (strlen(line) < (SPACES_BEFORE_CMD * 2) + 1 || (*line == 0)
+      || is_comment_line(line)) {
     return false;
   }
 
@@ -67,14 +67,11 @@ parse_cmd (char* line, CronEntry* entry, int count) {
     return ERR;
   }
 
-  // TODO: free
   entry->schedule = line_cp;
-
   // splits the string in two; note: shared memory block so only one `free` may
   // be called
   *entry->cmd     = '\0';
   ++entry->cmd;
-  // TODO: free
   entry->cmd = s_trim(entry->cmd);
 
   return OK;
@@ -92,7 +89,7 @@ parse_entry (CronEntry* entry, char* line) {
 
   free(line_cp);
 
-  cron_expr*  expr = malloc(sizeof(cron_expr));
+  cron_expr*  expr = xmalloc(sizeof(cron_expr));
   const char* err  = NULL;
   cron_parse_expr(entry->schedule, expr, &err);
 

@@ -17,3 +17,4 @@
 - [ ] Ensure tests don't log to syslog or whatever (maybe a test sink?)
 - [ ] handle signals and log getting closed or deleted
 - [ ] daemon lock
+- [ ] kill chronic anywhere integ test stops (e.g. TRAP)

@@ -29,7 +29,8 @@ run () {
 
 main () {
   kill $(pgrep integ_test) 2>/dev/null ||:
-
+  # Make sure we stop any instances if the tests fail catastrophically and early exit
+  trap quietly_kill EXIT
   run
 }
 

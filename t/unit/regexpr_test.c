@@ -34,7 +34,7 @@ match_variable_test () {
     {.invalid_str = "~=\"valid_val_but_invalid_key\""}
   };
 
-  hash_table* ht = ht_init(0);
+  hash_table* ht = ht_init(0, NULL);
 
   ITER_CASES_TEST(tests, TestCase) {
     TestCase tc = tests[i];
@@ -50,7 +50,7 @@ match_variable_test () {
       free(input);
     } else {
       // TODO: figure out this weird behavior with the PATH=... test and `free`
-      char* input = fmt_str("%s=\"%s\"", s_copy(tc.key), s_copy(tc.value));
+      char* input = s_fmt("%s=\"%s\"", s_copy(tc.key), s_copy(tc.value));
 
       match_variable(input, ht);
 

@@ -87,16 +87,16 @@ complete_env (Crontab* ct) {
   // Fill out the envp using the vars map. We're going to need this later and
   // forevermore, so we might as well get it out of the way upfront.
   if (vars->count > 0) {
-    ct->envp         = malloc(sizeof(char*) * vars->count + 1);
+    ct->envp         = xmalloc(sizeof(char*) * vars->count + 1);
 
     unsigned int idx = 0;
     for (unsigned int i = 0; i < (unsigned int)vars->capacity; i++) {
-      ht_record* r = vars->records[i];
+      ht_entry* r = vars->entries[i];
       if (!r) {
         continue;
       }
 
-      ct->envp[idx] = fmt_str("%s=%s", r->key, r->value);
+      ct->envp[idx] = s_fmt("%s=%s", r->key, r->value);
       idx++;
     }
 
@@ -264,7 +264,7 @@ new_crontab (
   ct->mtime   = mtime;
   ct->uname   = uname;
   ct->entries = array_init();
-  ct->vars    = ht_init(0);
+  ct->vars    = ht_init(0, free);
   ct->envp    = NULL;
 
   while (fgets(buf, sizeof(buf), fd) != NULL && --max_lines) {
@@ -302,6 +302,17 @@ new_crontab (
 }
 
 void
+free_crontab (Crontab* ct) {
+  free(ct->uname);
+  array_free(ct->entries, (free_fn*)free_cron_entry);
+  ht_delete_table(ct->vars);
+  if (ct->envp) {
+    free(ct->envp);
+  }
+  free(ct);
+}
+
+void
 scan_crontabs (
   hash_table* old_db,
   hash_table* new_db,
@@ -315,7 +326,7 @@ scan_crontabs (
     foreach (fnames, i) {
       char* fname = array_get(fnames, i);
       char* fpath;
-      if (!(fpath = fmt_str("%s/%s", dir_conf.path, fname))) {
+      if (!(fpath = s_fmt("%s/%s", dir_conf.path, fname))) {
         printlogf("failed to concatenate as %s/%s\n", dir_conf.path, fname);
         continue;
       }
@@ -329,7 +340,8 @@ scan_crontabs (
       char* uname = dir_conf.is_root ? ROOT_UNAME : fname;
       // File hasn't been processed before
       if (!ct) {
-        if ((crontab_fd = get_crontab_fd_if_valid(fpath, uname, 0, &statbuf)) < OK) {
+        if ((crontab_fd = get_crontab_fd_if_valid(fpath, uname, 0, &statbuf))
+            < OK) {
           printlogf("file %s not valid; continuing...\n", fpath);
           continue;
         }
@@ -341,17 +353,17 @@ scan_crontabs (
           dir_conf.is_root,
           curr,
           statbuf.st_mtime,
-          fname
+          s_copy(fname)
         );
-        // TODO: free existing values
-        ht_insert_ptr(new_db, fpath, ct);
+        ht_insert(new_db, fpath, ct);
       }
       // File exists in db
       else {
         printlogf("crontab for file %s exists...\n", fpath);
 
-        // Skips mtime check
-        if ((crontab_fd = get_crontab_fd_if_valid(fpath, uname, -1, &statbuf)) < OK) {
+        // Renew the fd and statbuf
+        if ((crontab_fd = get_crontab_fd_if_valid(fpath, uname, -1, &statbuf))
+            < OK) {
           printlogf(
             "existing crontab file %s not valid; it won't be carried over. "
             "continuing...\n",
@@ -360,7 +372,8 @@ scan_crontabs (
           continue;
         }
 
-        // not modified, just renew the entries
+        // The crontab was not modified, just renew the entries so we know when
+        // to run them next
         if (ct->mtime >= statbuf.st_mtime) {
           printlogf(
             "existing file %s not modified, renewing entries if any\n",
@@ -382,23 +395,28 @@ scan_crontabs (
             dir_conf.is_root,
             curr,
             statbuf.st_mtime,
-            fname
+            s_copy(fname)
           );
         }
 
-        ht_insert_ptr(new_db, fpath, ct);
+        // set the og entry to NULL
+        old_db->free_value = NULL;
+        ht_insert(old_db, fpath, NULL);
+        old_db->free_value = (free_fn*)free_crontab;
+
+        ht_insert(new_db, fpath, ct);
       }
     }
 
-    array_free(fnames);
+    array_free(fnames, free);
   }
 }
 
-void
+hash_table*
 update_db (hash_table* db, time_t curr, DirConfig* dir_conf, ...) {
   // We HAVE to make a brand new db each time, else we will not be able to
   // tell if a file was deleted
-  hash_table* new_db = ht_init(0);
+  hash_table* new_db = ht_init(0, (free_fn*)free_crontab);
 
   va_list args;
   va_start(args, dir_conf);
@@ -411,8 +429,7 @@ update_db (hash_table* db, time_t curr, DirConfig* dir_conf, ...) {
 
   va_end(args);
 
-  // TODO: we have to remove records that we copied over to the new_db first
-  // ht_delete_table_ptr(db);
+  ht_delete_table(db);
 
-  *db = *new_db;
+  return new_db;
 }

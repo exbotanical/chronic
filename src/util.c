@@ -22,7 +22,7 @@ to_time_str (time_t t) {
   struct tm* time_info = localtime(&t);
   strftime(msg, sizeof(msg), TIMESTAMP_FMT, time_info);
 
-  return fmt_str("%s", msg);
+  return s_fmt("%s", msg);
 }
 
 char*

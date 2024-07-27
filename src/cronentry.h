@@ -57,4 +57,6 @@ CronEntry *new_cron_entry(char *raw, time_t curr, Crontab *ct);
  */
 void renew_cron_entry(CronEntry *entry, time_t curr);
 
+void free_cron_entry(CronEntry *entry);
+
 #endif /* CRONENTRY_H */

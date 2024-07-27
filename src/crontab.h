@@ -105,6 +105,9 @@ void scan_crontabs(
  * @param dir_conf A variadic list of directories to be scanned.
  * @param ...
  */
-void update_db(hash_table *db, time_t curr, DirConfig *dir_conf, ...);
+hash_table *update_db(hash_table *db, time_t curr, DirConfig *dir_conf, ...);
+
+// TODO: docs
+void free_crontab(Crontab *ct);
 
 #endif /* FS_H */

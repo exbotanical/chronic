@@ -53,7 +53,7 @@ setup_user_crontab () {
 
   touch "$f" && \
   chmod 600 "$f" && \
-  chown "$uname:$uname" "$f"
+  chown "$uname:$uname" "$f" 2> /dev/null
 }
 
 teardown_user_crontab () {

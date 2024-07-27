@@ -92,4 +92,8 @@ void init_reap_routine(void);
 void signal_reap_routine(void);
 
 void run_jobs(hash_table *db, time_t ts);
+
+void free_cronjob(Job *job);
+void free_mailjob(Job *job);
+
 #endif /* JOB_H */

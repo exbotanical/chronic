@@ -34,10 +34,15 @@ integ_test: $(PROG)
 	./$(TESTDIR)/integ/utils/run.bash
 	$(MAKE) clean
 
+valgrind: CFLAGS += -g -O0 -DVALGRIND
+valgrind: $(PROG)
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -s ./$(PROG)
+	$(MAKE) clean
+
 clean:
 	rm -f $(UNIT_TARGET) $(PROG) .log*
 
 lint:
 	$(LINTER) -i $(SRC) $(wildcard $(TESTDIR)/*/*.c)
 
-.PHONY: test unit_test integ_test clean lint
+.PHONY: test unit_test integ_test valgrind clean lint

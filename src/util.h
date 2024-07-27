@@ -37,9 +37,7 @@ get_sleep_duration (short interval, time_t now) {
 char *to_time_str(time_t ts);
 
 /**
- * Generates a v4 UUID.
- *
- * TODO: need to free
+ * Generates a v4 UUID. Must be freed by caller.
  */
 char *create_uuid(void);
 

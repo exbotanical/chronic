@@ -49,11 +49,13 @@ main (int argc, char** argv) {
   cli_init(argc, argv);
   set_hostname();
 
+#ifndef VALGRIND
   // Become a daemon process
   if (daemonize() != OK) {
     printf("daemonize fail");
     exit(EXIT_FAILURE);
   }
+#endif
 
   logger_init();
 
@@ -68,29 +70,25 @@ main (int argc, char** argv) {
   );
 
   daemon_lock();  // TODO: check before daemonize
-
   setup_sig_handlers();
 
   job_queue         = array_init();
   mail_queue        = array_init();
   daemon_pid        = getpid();
-
-  hash_table* db    = ht_init(0);
+  hash_table* db    = ht_init(0, free_crontab);
 
   time_t start_time = time(NULL);
 
-  printlogf(
-    "cron daemon (pid=%d) started at %s\n",
-    daemon_pid,
-    to_time_str(start_time)
-  );
+  char* s_ts        = to_time_str(start_time);
+  printlogf("cron daemon (pid=%d) started at %s\n", daemon_pid, s_ts);
+  free(s_ts);
 
   time_t current_iter_time;
 
   DirConfig sys_dir = {.is_root = true, .path = SYS_CRONTABS_DIR};
   DirConfig usr_dir = {.is_root = false, .path = CRONTABS_DIR};
 
-  update_db(db, start_time, &usr_dir, &sys_dir, NULL);
+  db                = update_db(db, start_time, &usr_dir, &sys_dir, NULL);
   init_reap_routine();
 
   while (true) {
@@ -106,16 +104,18 @@ main (int argc, char** argv) {
     current_iter_time        = time(NULL);
     time_t rounded_timestamp = round_ts(current_iter_time, loop_interval);
 
-    printlogf(
-      "Current iter time: %s (rounded to %s)\n",
-      to_time_str(current_iter_time),
-      to_time_str(rounded_timestamp)
-    );
+    char* c_ts               = to_time_str(current_iter_time);
+    char* r_ts               = to_time_str(rounded_timestamp);
+    printlogf("Current iter time: %s (rounded to %s)\n", c_ts, r_ts);
+    free(c_ts);
+    free(r_ts);
 
     run_jobs(db, rounded_timestamp);
 
-    update_db(db, current_iter_time, &usr_dir, &sys_dir, NULL);
+    db = update_db(db, current_iter_time, &usr_dir, &sys_dir, NULL);
   }
 
   exit(1);
 }
+
+// init_reap_routine

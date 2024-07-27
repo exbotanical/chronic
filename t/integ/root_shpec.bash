@@ -123,12 +123,5 @@ describe 'crond run by root'
     # TODO: Assert on actual mail contents once we finalize the logic there
   ti
 
-  it 'root'
-    echo ROOT
-    ls $MAIL_DIR
-    cat $MAIL_DIR/root
-    # TODO: do a job that requires root permissions
-  ti
-
   quietly_kill
 end_describe

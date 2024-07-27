@@ -11,7 +11,7 @@
  */
 static void
 setopt_logfile (command_t* self) {
-  opts.log_file = (char*)self->arg;
+  opts.log_file = s_copy((char*)self->arg);
 }
 
 void
@@ -28,4 +28,5 @@ cli_init (int argc, char** argv) {
   );
 
   command_parse(&cmd, argc, argv);
+  command_free(&cmd);
 }
