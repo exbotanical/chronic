@@ -1,7 +1,9 @@
+#include "util.h"
+
+#include <dirent.h>
 #include <stdlib.h>
 #include <uuid/uuid.h>
 
-#include "libutil/libutil.h"
 #include "log.h"
 #include "opt-constants.h"
 
@@ -34,4 +36,34 @@ create_uuid (void) {
   uuid_unparse(bin_uuid, uuid);
 
   return s_copy(uuid);
+}
+
+array_t*
+get_filenames (char* dirpath) {
+  DIR* dir;
+
+  if ((dir = opendir(dirpath)) != NULL) {
+    printlogf("scanning dir %s\n", dirpath);
+    struct dirent* den;
+
+    array_t* file_names = array_init();
+
+    while ((den = readdir(dir)) != NULL) {
+      // Skip pointer files
+      if (s_equals(den->d_name, ".") || s_equals(den->d_name, "..")) {
+        continue;
+      }
+
+      printlogf("found file %s/%s\n", dirpath, den->d_name);
+      array_push(file_names, s_copy(den->d_name));
+    }
+
+    closedir(dir);
+    return file_names;
+  } else {
+    perror("opendir");
+    printlogf("unable to scan dir %s\n", dirpath);
+  }
+
+  return NULL;
 }

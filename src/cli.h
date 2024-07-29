@@ -9,12 +9,12 @@
 typedef struct {
   bool  use_syslog;
   char* log_file;
-} CliOptions;
+} cli_opts;
 
-extern CliOptions opts;
+extern cli_opts opts;
 
 /**
- * Initializes the CLI configuration.
+ * Initializes the CLI configuration and parses the argument vector immediately.
  */
 void cli_init(int argc, char** argv);
 

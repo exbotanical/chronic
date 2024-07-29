@@ -28,12 +28,11 @@ array_t* job_queue;
 array_t* mail_queue;
 
 const char* job_state_names[] = {X(PENDING), X(RUNNING), X(EXITED)};
-
 // Desired interval in seconds between loop iterations
 const short loop_interval     = 60;
 
-CliOptions opts               = {0};
-user_t     usr                = {0};
+cli_opts opts                 = {0};
+user_t   usr                  = {0};
 
 static void
 set_hostname (void) {
@@ -63,7 +62,7 @@ main (int argc, char** argv) {
   usr.root  = usr.uid == 0;
   usr.uname = getpwuid(usr.uid)->pw_name;
   printlogf(
-    "running as %s (uid=%d, root=%s)\n",
+    "running as %s (uid=%d, root?=%s)\n",
     usr.uname,
     usr.uid,
     usr.root ? "y" : "n"
@@ -75,7 +74,7 @@ main (int argc, char** argv) {
   job_queue         = array_init();
   mail_queue        = array_init();
   daemon_pid        = getpid();
-  hash_table* db    = ht_init(0, free_crontab);
+  hash_table* db    = ht_init(0, (free_fn*)free_crontab);
 
   time_t start_time = time(NULL);
 
@@ -85,10 +84,10 @@ main (int argc, char** argv) {
 
   time_t current_iter_time;
 
-  DirConfig sys_dir = {.is_root = true, .path = SYS_CRONTABS_DIR};
-  DirConfig usr_dir = {.is_root = false, .path = CRONTABS_DIR};
+  dir_config sys_dir = {.is_root = true, .path = SYS_CRONTABS_DIR};
+  dir_config usr_dir = {.is_root = false, .path = CRONTABS_DIR};
 
-  db                = update_db(db, start_time, &usr_dir, &sys_dir, NULL);
+  db                 = update_db(db, start_time, &usr_dir, &sys_dir, NULL);
   init_reap_routine();
 
   while (true) {
@@ -110,12 +109,9 @@ main (int argc, char** argv) {
     free(c_ts);
     free(r_ts);
 
-    run_jobs(db, rounded_timestamp);
-
+    try_run_jobs(db, rounded_timestamp);
     db = update_db(db, current_iter_time, &usr_dir, &sys_dir, NULL);
   }
 
-  exit(1);
+  exit(EXIT_FAILURE);
 }
-
-// init_reap_routine

@@ -15,13 +15,13 @@
       1. Strip comments
       2. Ignore empty lines
       3. Parse fields: minute, hour, day of month, month, day of week, command to run
-      4. Store in Job struct
+      4. Store in job_t struct
    2. Watcher thread using inotify to process change events on the crontab (re-parsing)
       1. Use mutex on global job structs
 
 
 ---
-Storing in Job:
+Storing in job_t:
 Priority queue (heap) to store tasks?
 1. Parse crontabs and compute a timestamp for next execution time
 2. At end of each iteration of main loop, sleep for a computed time to always have even minute
@@ -118,7 +118,7 @@ for (const { file } of readdir(crontabDir)) {
 ## The New New Plan
 
 ```js
-interface Job {
+interface job_t {
 
 }
 
@@ -135,7 +135,7 @@ main() {
 
     // { root: [1, 2, 3, 4], goldmund: [1, 2]}
     // Note: db_map should actually be a linked list of linked lists?
-    // Nah, we'll use HashMap<username, LinkedList<Job>>
+    // Nah, we'll use HashMap<username, LinkedList<job_t>>
     scan_crontabs(sys, usr, db_map)
 
     db_map.entries().for_each(([user, job]) =>

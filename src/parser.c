@@ -58,8 +58,8 @@ strip_comment (char* str) {
   }
 }
 
-Retval
-parse_cmd (char* line, CronEntry* entry, int count) {
+retval_t
+parse_cmd (char* line, cron_entry* entry, int count) {
   char* line_cp = s_copy(line);
 
   entry->cmd = until_nth_of_char(line_cp, ' ', line_cp[0] == '@' ? 1 : count);
@@ -77,8 +77,8 @@ parse_cmd (char* line, CronEntry* entry, int count) {
   return OK;
 }
 
-Retval
-parse_entry (CronEntry* entry, char* line) {
+retval_t
+parse_entry (cron_entry* entry, char* line) {
   char* line_cp = s_trim(line);
   strip_comment(line_cp);
 
@@ -102,7 +102,7 @@ parse_entry (CronEntry* entry, char* line) {
   return OK;
 }
 
-ParseLineResult
+parse_ln_result
 parse_line (char* ptr, int max_entries, hash_table* vars) {
   if (max_entries == 1) {
     return DONE;

@@ -1,10 +1,10 @@
 // Doing this helped me conceptualize how this whole thing would work
-interface Crontab {
+interface crontab {
   mtime: number
-  jobs: Job[]
+  jobs: job_t[]
 }
 
-interface Job {
+interface job_t {
   id: number
   run_at: number
   line: string
@@ -19,16 +19,16 @@ interface FFile {
   hasChanged: boolean
 }
 
-interface DirConfig {
+interface dir_config {
   mtime: number
   dirname: string
   files: FFile[]
 }
 
-type DbMap = Map<string, Crontab>
+type DbMap = Map<string, crontab>
 
-let mail_jobs: Job[] = /* mmap() */ []
-let running_jobs: Job[] = []
+let mail_jobs: job_t[] = /* mmap() */ []
+let running_jobs: job_t[] = []
 
 let id_counter = 0
 
@@ -53,19 +53,19 @@ const f3: FFile = {
   hasChanged: true,
 }
 
-const sys: DirConfig = {
+const sys: dir_config = {
   dirname: '/etc/cron.d',
   mtime: 0,
   files: [f1],
 }
 
-const usr: DirConfig = {
+const usr: dir_config = {
   dirname: '/var/crontab',
   mtime: 0,
   files: [f2, f3],
 }
 
-function scan_crontabs(_sys: DirConfig, usr: DirConfig, old_db: DbMap) {
+function scan_crontabs(_sys: dir_config, usr: dir_config, old_db: DbMap) {
   let new_db: DbMap = new Map()
   console.log({ INNER: old_db })
   for (const file of usr.files) {
@@ -83,7 +83,7 @@ function scan_crontabs(_sys: DirConfig, usr: DirConfig, old_db: DbMap) {
     new_db.set(file.fileName, fileConfig)
 
     if (fileConfig.mtime < file.mtime) {
-      const usr_jobs: Job[] = []
+      const usr_jobs: job_t[] = []
 
       for (const line of file.lines) {
         const job = new_job(line, file.fileName)
@@ -97,13 +97,13 @@ function scan_crontabs(_sys: DirConfig, usr: DirConfig, old_db: DbMap) {
   return new_db
 }
 
-function run_job(job: Job, db_map: DbMap) {
+function run_job(job: job_t, db_map: DbMap) {
   // must keep in og db for carry overs
   running_jobs.push(job)
   console.log(running_jobs)
 }
 
-function new_job(line: string, user: string): Job {
+function new_job(line: string, user: string): job_t {
   return {
     run_at: Date.now(),
     line,
@@ -123,13 +123,13 @@ function reap() {
   running_jobs = []
 }
 
-function queue_job(job: Job) {
+function queue_job(job: job_t) {
   running_jobs.push(job)
   console.log(running_jobs)
 }
 
 const stime = 10
-async function main(sys: DirConfig, usr: DirConfig) {
+async function main(sys: dir_config, usr: dir_config) {
   let db_map: DbMap = new Map()
 
   while (true) {
@@ -160,7 +160,7 @@ async function main(sys: DirConfig, usr: DirConfig) {
   }
 }
 
-function push_to_mail_jobs(job: Job) {
+function push_to_mail_jobs(job: job_t) {
   mail_jobs.push(job)
 }
 

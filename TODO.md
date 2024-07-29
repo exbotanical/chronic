@@ -6,8 +6,8 @@
 - [ ] schedule and run overdue jobs
 - [ ] job reporting
 - [x] synchronize updates to crontab
-- [ ] actually read the sys ~~and user crontabs~~
-  - [ ] perms
+- [x] actually read the sys ~~and user crontabs~~
+  - [x] perms
 - [ ] special crontab config support (toml or yaml?)
 - [x] log to syslog
   - [ ] syslog levels?
@@ -15,6 +15,10 @@
 - [x] integ testing
 - [x] unit tests
 - [ ] Ensure tests don't log to syslog or whatever (maybe a test sink?)
-- [ ] handle signals and log getting closed or deleted
-- [ ] daemon lock
+- [x] handle signals
+  - [ ] and log getting closed or deleted
+- [x] daemon lock
 - [ ] kill chronic anywhere integ test stops (e.g. TRAP)
+- [ ] crontab program
+- [ ] validate permissions e.g. child job exec
+- [ ] format mail

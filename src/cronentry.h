@@ -1,5 +1,5 @@
-#ifndef CRONENTRY_H
-#define CRONENTRY_H
+#ifndef cron_entry_H
+#define cron_entry_H
 
 #include <time.h>
 
@@ -34,8 +34,8 @@ typedef struct {
   /**
    * A pointer to the entry's parent crontab.
    */
-  Crontab     *parent;
-} CronEntry;
+  crontab_t   *parent;
+} cron_entry;
 
 /**
  * Parses the raw line from the crontab file as an entry for the provided
@@ -46,7 +46,7 @@ typedef struct {
  * @param ct The crontab object to which this entry belongs. We pass in the
  * crontab because we want the entry to have a pointer to its parent.
  */
-CronEntry *new_cron_entry(char *raw, time_t curr, Crontab *ct);
+cron_entry *new_cron_entry(char *raw, time_t curr, crontab_t *ct);
 
 /**
  * Renews the `next` field on the given cron entry based on the current crond
@@ -55,8 +55,11 @@ CronEntry *new_cron_entry(char *raw, time_t curr, Crontab *ct);
  * @param entry The cron entry to renew.
  * @param curr The current crond iteration time.
  */
-void renew_cron_entry(CronEntry *entry, time_t curr);
+void renew_cron_entry(cron_entry *entry, time_t curr);
 
-void free_cron_entry(CronEntry *entry);
+/**
+ * Deallocates a cron entry.
+ */
+void free_cron_entry(cron_entry *entry);
 
-#endif /* CRONENTRY_H */
+#endif /* cron_entry_H */

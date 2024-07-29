@@ -40,7 +40,7 @@ get_lockfile_path (void) {
   return lockfile_path;
 }
 
-Retval
+retval_t
 daemonize (void) {
   // Fork a new process
   pid_t pid;
@@ -99,7 +99,6 @@ void
 daemon_lock (void) {
   int  fd;
   char buf[LOCKFILE_BUFFER_SZ];
-  bool is_root;
 
   char* lp = get_lockfile_path();
   printlogf("lockfile path: %s\n", lp);
@@ -123,7 +122,7 @@ daemon_lock (void) {
       errno = 0;
       char* endptr;
       long  pid = strtol(buf, &endptr, 10);
-      if (errno != 0 || (endptr && endptr != '\n')) {
+      if (errno != 0 || (endptr && *endptr != '\n')) {
         printlogf("cannot acquire dedupe lock; unable to determine if that's "
                   "because there's already a running instance\n");
       } else {
@@ -162,7 +161,6 @@ daemon_quit () {
 void
 setup_sig_handlers (void) {
   struct sigaction sa;
-  int              n;
 
   sigemptyset(&sa.sa_mask);
   // restart any system calls that were interrupted by signal

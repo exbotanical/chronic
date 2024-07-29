@@ -86,11 +86,11 @@ parse_cmd_test (void) {
 
   char* expected = "/bin/sh command";
   ITER_CASES_TEST(tests, TestCase) {
-    TestCase  tc = tests[i];
-    CronEntry entry;
+    TestCase   tc = tests[i];
+    cron_entry entry;
 
-    char*  s   = s_copy(tc.input);
-    Retval ret = parse_cmd(s, &entry, tc.spaces_until_cmd);
+    char*    s   = s_copy(tc.input);
+    retval_t ret = parse_cmd(s, &entry, tc.spaces_until_cmd);
 
     if (tc.expect_err) {
       ok(ret == ERR, "Expect result to be ERR (%d)", ERR);
@@ -121,10 +121,10 @@ parse_entry_test (void) {
 
   char* expected = "/bin/sh command";
   ITER_CASES_TEST(tests, TestCase) {
-    TestCase  tc = tests[i];
-    CronEntry entry;
+    TestCase   tc = tests[i];
+    cron_entry entry;
 
-    Retval ret = parse_entry(&entry, tc.input);
+    retval_t ret = parse_entry(&entry, tc.input);
 
     if (tc.expect_err) {
       ok(ret == ERR, "Expect result to be ERR (%d)", ERR);

@@ -23,7 +23,7 @@ typedef enum {
    * associated with the job have been cleaned up.
    */
   EXITED
-} JobState;
+} job_state;
 
 /**
  * Represents all possible job types.
@@ -38,7 +38,7 @@ typedef enum {
    * cron job.
    */
   MAIL
-} JobType;
+} job_type;
 
 /**
  * Represents a job executed by the daemon.
@@ -47,34 +47,34 @@ typedef struct {
   /**
    * A unique identifier for the job (UUID v4).
    */
-  char    *ident;
+  char     *ident;
   /**
    * The command to be executed.
    */
-  char    *cmd;
+  char     *cmd;
   /**
    * The process id of the job when running. Starts as -1.
    */
-  pid_t    pid;
+  pid_t     pid;
   /**
    * The current job state.
    */
-  JobState state;
+  job_state state;
   /**
    * The username or email address to whom results will be reported.
    * This is set by the MAILTO variable in the corresponding crontab.
    * If MAILTO is not present, this will be set to the owning user's username.
    */
-  char    *mailto;
+  char     *mailto;
   /**
    * The job type.
    */
-  JobType  type;
+  job_type  type;
   /**
    * The return status of the job, once executed. Starts as -1.
    */
-  int      ret;
-} Job;
+  int       ret;
+} job_t;
 
 /**
  * Initializes the job reap routine. This is a daemon thread that awaits job
@@ -91,9 +91,24 @@ void init_reap_routine(void);
  */
 void signal_reap_routine(void);
 
-void run_jobs(hash_table *db, time_t ts);
+/**
+ * Iterates the crontab db and runs any job whose `next` timestamp matches the
+ * current rounded timestamp.
+ *
+ * @param db A hash table of eligible jobs, in the form
+ * HashTable<char*, crontab_t*>
+ * @param ts The current rounded time.
+ */
+void try_run_jobs(hash_table *db, time_t ts);
 
-void free_cronjob(Job *job);
-void free_mailjob(Job *job);
+/**
+ * Deallocates a job with type CRON.
+ */
+void free_cronjob(job_t *job);
+
+/**
+ * Deallocates a job with type MAIL.
+ */
+void free_mailjob(job_t *job);
 
 #endif /* JOB_H */

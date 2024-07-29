@@ -1,3 +1,4 @@
+#include "libutil/libutil.h"
 #include "tap.c/tap.h"
 #include "tests.h"
 #include "util.h"
@@ -66,7 +67,40 @@ get_sleep_duration_test () {
 }
 
 void
-run_time_tests (void) {
+get_filenames_test () {
+  char* dirname = setup_test_directory();
+  setup_test_file(dirname, "file1.txt", NULL);
+  setup_test_file(dirname, "file2.txt", NULL);
+  setup_test_file(dirname, "file3.txt", NULL);
+
+  array_t* result = get_filenames(dirname);
+
+  ok(result != NULL, "Expect non-NULL result");
+  ok(array_size(result) == 3, "Expect 3 files in the test directory");
+
+  // Depending on the OS, the order may be different
+  ok(
+    array_includes(result, has_filename_comparator, "file1.txt") == true,
+    "Should contain file1.txt"
+  );
+  ok(
+    array_includes(result, has_filename_comparator, "file2.txt") == true,
+    "Should contain file2.txt"
+  );
+  ok(
+    array_includes(result, has_filename_comparator, "file3.txt") == true,
+    "Should contain file3.txt"
+  );
+
+  cleanup_test_file(dirname, "file1.txt");
+  cleanup_test_file(dirname, "file2.txt");
+  cleanup_test_file(dirname, "file3.txt");
+  cleanup_test_directory(dirname);
+}
+
+void
+run_utils_tests (void) {
   round_ts_test();
   get_sleep_duration_test();
+  get_filenames_test();
 }

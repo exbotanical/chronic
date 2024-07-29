@@ -1,5 +1,5 @@
 FROM ubuntu:20.04
-# TODO: shared
+
 RUN apt-get update && apt-get install -y git gcc make uuid-dev vim bash curl libpcre3-dev
 RUN DEBIAN_FRONTEND=noninteractive apt-get -yq install bsd-mailx
 

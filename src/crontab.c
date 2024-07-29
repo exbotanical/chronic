@@ -48,7 +48,7 @@ is_file_owner (struct stat* statbuf, struct passwd* pw) {
  * @param ct The crontab whose environment we're finalizing.
  */
 static void
-complete_env (Crontab* ct) {
+complete_env (crontab_t* ct) {
   hash_table* vars = ct->vars;
 
 // We don't want to have to create users for unit tests.
@@ -78,12 +78,6 @@ complete_env (Crontab* ct) {
     );
   }
 #endif
-
-  // TODO: We could totally hoist this logic - the var matching function
-  // actually returns the full key=value string in the first element of the
-  // matches array. I was just lazy and really wanted to get the crond up and
-  // running.
-
   // Fill out the envp using the vars map. We're going to need this later and
   // forevermore, so we might as well get it out of the way upfront.
   if (vars->count > 0) {
@@ -103,36 +97,6 @@ complete_env (Crontab* ct) {
     // `execle` requires it to be NULL-terminated
     ct->envp[idx] = NULL;
   }
-}
-
-array_t*
-get_filenames (char* dirpath) {
-  DIR* dir;
-
-  if ((dir = opendir(dirpath)) != NULL) {
-    printlogf("scanning dir %s\n", dirpath);
-    struct dirent* den;
-
-    array_t* file_names = array_init();
-
-    while ((den = readdir(dir)) != NULL) {
-      // Skip pointer files
-      if (s_equals(den->d_name, ".") || s_equals(den->d_name, "..")) {
-        continue;
-      }
-
-      printlogf("found file %s/%s\n", dirpath, den->d_name);
-      array_push(file_names, s_copy(den->d_name));
-    }
-
-    closedir(dir);
-    return file_names;
-  } else {
-    perror("opendir");
-    printlogf("unable to scan dir %s\n", dirpath);
-  }
-
-  return NULL;
 }
 
 int
@@ -232,7 +196,7 @@ dont_process:
   return not_ok;
 }
 
-Crontab*
+crontab_t*
 new_crontab (
   int    crontab_fd,
   bool   is_root,
@@ -260,12 +224,12 @@ new_crontab (
 
   char buf[RW_BUFFER];
 
-  Crontab* ct = xmalloc(sizeof(Crontab));
-  ct->mtime   = mtime;
-  ct->uname   = uname;
-  ct->entries = array_init();
-  ct->vars    = ht_init(0, free);
-  ct->envp    = NULL;
+  crontab_t* ct = xmalloc(sizeof(crontab_t));
+  ct->mtime     = mtime;
+  ct->uname     = uname;
+  ct->entries   = array_init();
+  ct->vars      = ht_init(0, free);
+  ct->envp      = NULL;
 
   while (fgets(buf, sizeof(buf), fd) != NULL && --max_lines) {
     char* ptr = buf;
@@ -275,7 +239,7 @@ new_crontab (
       case SKIP_LINE: continue;
       case DONE: break;
       case ENTRY: {
-        CronEntry* entry = new_cron_entry(ptr, curr_time, ct);
+        cron_entry* entry = new_cron_entry(ptr, curr_time, ct);
         if (!entry) {
           printlogf(
             "Failed to parse what was thought to be a cron entry: %s (user "
@@ -295,14 +259,13 @@ new_crontab (
   }
 
   fclose(fd);
-
   complete_env(ct);
 
   return ct;
 }
 
 void
-free_crontab (Crontab* ct) {
+free_crontab (crontab_t* ct) {
   free(ct->uname);
   array_free(ct->entries, (free_fn*)free_cron_entry);
   ht_delete_table(ct->vars);
@@ -316,7 +279,7 @@ void
 scan_crontabs (
   hash_table* old_db,
   hash_table* new_db,
-  DirConfig   dir_conf,
+  dir_config  dir_conf,
   time_t      curr
 ) {
   array_t* fnames = get_filenames(dir_conf.path);
@@ -330,7 +293,7 @@ scan_crontabs (
         printlogf("failed to concatenate as %s/%s\n", dir_conf.path, fname);
         continue;
       }
-      Crontab* ct = (Crontab*)ht_get(old_db, fpath);
+      crontab_t* ct = (crontab_t*)ht_get(old_db, fpath);
 
       int         crontab_fd;
       struct stat statbuf;
@@ -380,7 +343,7 @@ scan_crontabs (
             fpath
           );
           foreach (ct->entries, i) {
-            CronEntry* entry = array_get(ct->entries, i);
+            cron_entry* entry = array_get(ct->entries, i);
             renew_cron_entry(entry, curr);
           }
         } else {
@@ -413,7 +376,7 @@ scan_crontabs (
 }
 
 hash_table*
-update_db (hash_table* db, time_t curr, DirConfig* dir_conf, ...) {
+update_db (hash_table* db, time_t curr, dir_config* dir_conf, ...) {
   // We HAVE to make a brand new db each time, else we will not be able to
   // tell if a file was deleted
   hash_table* new_db = ht_init(0, (free_fn*)free_crontab);
@@ -424,11 +387,10 @@ update_db (hash_table* db, time_t curr, DirConfig* dir_conf, ...) {
   while (dir_conf != NULL) {
     scan_crontabs(db, new_db, *dir_conf, curr);
 
-    dir_conf = va_arg(args, DirConfig*);
+    dir_conf = va_arg(args, dir_config*);
   }
 
   va_end(args);
-
   ht_delete_table(db);
 
   return new_db;

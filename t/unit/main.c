@@ -5,7 +5,7 @@
 #include "tests.h"
 
 // Externs initialized in main
-CliOptions opts               = {0};
+cli_opts opts                 = {0};
 
 char hostname[SMALL_BUFFER]   = "unit_test";
 
@@ -27,7 +27,7 @@ main (int argc, char** argv) {
   run_parser_tests();
   run_regexpr_tests();
   run_crontab_tests();
-  run_time_tests();
+  run_utils_tests();
 
   done_testing();
 }

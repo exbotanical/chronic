@@ -21,11 +21,11 @@ pthread_cond_t  cond  = PTHREAD_COND_INITIALIZER;
  * Creates a new job of type CRON.
  *
  * @param entry The entry which this job will represent.
- * @return Job*
+ * @return job_t*
  */
-static Job*
-new_cronjob (CronEntry* entry) {
-  Job* job    = xmalloc(sizeof(Job));
+static job_t*
+new_cronjob (cron_entry* entry) {
+  job_t* job  = xmalloc(sizeof(job_t));
   job->ident  = create_uuid();
   job->type   = CRON;
   job->state  = PENDING;
@@ -40,7 +40,7 @@ new_cronjob (CronEntry* entry) {
 }
 
 void
-free_cronjob (Job* job) {
+free_cronjob (job_t* job) {
   free(job->cmd);
   free(job->ident);
   free(job->mailto);
@@ -51,11 +51,11 @@ free_cronjob (Job* job) {
  * Creates a new job of type MAIL.
  *
  * @param og_job The original job about which this MAIL job is reporting.
- * @return Job*
+ * @return job_t*
  */
-static Job*
-new_mailjob (Job* og_job) {
-  Job* job    = xmalloc(sizeof(Job));
+static job_t*
+new_mailjob (job_t* og_job) {
+  job_t* job  = xmalloc(sizeof(job_t));
   job->ident  = create_uuid();
   job->type   = MAIL;
   job->state  = PENDING;
@@ -80,7 +80,7 @@ new_mailjob (Job* og_job) {
 }
 
 void
-free_mailjob (Job* job) {
+free_mailjob (job_t* job) {
   free(job->ident);
   free(job->cmd);
   free(job->mailto);
@@ -125,8 +125,8 @@ static unsigned int temporary_mail_count = 0;
  * @param exited_job The EXITED job to report in the MAIL job.
  */
 static void
-run_mailjob (Job* exited_job) {
-  Job* job = new_mailjob(exited_job);
+run_mailjob (job_t* exited_job) {
+  job_t* job = new_mailjob(exited_job);
   array_push(mail_queue, job);
 
   printlogf("[job %s] going to run mail cmd: %s\n", job->ident, job->cmd);
@@ -162,8 +162,8 @@ run_mailjob (Job* exited_job) {
  * @param entry
  */
 static void
-run_cronjob (CronEntry* entry) {
-  Job* job = new_cronjob(entry);
+run_cronjob (cron_entry* entry) {
+  job_t* job = new_cronjob(entry);
 
   pthread_mutex_lock(&mutex);
   array_push(job_queue, job);
@@ -201,7 +201,7 @@ run_cronjob (CronEntry* entry) {
 }
 
 static void
-reap_job (Job* job) {
+reap_job (job_t* job) {
   switch (job->state) {
     case PENDING: break;
     case EXITED: break;
@@ -239,7 +239,7 @@ reap_routine (void* _arg) {
     printlogf("in reaper thread\n");
 
     foreach (job_queue, i) {
-      Job* job = array_get(job_queue, i);
+      job_t* job = array_get(job_queue, i);
       // TODO: null checks everywhere ^
       reap_job(job);
 
@@ -255,7 +255,7 @@ reap_routine (void* _arg) {
     }
 
     foreach (mail_queue, i) {
-      Job* job = array_get(mail_queue, i);
+      job_t* job = array_get(mail_queue, i);
       reap_job(job);
 
       if (job->state == EXITED) {
@@ -277,7 +277,7 @@ init_reap_routine (void) {
   pthread_attr_t attr;
   int            rc = pthread_attr_init(&attr);
   rc = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-
+  // TODO: handle rc
   pthread_create(&reaper_thread_id, &attr, &reap_routine, NULL);
 }
 
@@ -289,7 +289,7 @@ signal_reap_routine (void) {
 }
 
 void
-run_jobs (hash_table* db, time_t ts) {
+try_run_jobs (hash_table* db, time_t ts) {
   // We must iterate the capacity here because hash table entries are not
   // stored contiguously
   if (db->count > 0) {
@@ -301,9 +301,9 @@ run_jobs (hash_table* db, time_t ts) {
         continue;
       }
 
-      Crontab* ct = r->value;
+      crontab_t* ct = r->value;
       foreach (ct->entries, i) {
-        CronEntry* entry = array_get(ct->entries, i);
+        cron_entry* entry = array_get(ct->entries, i);
         if (entry->next == ts) {
           run_cronjob(entry);
         }

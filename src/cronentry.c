@@ -8,11 +8,10 @@
 
 unsigned int id_counter = 0;
 
-CronEntry*
-new_cron_entry (char* raw, time_t curr, Crontab* ct) {
-  CronEntry* entry = xmalloc(sizeof(CronEntry));
+cron_entry*
+new_cron_entry (char* raw, time_t curr, crontab_t* ct) {
+  cron_entry* entry = xmalloc(sizeof(cron_entry));
 
-  // TODO: Lift out
   if (parse_entry(entry, raw) != OK) {
     printlogf("[ERROR] Failed to parse entry line %s\n", raw);
     return NULL;
@@ -26,14 +25,14 @@ new_cron_entry (char* raw, time_t curr, Crontab* ct) {
 }
 
 void
-renew_cron_entry (CronEntry* entry, time_t curr) {
+renew_cron_entry (cron_entry* entry, time_t curr) {
   printlogf("Updating time for entry %d\n", entry->id);
 
   entry->next = cron_next(entry->expr, curr);
 }
 
 void
-free_cron_entry (CronEntry* entry) {
+free_cron_entry (cron_entry* entry) {
   free(entry->expr);
   free(entry->schedule);
   free(entry->cmd);

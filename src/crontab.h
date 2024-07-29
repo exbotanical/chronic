@@ -22,7 +22,7 @@ typedef struct {
    * The absolute path of the directory.
    */
   char *path;
-} DirConfig;
+} dir_config;
 
 /**
  * Represents a single crontab (file). We assume (and we enforce this in the
@@ -51,15 +51,7 @@ typedef struct {
    * "key=value" literals.
    */
   char      **envp;
-} Crontab;
-
-/**
- * Given a directory path, returns an array of all of the valid filenames
- * therein.
- *
- * @param dirpath
- */
-array_t *get_filenames(char *dirpath);
+} crontab_t;
 
 /**
  * Parses a file into new crontab.
@@ -70,15 +62,20 @@ array_t *get_filenames(char *dirpath);
  * @param curr_time The current time.
  * @param mtime The last modified time of the file represented by `crontab_fd`.
  * @param uname The username (and filename).
- * @return Crontab*
+ * @return crontab_t*
  */
-Crontab *new_crontab(
+crontab_t *new_crontab(
   int    crontab_fd,
   bool   is_root,
   time_t curr_time,
   time_t mtime,
   char  *uname
 );
+
+/**
+ * Deallocates a crontab.
+ */
+void free_crontab(crontab_t *ct);
 
 /**
  * Scans all crontabs in the given directory and updates them if needed.
@@ -88,12 +85,11 @@ Crontab *new_crontab(
  * @param dir_conf The dir config for the directory to be scanned.
  * @param curr The current time.
  *
- * TODO: static
  */
 void scan_crontabs(
   hash_table *old_db,
   hash_table *new_db,
-  DirConfig   dir_conf,
+  dir_config  dir_conf,
   time_t      curr
 );
 
@@ -105,9 +101,6 @@ void scan_crontabs(
  * @param dir_conf A variadic list of directories to be scanned.
  * @param ...
  */
-hash_table *update_db(hash_table *db, time_t curr, DirConfig *dir_conf, ...);
-
-// TODO: docs
-void free_crontab(Crontab *ct);
+hash_table *update_db(hash_table *db, time_t curr, dir_config *dir_conf, ...);
 
 #endif /* FS_H */

@@ -20,6 +20,9 @@ void logger_init();
  */
 void printlogf(const char *fmt, ...);
 
+/**
+ * Closes any file descriptors used by the logger.
+ */
 void logger_close(void);
 
 #endif /* LOG_H */

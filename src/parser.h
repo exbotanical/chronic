@@ -7,16 +7,16 @@
 #include "libhash/libhash.h"
 #include "util.h"
 
-typedef enum { ENV_VAR_ADDED, SKIP_LINE, ENTRY, DONE } ParseLineResult;
+typedef enum { ENV_VAR_ADDED, SKIP_LINE, ENTRY, DONE } parse_ln_result;
 
-void   strip_comment(char *str);
-char  *until_nth_of_char(const char *str, char c, int n);
-bool   is_comment_line(const char *str);
-bool   should_parse_line(const char *line);
-void   extract_vars(const char *s, hash_table *ht);
-Retval parse_cmd(char *line, CronEntry *entry, int count);
+void     strip_comment(char *str);
+char    *until_nth_of_char(const char *str, char c, int n);
+bool     is_comment_line(const char *str);
+bool     should_parse_line(const char *line);
+void     extract_vars(const char *s, hash_table *ht);
+retval_t parse_cmd(char *line, cron_entry *entry, int count);
 
-Retval          parse_entry(CronEntry *entry, char *line);
-ParseLineResult parse_line(char *ptr, int max_entries, hash_table *ht);
+retval_t        parse_entry(cron_entry *entry, char *line);
+parse_ln_result parse_line(char *ptr, int max_entries, hash_table *ht);
 
 #endif /* PARSER_H */
