@@ -76,4 +76,5 @@ setup_sys_cron () {
 teardown_sys_cron () {
   rm -rf "$SYS_CRONDIR"
   rm /tmp/root*
+  rm $MAIL_DIR/root
 }

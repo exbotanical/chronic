@@ -5,7 +5,9 @@ TESTING_DIR=t/integ
 UTILS_F=run_utils.bash
 
 declare -a SKIP_FILES=(
-  # 'main_shpec.bash'
+  # 'daemon_shpec.bash'
+  # 'root_shpec.bash'
+  # 'user_shpec.bash'
 )
 
 run_test () {
