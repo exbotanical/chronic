@@ -14,6 +14,7 @@ DEPSDIR     := deps
 TESTDIR     := t
 
 SRC         := $(wildcard $(SRCDIR)/*.c)
+TESTS       := $(wildcard $(TESTDIR)/*/*.c)
 SRC_NOMAIN  := $(filter-out $(SRCDIR)/main.c, $(SRC))
 TEST_DEPS   := $(wildcard $(DEPSDIR)/tap.c/*.c)
 DEPS        := $(filter-out $(wildcard $(DEPSDIR)/tap.c/*), $(wildcard $(DEPSDIR)/*/*.c))
@@ -37,12 +38,12 @@ unit_test: $(UNIT_TESTS) $(DEPS) $(TEST_DEPS) $(SRC_NOMAIN)
 	@./$(UNIT_TARGET)
 	@$(MAKE) clean
 
-integ_test: $(PROG)
+integ_test: all
 	@./$(TESTDIR)/integ/utils/run.bash
 	@$(MAKE) clean
 
 valgrind: CFLAGS += -g -O0 -DVALGRIND
-valgrind: $(PROG)
+valgrind: all
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -s ./$(PROG)
 	@$(MAKE) clean
 
@@ -50,4 +51,4 @@ clean:
 	@rm -f $(UNIT_TARGET) $(PROG) .log*
 
 fmt:
-	$(FMT) -i $(SRC) $(wildcard $(TESTDIR)/*/*.c)
+	$(FMT) -i $(SRC) $(TESTS)
