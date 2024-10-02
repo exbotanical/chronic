@@ -1,6 +1,6 @@
 # TODOs
 
-- [ ] cleanup
+- [x] cleanup
 - [ ] allow user to interpolate a `RELATIVE_DIR` in crontabs (so they can reference files relative to the crontab)
 - [x] allow variables in crontab
 - [ ] schedule and run overdue jobs
@@ -18,7 +18,9 @@
 - [x] handle signals
   - [ ] and log getting closed or deleted
 - [x] daemon lock
-- [ ] kill chronic anywhere integ test stops (e.g. TRAP)
+- [x] kill chronic anywhere integ test stops (e.g. TRAP)
 - [ ] crontab program
 - [ ] validate permissions e.g. child job exec
-- [ ] format mail
+- [x] format mail
+  - [ ] test
+- [ ] Fix all gcc warnings/errors and enable strict mode
