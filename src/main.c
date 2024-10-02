@@ -17,6 +17,7 @@
 #include "job.h"
 #include "log.h"
 #include "opt-constants.h"
+#include "panic.h"
 #include "usr.h"
 #include "util.h"
 
@@ -51,8 +52,7 @@ main (int argc, char** argv) {
 #ifndef VALGRIND
   // Become a daemon process
   if (daemonize() != OK) {
-    printf("daemonize fail");
-    exit(EXIT_FAILURE);
+    panic("[%s@L%d] daemonize fail\n", __func__, __LINE__);
   }
 #endif
 
@@ -71,10 +71,12 @@ main (int argc, char** argv) {
   daemon_lock();  // TODO: check before daemonize
   setup_sig_handlers();
 
-  job_queue         = array_init();
-  mail_queue        = array_init();
+  job_queue         = array_init_or_panic();
+  mail_queue        = array_init_or_panic();
+
   daemon_pid        = getpid();
-  hash_table* db    = ht_init(0, (free_fn*)free_crontab);
+
+  hash_table* db    = ht_init_or_panic(0, (free_fn*)free_crontab);
 
   time_t start_time = time(NULL);
 

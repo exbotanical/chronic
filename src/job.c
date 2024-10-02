@@ -11,6 +11,7 @@
 #include "libutil/libutil.h"
 #include "log.h"
 #include "opt-constants.h"
+#include "panic.h"
 #include "util.h"
 
 // Mutex + cond var for the reaper daemon thread.
@@ -29,12 +30,12 @@ new_cronjob (cron_entry* entry) {
   job->ident  = create_uuid();
   job->type   = CRON;
   job->state  = PENDING;
-  job->cmd    = s_copy(entry->cmd);
+  job->cmd    = s_copy_or_panic(entry->cmd);
   job->ret    = -1;
   job->pid    = -1;
 
   ht_entry* r = ht_search(entry->parent->vars, MAILTO_ENVVAR);
-  job->mailto = s_copy(r ? r->value : entry->parent->uname);
+  job->mailto = s_copy_or_panic(r ? r->value : entry->parent->uname);
 
   return job;
 }
@@ -59,7 +60,7 @@ new_mailjob (job_t* og_job) {
   job->ident  = create_uuid();
   job->type   = MAIL;
   job->state  = PENDING;
-  job->mailto = s_copy(og_job->mailto);
+  job->mailto = s_copy_or_panic(og_job->mailto);
   job->ret    = -1;
   job->pid    = -1;
 
@@ -70,11 +71,11 @@ new_mailjob (job_t* og_job) {
     MAILCMD_PATH,
     DAEMON_IDENT,
     hostname,
-    og_job->cmd,
+    MAIL_SUBJECT,
     og_job->mailto
   );
 
-  job->cmd = s_copy(mail_cmd);
+  job->cmd = s_copy_or_panic(mail_cmd);
 
   return job;
 }
@@ -116,8 +117,6 @@ check_job (pid_t pid, int* status) {
   return false;
 }
 
-static unsigned int temporary_mail_count = 0;
-
 // TODO: [bash] <defunct>
 /**
  * Creates and runs a MAIL job to report the given EXITED job `exited_job`.
@@ -127,7 +126,7 @@ static unsigned int temporary_mail_count = 0;
 static void
 run_mailjob (job_t* exited_job) {
   job_t* job = new_mailjob(exited_job);
-  array_push(mail_queue, job);
+  array_push_or_panic(mail_queue, job);
 
   printlogf("[job %s] going to run mail cmd: %s\n", job->ident, job->cmd);
 
@@ -142,18 +141,18 @@ run_mailjob (job_t* exited_job) {
       exit(EXIT_FAILURE);
     }
 
-    fprintf(
-      mail_pipe,
-      s_fmt("This is the body of the email (num %d).\n", ++temporary_mail_count)
-    );
+    char* email_body = s_fmt("command: %s", exited_job->cmd);
+    fprintf(mail_pipe, email_body);
+    free(email_body);
 
     if (pclose(mail_pipe) == -1) {
       perror("pclose");
       exit(EXIT_FAILURE);
     }
 
-    exit(0);
+    exit(EXIT_SUCCESS);
   }
+
   job->state = RUNNING;
 }
 
@@ -166,11 +165,11 @@ run_cronjob (cron_entry* entry) {
   job_t* job = new_cronjob(entry);
 
   pthread_mutex_lock(&mutex);
-  array_push(job_queue, job);
+  array_push_or_panic(job_queue, job);
   pthread_mutex_unlock(&mutex);
 
-  char* home  = ht_get(entry->parent->vars, HOMEDIR_ENVVAR);
-  char* shell = ht_get(entry->parent->vars, SHELL_ENVVAR);
+  char* home  = ht_get_or_panic(entry->parent->vars, HOMEDIR_ENVVAR);
+  char* shell = ht_get_or_panic(entry->parent->vars, SHELL_ENVVAR);
 
   if ((job->pid = fork()) == 0) {
     // Detach from the crond and become session leader
@@ -239,8 +238,7 @@ reap_routine (void* _arg) {
     printlogf("in reaper thread\n");
 
     foreach (job_queue, i) {
-      job_t* job = array_get(job_queue, i);
-      // TODO: null checks everywhere ^
+      job_t* job = array_get_or_panic(job_queue, i);
       reap_job(job);
 
       // We need to be careful to only remove EXITED jobs, else
@@ -255,7 +253,7 @@ reap_routine (void* _arg) {
     }
 
     foreach (mail_queue, i) {
-      job_t* job = array_get(mail_queue, i);
+      job_t* job = array_get_or_panic(mail_queue, i);
       reap_job(job);
 
       if (job->state == EXITED) {
@@ -276,8 +274,12 @@ init_reap_routine (void) {
   pthread_t      reaper_thread_id;
   pthread_attr_t attr;
   int            rc = pthread_attr_init(&attr);
-  rc = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-  // TODO: handle rc
+  if (rc != 0) {
+    panic("pthread_attr_init failed with rc %d\n", rc);
+  }
+  if ((rc = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED)) != 0) {
+    panic("pthread_attr_setdetachstate failed with rc %d\n", rc);
+  }
   pthread_create(&reaper_thread_id, &attr, &reap_routine, NULL);
 }
 
@@ -303,7 +305,7 @@ try_run_jobs (hash_table* db, time_t ts) {
 
       crontab_t* ct = r->value;
       foreach (ct->entries, i) {
-        cron_entry* entry = array_get(ct->entries, i);
+        cron_entry* entry = array_get_or_panic(ct->entries, i);
         if (entry->next == ts) {
           run_cronjob(entry);
         }

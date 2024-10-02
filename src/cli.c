@@ -2,6 +2,7 @@
 
 #include "commander/commander.h"
 #include "constants.h"
+#include "panic.h"
 
 /**
  * Sets the log file CLI option.
@@ -11,7 +12,7 @@
  */
 static void
 setopt_logfile (command_t* self) {
-  opts.log_file = s_copy((char*)self->arg);
+  opts.log_file = s_copy_or_panic((char*)self->arg);
 }
 
 void

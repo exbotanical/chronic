@@ -37,7 +37,6 @@ describe 'crond run by non-root'
   # Add 1 min job for demian
   add_user_job $uname_2 1
 
-
   trap 'quietly_kill; teardown_user "$uname_1" 2>/dev/null; \
   teardown_user "$uname_2" 2>/dev/null; \
   teardown_user_crondir 2>/dev/null; \

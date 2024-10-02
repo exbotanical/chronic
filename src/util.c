@@ -6,13 +6,13 @@
 
 #include "log.h"
 #include "opt-constants.h"
+#include "panic.h"
 
 void*
 xmalloc (size_t sz) {
   void* ptr;
   if ((ptr = malloc(sz)) == NULL) {
-    printlogf("[xmalloc::%s] failed to allocate memory\n", __func__);
-    exit(1);
+    panic("[%s@L%d] xmalloc failed to allocate memory\n", __func__, __LINE__);
   }
 
   return ptr;
@@ -35,7 +35,7 @@ create_uuid (void) {
   uuid_generate_random(bin_uuid);
   uuid_unparse(bin_uuid, uuid);
 
-  return s_copy(uuid);
+  return s_copy_or_panic(uuid);
 }
 
 array_t*
@@ -46,7 +46,7 @@ get_filenames (char* dirpath) {
     printlogf("scanning dir %s\n", dirpath);
     struct dirent* den;
 
-    array_t* file_names = array_init();
+    array_t* file_names = array_init_or_panic();
 
     while ((den = readdir(dir)) != NULL) {
       // Skip pointer files
@@ -55,7 +55,8 @@ get_filenames (char* dirpath) {
       }
 
       printlogf("found file %s/%s\n", dirpath, den->d_name);
-      array_push(file_names, s_copy(den->d_name));
+
+      array_push_or_panic(file_names, s_copy_or_panic(den->d_name));
     }
 
     closedir(dir);

@@ -8,19 +8,20 @@
 
 #include "libutil/libutil.h"
 #include "log.h"
+#include "panic.h"
 
 static const char *VARIABLE_PATTERN
   = "^([a-zA-Z_-][a-zA-Z0-9_-]*)=\"([^\"]*)\"(?<! )$";
 
-static int ovecsize = 30;
-static int ovector[30];  // TODO:
+static int ovecsize = 32;
+static int ovector[32];  // TODO:
 
 static pthread_once_t init_regex_cache_once = PTHREAD_ONCE_INIT;
 static hash_table    *regex_cache;
 
 static void
 init_regex_cache (void) {
-  regex_cache = ht_init(1, NULL);
+  regex_cache = ht_init_or_panic(1, NULL);
 }
 
 static hash_table *
@@ -37,13 +38,14 @@ regex_compile (const char *pattern) {
 
   pcre *re = pcre_compile(pattern, 0, &error, &erroffset, NULL);
   if (re == NULL) {
-    printf(
-      "PCRE compilation failed at offset %d: %s; errno: %d\n",
+    panic(
+      "[%s@L%d] PCRE compilation failed at offset %d: %s; errno: %d\n",
+      __func__,
+      __LINE__,
       erroffset,
       error,
       errno
     );
-    exit(1);
   }
 
   return re;
@@ -70,7 +72,7 @@ array_t *
 regex_matches (pcre *re, char *cmp) {
   int rc = pcre_exec(re, NULL, cmp, strlen(cmp), 0, 0, ovector, ovecsize);
   if (rc >= 0) {
-    array_t *matches = array_init();
+    array_t *matches = array_init_or_panic();
 
     int i;
 
@@ -83,7 +85,7 @@ regex_matches (pcre *re, char *cmp) {
       strncpy(match, cmp + start, len);
       match[len] = '\0';
 
-      array_push(matches, s_copy(match));
+      array_push_or_panic(matches, s_copy_or_panic(match));
     }
 
     return matches;
@@ -101,18 +103,20 @@ bool
 match_variable (char *line, hash_table *vars) {
   pcre *re = regex_cache_get(get_regex_cache(), VARIABLE_PATTERN);
   if (!re) {
-    printlogf("an error occurred when compiling regex\n");
-    exit(EXIT_FAILURE);
+    panic(
+      "[%s@L%d] an error occurred when compiling regex\n",
+      __func__,
+      __LINE__
+    );
   }
 
   array_t *matches = regex_matches(re, line);
   if (matches && array_size(matches) == 3) {
     ht_insert(
       vars,
-      s_copy(array_get(matches, 1)),
-      s_copy(array_get(matches, 2))
+      s_copy_or_panic(array_get_or_panic(matches, 1)),
+      s_copy_or_panic(array_get_or_panic(matches, 2))
     );
-
     array_free(matches, free);
 
     return true;

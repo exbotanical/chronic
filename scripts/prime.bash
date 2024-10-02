@@ -22,3 +22,5 @@ add_user_job $uname_3 1
 add_user_job $uname_1 3
 add_user_job $uname_1 5
 add_user_job $uname_2 2
+
+service postfix start

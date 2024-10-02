@@ -15,6 +15,7 @@
 #include "cronentry.h"
 #include "log.h"
 #include "opt-constants.h"
+#include "panic.h"
 #include "parser.h"
 #include "util.h"
 
@@ -56,15 +57,16 @@ complete_env (crontab_t* ct) {
   struct passwd* pw = getpwnam(ct->uname);
   if (pw) {
     if (!ht_search(vars, HOMEDIR_ENVVAR)) {
-      ht_insert(vars, HOMEDIR_ENVVAR, s_copy(pw->pw_dir));
+      // TODO: update ht_insert API to return bool
+      ht_insert(vars, HOMEDIR_ENVVAR, s_copy_or_panic(pw->pw_dir));
     }
 
     if (!ht_search(vars, SHELL_ENVVAR)) {
-      ht_insert(vars, SHELL_ENVVAR, s_copy(pw->pw_shell));
+      ht_insert(vars, SHELL_ENVVAR, s_copy_or_panic(pw->pw_shell));
     }
 
     if (!ht_search(vars, UNAME_ENVVAR)) {
-      ht_insert(vars, UNAME_ENVVAR, s_copy(pw->pw_name));
+      ht_insert(vars, UNAME_ENVVAR, s_copy_or_panic(pw->pw_name));
     }
 
     if (!ht_search(vars, PATH_ENVVAR)) {
@@ -227,9 +229,9 @@ new_crontab (
   crontab_t* ct = xmalloc(sizeof(crontab_t));
   ct->mtime     = mtime;
   ct->uname     = uname;
-  ct->entries   = array_init();
-  ct->vars      = ht_init(0, free);
   ct->envp      = NULL;
+  ct->entries   = array_init_or_panic();
+  ct->vars      = ht_init_or_panic(0, free);
 
   while (fgets(buf, sizeof(buf), fd) != NULL && --max_lines) {
     char* ptr = buf;
@@ -251,7 +253,7 @@ new_crontab (
         }
 
         printlogf("New entry (%d) for crontab %s\n", entry->id, uname);
-        array_push(ct->entries, entry);
+        array_push_or_panic(ct->entries, entry);
         max_entries--;
       }
       default: break;
@@ -287,14 +289,14 @@ scan_crontabs (
   // This will handle removal of any files that were deleted during runtime
   if (has_elements(fnames)) {
     foreach (fnames, i) {
-      char* fname = array_get(fnames, i);
+      char* fname = array_get_or_panic(fnames, i);
+
       char* fpath;
       if (!(fpath = s_fmt("%s/%s", dir_conf.path, fname))) {
         printlogf("failed to concatenate as %s/%s\n", dir_conf.path, fname);
         continue;
       }
-      crontab_t* ct = (crontab_t*)ht_get(old_db, fpath);
-
+      crontab_t*  ct = ht_get(old_db, fpath);
       int         crontab_fd;
       struct stat statbuf;
 
@@ -316,7 +318,7 @@ scan_crontabs (
           dir_conf.is_root,
           curr,
           statbuf.st_mtime,
-          s_copy(fname)
+          s_copy_or_panic(fname)
         );
         ht_insert(new_db, fpath, ct);
       }
@@ -343,7 +345,7 @@ scan_crontabs (
             fpath
           );
           foreach (ct->entries, i) {
-            cron_entry* entry = array_get(ct->entries, i);
+            cron_entry* entry = array_get_or_panic(ct->entries, i);
             renew_cron_entry(entry, curr);
           }
         } else {
@@ -351,14 +353,13 @@ scan_crontabs (
             "existing file %s was modified, recreating crontab\n",
             fpath
           );
-
           // modified, re-process
           ct = new_crontab(
             crontab_fd,
             dir_conf.is_root,
             curr,
             statbuf.st_mtime,
-            s_copy(fname)
+            s_copy_or_panic(fname)
           );
         }
 
@@ -379,7 +380,7 @@ hash_table*
 update_db (hash_table* db, time_t curr, dir_config* dir_conf, ...) {
   // We HAVE to make a brand new db each time, else we will not be able to
   // tell if a file was deleted
-  hash_table* new_db = ht_init(0, (free_fn*)free_crontab);
+  hash_table* new_db = ht_init_or_panic(0, (free_fn*)free_crontab);
 
   va_list args;
   va_start(args, dir_conf);

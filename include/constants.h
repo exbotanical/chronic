@@ -23,7 +23,9 @@
 #define MED_BUFFER      SMALL_BUFFER * 4
 #define LARGE_BUFFER    MED_BUFFER * 2
 
-#define MAILCMD_FMT     "%s -r%s@%s -s 'job: %s' %s"
+// Mail command path | sender | hostname | subject |  recipient
+#define MAILCMD_FMT     "%s -r%s@%s -s '%s' %s"
+#define MAIL_SUBJECT    "cron job completed"
 
 #define CHRONIC_VERSION "0.0.1"
 #define DAEMON_IDENT    "crond"

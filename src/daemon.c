@@ -19,6 +19,7 @@
 #include "job.h"
 #include "libutil/libutil.h"
 #include "log.h"
+#include "panic.h"
 
 #define LOCKFILE_BUFFER_SZ    512
 #define SYS_LOCKFILE_PATH     "/var/run/crond.pid"
@@ -50,7 +51,7 @@ daemonize (void) {
     return ERR;
   } else if (pid > 0) {
     // Exit the parent process without performing atexit tasks
-    _exit(0);
+    _exit(EXIT_SUCCESS);
   }
 
   // Close std file descriptors to isolate the daemon process
@@ -105,8 +106,7 @@ daemon_lock (void) {
   // Initially, we set the perms to be r/w by owner only to prevent race
   // conds.
   if ((fd = open(lp, O_RDWR | O_CREAT, 0600)) == -1) {
-    printlogf("failed to open/create %s: %s", lp, strerror(errno));
-    exit(EXIT_FAILURE);
+    panic("failed to open/create %s", lp, strerror(errno));
   }
 
   if (flock(fd, LOCK_EX /* exclusive */ | LOCK_NB /* non-blocking */) < OK) {
@@ -134,7 +134,7 @@ daemon_lock (void) {
       }
     }
 
-    exit(EXIT_FAILURE);
+    panic("%s\n", "failed to acquire dedupe lock");
   }
 
   fchmod(fd, 0644);
@@ -167,8 +167,12 @@ setup_sig_handlers (void) {
   sa.sa_flags   = SA_RESTART;
   sa.sa_handler = daemon_quit;
   if (sigaction(SIGINT, &sa, NULL) < OK || sigaction(SIGTERM, &sa, NULL)) {
-    printlogf("failed to setup signal handler: %s\n", strerror(errno));
-    exit(EXIT_FAILURE);
+    panic(
+      "[%s@L%d] failed to setup signal handler: %s\n",
+      __func__,
+      __LINE__,
+      strerror(errno)
+    );
   }
   // TODO: reap on sigchld
 }

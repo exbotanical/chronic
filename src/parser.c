@@ -7,6 +7,7 @@
 #include "libhash/libhash.h"
 #include "libutil/libutil.h"
 #include "log.h"
+#include "panic.h"
 #include "regexpr.h"
 #include "strdup/strdup.h"
 
@@ -60,7 +61,7 @@ strip_comment (char* str) {
 
 retval_t
 parse_cmd (char* line, cron_entry* entry, int count) {
-  char* line_cp = s_copy(line);
+  char* line_cp = s_copy_or_panic(line);
 
   entry->cmd = until_nth_of_char(line_cp, ' ', line_cp[0] == '@' ? 1 : count);
   if (s_nullish(entry->cmd)) {

@@ -6,6 +6,7 @@ PROG := chronic
 UNIT_TARGET := unit_test
 
 SRCDIR := src
+INCDIR := include
 DEPSDIR := deps
 TESTDIR := t
 
@@ -13,20 +14,21 @@ SRC := $(wildcard $(SRCDIR)/*.c)
 TEST_DEPS := $(wildcard $(DEPSDIR)/tap.c/*.c)
 DEPS := $(filter-out $(wildcard $(DEPSDIR)/tap.c/*), $(wildcard $(DEPSDIR)/*/*.c))
 
-CFLAGS := -I$(DEPSDIR) -Wall -Wextra -pedantic
-UNIT_TEST_CFLAGS := -DUNIT_TEST
+# TODO: isystem?
+CFLAGS := -I$(DEPSDIR) -I$(INCDIR) -Wall -Wextra -pedantic
+UNIT_TEST_CFLAGS := -DUNIT_TEST -I$(DEPSDIR) -I$(INCDIR)
 LIBS := -lm -lpthread -lpcre -luuid
 
 TESTS := $(wildcard $(TESTDIR)/*.c)
 
 $(PROG):
-	$(CC) $(CFLAGS) $(SRC) $(DEPS) $(LIBS) -Ideps -Isrc -o $(PROG)
+	$(CC) $(CFLAGS) $(SRC) $(DEPS) $(LIBS) -o $(PROG)
 
 test:
 	$(MAKE) unit_test
 
 unit_test:
-	$(CC) $(UNIT_TEST_CFLAGS) $(wildcard $(TESTDIR)/unit/*.c) $(TEST_DEPS) $(DEPS) $(filter-out $(SRCDIR)/main.c, $(SRC)) -I$(SRCDIR) -I$(DEPSDIR) $(LIBS) -o $(UNIT_TARGET)
+	$(CC) $(UNIT_TEST_CFLAGS) $(wildcard $(TESTDIR)/unit/*.c) $(TEST_DEPS) $(DEPS) $(filter-out $(SRCDIR)/main.c, $(SRC)) $(LIBS) -o $(UNIT_TARGET)
 	./$(UNIT_TARGET)
 	$(MAKE) clean
 
@@ -41,7 +43,7 @@ valgrind: $(PROG)
 
 clean:
 	rm -f $(UNIT_TARGET) $(PROG) .log*
-
+# TODO: cleanup Makefile
 lint:
 	$(LINTER) -i $(SRC) $(wildcard $(TESTDIR)/*/*.c)
 
