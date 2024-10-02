@@ -27,14 +27,14 @@ UNIT_TEST_CFLAGS := -DUNIT_TEST $(CFLAGS)
 LIBS             := -lm -lpthread -lpcre -luuid
 
 all: $(SRC) $(DEPS)
-	$(CC) $(CFLAGS) $(LIBS) $^ -o $(PROG)
+	$(CC) $(CFLAGS) $^ $(LIBS) -o $(PROG)
 
 test:
 	@$(MAKE) unit_test
 	@$(MAKE) integ_test
 
 unit_test: $(UNIT_TESTS) $(DEPS) $(TEST_DEPS) $(SRC_NOMAIN)
-	$(CC) $(UNIT_TEST_CFLAGS) $(LIBS) $^ -o $(UNIT_TARGET)
+	$(CC) $(UNIT_TEST_CFLAGS) $^ $(LIBS) -o $(UNIT_TARGET)
 	@./$(UNIT_TARGET)
 	@$(MAKE) clean
 
