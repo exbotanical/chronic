@@ -21,11 +21,7 @@ setup_test_directory () {
 }
 
 void
-setup_test_file (
-  const char* dirname,
-  const char* filename,
-  const char* content
-) {
+setup_test_file (const char* dirname, const char* filename, const char* content) {
   char path[256];
   snprintf(path, sizeof(path), "%s/%s", dirname, filename);
 
@@ -43,11 +39,7 @@ setup_test_file (
 }
 
 void
-modify_test_file (
-  const char* dirname,
-  const char* filename,
-  const char* content
-) {
+modify_test_file (const char* dirname, const char* filename, const char* content) {
   char path[256];
   snprintf(path, sizeof(path), "%s/%s", dirname, filename);
 

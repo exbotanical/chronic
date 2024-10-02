@@ -21,13 +21,7 @@ round_ts_test (void) {
   ITER_CASES_TEST(tests, TestCase) {
     TestCase tc = tests[i];
 
-    ok(
-      round_ts(tc.ts, tc.unit) == tc.expect,
-      "Rounds %d to %d given unit %d",
-      tc.ts,
-      tc.unit,
-      tc.expect
-    );
+    ok(round_ts(tc.ts, tc.unit) == tc.expect, "Rounds %d to %d given unit %d", tc.ts, tc.unit, tc.expect);
   }
 }
 
@@ -79,18 +73,9 @@ get_filenames_test () {
   ok(array_size(result) == 3, "Expect 3 files in the test directory");
 
   // Depending on the OS, the order may be different
-  ok(
-    array_includes(result, has_filename_comparator, "file1.txt") == true,
-    "Should contain file1.txt"
-  );
-  ok(
-    array_includes(result, has_filename_comparator, "file2.txt") == true,
-    "Should contain file2.txt"
-  );
-  ok(
-    array_includes(result, has_filename_comparator, "file3.txt") == true,
-    "Should contain file3.txt"
-  );
+  ok(array_includes(result, has_filename_comparator, "file1.txt") == true, "Should contain file1.txt");
+  ok(array_includes(result, has_filename_comparator, "file2.txt") == true, "Should contain file2.txt");
+  ok(array_includes(result, has_filename_comparator, "file3.txt") == true, "Should contain file3.txt");
 
   cleanup_test_file(dirname, "file1.txt");
   cleanup_test_file(dirname, "file2.txt");

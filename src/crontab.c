@@ -102,12 +102,7 @@ complete_env (crontab_t* ct) {
 }
 
 int
-get_crontab_fd_if_valid (
-  char*        fpath,
-  char*        uname,
-  time_t       last_mtime,
-  struct stat* statbuf
-) {
+get_crontab_fd_if_valid (char* fpath, char* uname, time_t last_mtime, struct stat* statbuf) {
   int            not_ok     = OK - 1;
   struct passwd* pw         = NULL;
   int            crontab_fd = not_ok;
@@ -152,23 +147,14 @@ get_crontab_fd_if_valid (
   // Verify that the user the file is named after actually owns said file,
   // unless we're root.
   if (!usr.root && !is_file_owner(statbuf, pw)) {
-    printlogf(
-      "file %s not owned by specified user %s (it's owned by %s)\n",
-      fpath,
-      uname,
-      pw->pw_name
-    );
+    printlogf("file %s not owned by specified user %s (it's owned by %s)\n", fpath, uname, pw->pw_name);
     goto dont_process;
   }
 
   // This time we're checking that the user who executed this program matches
   // the crontab owner, unless we're root;.
   if (!usr.root && pw->pw_uid != usr.uid) {
-    printlogf(
-      "current user %s must own this crontab (%s) or be root to schedule it\n ",
-      uname,
-      fpath
-    );
+    printlogf("current user %s must own this crontab (%s) or be root to schedule it\n ", uname, fpath);
     goto dont_process;
   }
 #endif
@@ -199,13 +185,7 @@ dont_process:
 }
 
 crontab_t*
-new_crontab (
-  int    crontab_fd,
-  bool   is_root,
-  time_t curr_time,
-  time_t mtime,
-  char*  uname
-) {
+new_crontab (int crontab_fd, bool is_root, time_t curr_time, time_t mtime, char* uname) {
   FILE* fd;
   if (!(fd = fdopen(crontab_fd, "r"))) {
     printlogf("fdopen on crontab_fd %d failed\n", crontab_fd);
@@ -278,12 +258,7 @@ free_crontab (crontab_t* ct) {
 }
 
 void
-scan_crontabs (
-  hash_table* old_db,
-  hash_table* new_db,
-  dir_config  dir_conf,
-  time_t      curr
-) {
+scan_crontabs (hash_table* old_db, hash_table* new_db, dir_config dir_conf, time_t curr) {
   array_t* fnames = get_filenames(dir_conf.path);
   // If no files, fall through to db replacement
   // This will handle removal of any files that were deleted during runtime
@@ -305,21 +280,14 @@ scan_crontabs (
       char* uname = dir_conf.is_root ? ROOT_UNAME : fname;
       // File hasn't been processed before
       if (!ct) {
-        if ((crontab_fd = get_crontab_fd_if_valid(fpath, uname, 0, &statbuf))
-            < OK) {
+        if ((crontab_fd = get_crontab_fd_if_valid(fpath, uname, 0, &statbuf)) < OK) {
           printlogf("file %s not valid; continuing...\n", fpath);
           continue;
         }
 
         printlogf("creating new crontab from file %s...\n", fpath);
 
-        ct = new_crontab(
-          crontab_fd,
-          dir_conf.is_root,
-          curr,
-          statbuf.st_mtime,
-          s_copy_or_panic(fname)
-        );
+        ct = new_crontab(crontab_fd, dir_conf.is_root, curr, statbuf.st_mtime, s_copy_or_panic(fname));
         ht_insert(new_db, fpath, ct);
       }
       // File exists in db
@@ -327,8 +295,7 @@ scan_crontabs (
         printlogf("crontab for file %s exists...\n", fpath);
 
         // Renew the fd and statbuf
-        if ((crontab_fd = get_crontab_fd_if_valid(fpath, uname, -1, &statbuf))
-            < OK) {
+        if ((crontab_fd = get_crontab_fd_if_valid(fpath, uname, -1, &statbuf)) < OK) {
           printlogf(
             "existing crontab file %s not valid; it won't be carried over. "
             "continuing...\n",
@@ -340,27 +307,15 @@ scan_crontabs (
         // The crontab was not modified, just renew the entries so we know when
         // to run them next
         if (ct->mtime >= statbuf.st_mtime) {
-          printlogf(
-            "existing file %s not modified, renewing entries if any\n",
-            fpath
-          );
+          printlogf("existing file %s not modified, renewing entries if any\n", fpath);
           foreach (ct->entries, i) {
             cron_entry* entry = array_get_or_panic(ct->entries, i);
             renew_cron_entry(entry, curr);
           }
         } else {
-          printlogf(
-            "existing file %s was modified, recreating crontab\n",
-            fpath
-          );
+          printlogf("existing file %s was modified, recreating crontab\n", fpath);
           // modified, re-process
-          ct = new_crontab(
-            crontab_fd,
-            dir_conf.is_root,
-            curr,
-            statbuf.st_mtime,
-            s_copy_or_panic(fname)
-          );
+          ct = new_crontab(crontab_fd, dir_conf.is_root, curr, statbuf.st_mtime, s_copy_or_panic(fname));
         }
 
         // set the og entry to NULL

@@ -167,12 +167,7 @@ setup_sig_handlers (void) {
   sa.sa_flags   = SA_RESTART;
   sa.sa_handler = daemon_quit;
   if (sigaction(SIGINT, &sa, NULL) < OK || sigaction(SIGTERM, &sa, NULL)) {
-    panic(
-      "[%s@L%d] failed to setup signal handler: %s\n",
-      __func__,
-      __LINE__,
-      strerror(errno)
-    );
+    panic("[%s@L%d] failed to setup signal handler: %s\n", __func__, __LINE__, strerror(errno));
   }
   // TODO: reap on sigchld
 }

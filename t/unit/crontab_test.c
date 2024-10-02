@@ -11,12 +11,7 @@
 static void
 validate_entry (cron_entry* entry, cron_entry* expected) {
   is(expected->cmd, entry->cmd, "Expect cmd '%s'", expected->cmd);
-  is(
-    expected->schedule,
-    entry->schedule,
-    "Expect schedule '%s'",
-    expected->schedule
-  );
+  is(expected->schedule, entry->schedule, "Expect schedule '%s'", expected->schedule);
   is(
     expected->parent->uname,
     entry->parent->uname,
@@ -44,22 +39,12 @@ new_crontab_test (void) {
   cron_entry expected_entries[] = {
     {.cmd = "script.sh",               .schedule = "*/1 * * * *",  .parent = ct},
     {.cmd = "exec.sh",                 .schedule = "*/2 * * * *",  .parent = ct},
-    {.cmd = "echo whatever > /tmp/hi", .schedule = "*/10 * * * *", .parent = ct
-    },
+    {.cmd = "echo whatever > /tmp/hi", .schedule = "*/10 * * * *", .parent = ct},
     {.cmd = "date",                    .schedule = "*/15 * * * *", .parent = ct}
   };
 
-  ok(
-    ct->mtime == now,
-    "Expect mtime to equal given mtime (%ld == %ld)",
-    ct->mtime,
-    now
-  );
-  ok(
-    array_size(entries) == num_expected_entries,
-    "Expect %d entries to have been created",
-    num_expected_entries
-  );
+  ok(ct->mtime == now, "Expect mtime to equal given mtime (%ld == %ld)", ct->mtime, now);
+  ok(array_size(entries) == num_expected_entries, "Expect %d entries to have been created", num_expected_entries);
 
   for (unsigned int i = 0; i < num_expected_entries; i++) {
     cron_entry  expected = expected_entries[i];
@@ -70,16 +55,8 @@ new_crontab_test (void) {
   }
 
   ok(ct->vars->count == 3, "has 3 environment variables");
-  is(
-    ht_get(ct->vars, "PATH"),
-    "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-    "has the PATH environment variable"
-  );
-  is(
-    ht_get(ct->vars, "SHELL"),
-    "/bin/echo",
-    "has the SHELL environment variable"
-  );
+  is(ht_get(ct->vars, "PATH"), "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", "has the PATH environment variable");
+  is(ht_get(ct->vars, "SHELL"), "/bin/echo", "has the SHELL environment variable");
   is(ht_get(ct->vars, "KEY"), "VALUE", "has the KEY environment variable");
 
   array_t* expected_envp_entries = array_init();

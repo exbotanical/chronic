@@ -24,9 +24,7 @@ match_variable_test () {
                     ".local/share/pnpm:/home/goldmund/.cargo/bin", .invalid_str = NULL},
     {.key = "SOME_TRICKY_VAR", .value = "WITH SPACES", .invalid_str = NULL},
     {.key = "ANOTHER_TRICKY_VAR", .value = "WITH=EQ", .invalid_str = NULL},
-    {.key         = "A_THIRD_TRICKY_VAR",
-     .value       = "WITH SPACES AND ' SINGLEQUOT",
-     .invalid_str = NULL},
+    {.key = "A_THIRD_TRICKY_VAR", .value = "WITH SPACES AND ' SINGLEQUOT", .invalid_str = NULL},
     {.key = "EMPTY", .value = "", .invalid_str = NULL},
     {.invalid_str = "SOME_INVALID_VAR"},
     {.invalid_str = ""},
@@ -54,11 +52,7 @@ match_variable_test () {
 
       match_variable(input, ht);
 
-      is(
-        ht_get(ht, tc.key),
-        tc.value,
-        "parses the variable and updates the hash table"
-      );
+      is(ht_get(ht, tc.key), tc.value, "parses the variable and updates the hash table");
     }
   }
 }

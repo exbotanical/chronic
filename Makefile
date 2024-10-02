@@ -1,9 +1,9 @@
-.PHONY: all test unit_test integ_test valgrind clean lint
+.PHONY: all test unit_test integ_test valgrind clean fmt
 .DELETE_ON_ERROR:
 
 CC          ?= gcc
 AR          ?= ar
-LINTER      ?= clang-format
+FMT         ?= clang-format
 
 PROG        := chronic
 UNIT_TARGET := unit_test
@@ -49,5 +49,5 @@ valgrind: $(PROG)
 clean:
 	@rm -f $(UNIT_TARGET) $(PROG) .log*
 
-lint:
-	$(LINTER) -i $(SRC) $(wildcard $(TESTDIR)/*/*.c)
+fmt:
+	$(FMT) -i $(SRC) $(wildcard $(TESTDIR)/*/*.c)

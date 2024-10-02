@@ -69,19 +69,13 @@ parse_cmd_test (void) {
   } TestCase;
 
   TestCase tests[] = {
-    {.input            = "* * * * * /bin/sh command",
-     .spaces_until_cmd = 5,
-     .expect_err       = false                                                                     },
-    {.input            = "* * * * /bin/sh command",
-     .spaces_until_cmd = 4,
-     .expect_err       = false                                                                     },
-    {.input = "   /bin/sh command",                     .spaces_until_cmd = 3,  .expect_err = false},
-    {.input            = "*/5 * * *   /bin/sh command",
-     .spaces_until_cmd = 6,
-     .expect_err       = false                                                                     },
-    {.input = "/bin/sh command",                        .spaces_until_cmd = 5,  .expect_err = true },
-    {.input = " ",                                      .spaces_until_cmd = 1,  .expect_err = true },
-    {.input = " ",                                      .spaces_until_cmd = 11, .expect_err = true },
+    {.input = "* * * * * /bin/sh command",   .spaces_until_cmd = 5,  .expect_err = false},
+    {.input = "* * * * /bin/sh command",     .spaces_until_cmd = 4,  .expect_err = false},
+    {.input = "   /bin/sh command",          .spaces_until_cmd = 3,  .expect_err = false},
+    {.input = "*/5 * * *   /bin/sh command", .spaces_until_cmd = 6,  .expect_err = false},
+    {.input = "/bin/sh command",             .spaces_until_cmd = 5,  .expect_err = true },
+    {.input = " ",                           .spaces_until_cmd = 1,  .expect_err = true },
+    {.input = " ",                           .spaces_until_cmd = 11, .expect_err = true },
   };
 
   char* expected = "/bin/sh command";
@@ -111,12 +105,11 @@ parse_entry_test (void) {
   } TestCase;
 
   TestCase tests[] = {
-    {.input      = "*/5 * * * * /bin/sh command # with a comment",
-     .expect_err = false                                                              },
-    {.input = "*/5 * * * * /bin/sh command#",                      .expect_err = false},
-    {.input = "   */5 * * * * /bin/sh command ",                   .expect_err = false},
-    {.input = "*/5 * * * x /bin/sh command ",                      .expect_err = true },
-    {.input = "/bin/sh command ",                                  .expect_err = true },
+    {.input = "*/5 * * * * /bin/sh command # with a comment", .expect_err = false},
+    {.input = "*/5 * * * * /bin/sh command#",                 .expect_err = false},
+    {.input = "   */5 * * * * /bin/sh command ",              .expect_err = false},
+    {.input = "*/5 * * * x /bin/sh command ",                 .expect_err = true },
+    {.input = "/bin/sh command ",                             .expect_err = true },
   };
 
   char* expected = "/bin/sh command";

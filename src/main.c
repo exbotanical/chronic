@@ -61,12 +61,7 @@ main (int argc, char** argv) {
   usr.uid   = getuid();
   usr.root  = usr.uid == 0;
   usr.uname = getpwuid(usr.uid)->pw_name;
-  printlogf(
-    "running as %s (uid=%d, root?=%s)\n",
-    usr.uname,
-    usr.uid,
-    usr.root ? "y" : "n"
-  );
+  printlogf("running as %s (uid=%d, root?=%s)\n", usr.uname, usr.uid, usr.root ? "y" : "n");
 
   daemon_lock();  // TODO: check before daemonize
   setup_sig_handlers();

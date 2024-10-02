@@ -25,8 +25,7 @@ is_comment_line (const char* str) {
 
 bool
 should_parse_line (const char* line) {
-  if (strlen(line) < (SPACES_BEFORE_CMD * 2) + 1 || (*line == 0)
-      || is_comment_line(line)) {
+  if (strlen(line) < (SPACES_BEFORE_CMD * 2) + 1 || (*line == 0) || is_comment_line(line)) {
     return false;
   }
 
