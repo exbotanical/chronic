@@ -7,7 +7,6 @@
  * CLI configuration options.
  */
 typedef struct {
-  bool  use_syslog;
   char* log_file;
 } cli_opts;
 

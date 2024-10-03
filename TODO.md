@@ -9,17 +9,17 @@
 - [x] actually read the sys ~~and user crontabs~~
   - [x] perms
 - [ ] special crontab config support (toml or yaml?)
-- [x] log to syslog
-  - [ ] syslog levels?
+- [x] ~~log to syslog~~
+  - [x] ~~syslog levels?~~
 - [ ] Allow log feature flags (fs logs, job logs, time logs, etc)
 - [x] integ testing
 - [x] unit tests
-- [ ] Ensure tests don't log to syslog or whatever (maybe a test sink?)
+- [x] ~~Ensure tests don't log to syslog or whatever (maybe a test sink?)~~
 - [x] handle signals
   - [ ] and log getting closed or deleted
 - [x] daemon lock
 - [x] kill chronic anywhere integ test stops (e.g. TRAP)
-- [ ] crontab program
+- [x] ~~crontab program~~ no point - just use a text editor!
 - [ ] validate permissions e.g. child job exec
 - [x] format mail
   - [ ] test

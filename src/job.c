@@ -117,7 +117,6 @@ check_job (pid_t pid, int* status) {
   return false;
 }
 
-// TODO: [bash] <defunct>
 /**
  * Creates and runs a MAIL job to report the given EXITED job `exited_job`.
  *
