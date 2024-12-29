@@ -1,8 +1,10 @@
 #ifndef LIBHASH_H
 #define LIBHASH_H
 
-#define HT_DEFAULT_CAPACITY 50
-#define HS_DEFAULT_CAPACITY 50
+#include "list.h"
+
+#define HT_DEFAULT_CAPACITY 53
+#define HS_DEFAULT_CAPACITY 53
 
 /**
  * A free function that will be invoked a hashmap value any time it is removed.
@@ -28,17 +30,17 @@ typedef struct {
    * Max number of entries which may be stored in the hash table. Adjustable.
    * Calculated as the first prime subsequent to the base capacity.
    */
-  int capacity;
+  unsigned int capacity;
 
   /**
    * Base capacity (used to calculate load for resizing)
    */
-  int base_capacity;
+  unsigned int base_capacity;
 
   /**
    * Number of non-NULL entries in the hash table
    */
-  int count;
+  unsigned int count;
 
   /**
    * The hash table's entries
@@ -51,6 +53,8 @@ typedef struct {
    * however they want.
    */
   free_fn *free_value;
+
+  node_t *occupied_buckets;
 } hash_table;
 
 /**
@@ -107,23 +111,32 @@ void ht_delete_table(hash_table *ht);
  * to the given key could be found
  */
 int ht_delete(hash_table *ht, const char *key);
+#include <stdio.h>
+#define HT_ITER_START(ht)                       \
+  node_t *head = ht->occupied_buckets;          \
+  while (head && head != &LIST_SENTINEL_NODE) { \
+    ht_entry *entry = ht->entries[head->value];
+
+#define HT_ITER_END  \
+  head = head->next; \
+  }
 
 typedef struct {
   /**
    * Max number of keys which may be stored in the hash set. Adjustable.
    * Calculated as the first prime subsequent to the base capacity.
    */
-  int capacity;
+  unsigned int capacity;
 
   /**
    * Base capacity (used to calculate load for resizing)
    */
-  int base_capacity;
+  unsigned int base_capacity;
 
   /**
    * Number of non-NULL keys in the hash set
    */
-  int count;
+  unsigned int count;
 
   /**
    * The hash set's keys

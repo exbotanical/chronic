@@ -1,4 +1,4 @@
-.PHONY: all test unit_test integ_test valgrind clean fmt
+.PHONY: all test unit_test unit_test_dev integ_test valgrind clean fmt
 .DELETE_ON_ERROR:
 
 CC          ?= gcc
@@ -37,6 +37,9 @@ unit_test: $(UNIT_TESTS) $(DEPS) $(TEST_DEPS) $(SRC_NOMAIN)
 	$(CC) $(UNIT_TEST_CFLAGS) $^ $(LIBS) -o $(UNIT_TARGET)
 	@./$(UNIT_TARGET)
 	@$(MAKE) clean
+
+unit_test_dev:
+	ls $(INCDIR)/*.h $(SRCDIR)/*.{h,c} $(TESTDIR)/**/*.{h,c} | entr -s 'make -s unit_test'
 
 integ_test: all
 	@./$(TESTDIR)/integ/utils/run.bash

@@ -1,6 +1,7 @@
-#ifndef HASH_H
-#define HASH_H
+#ifndef LIBHASH_HASH_H
+#define LIBHASH_HASH_H
 
-int h_resolve_hash(const char *key, const int capacity, const int attempt);
+unsigned int h_compute_hash(const char *key, const int capacity,
+                            const int attempt);
 
-#endif /* HASH_H */
+#endif /* LIBHASH_HASH_H */

@@ -69,7 +69,7 @@ init_ipc_routine (void) {
   if ((rc = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED)) != 0) {
     panic("pthread_attr_setdetachstate failed with rc %d\n", rc);
   }
-  pthread_create(&reaper_thread_id, &attr, &ipc_routine, NULL);
+  // pthread_create(&reaper_thread_id, &attr, &ipc_routine, NULL);
 }
 
 void

@@ -1,6 +1,6 @@
 {
   "name": "libhash",
-  "version": "1.0.0",
+  "version": "1.1.2",
   "author": "Matthew Zito",
   "repo": "exbotanical/libhash",
   "license": "MIT",
@@ -13,12 +13,13 @@
     "src/hash.h",
     "src/prime.c",
     "src/prime.h",
+    "src/list.h",
     "include/libhash.h"
   ],
   "dependencies": {
     "strdup": "*"
   },
   "development": {
-    "thlorenz/tap.c": "*"
+    "exbotanical/libtap": "*"
   }
 }

@@ -6,8 +6,6 @@
 #include "prime.h"
 #include "strdup/strdup.h"
 
-static const int H_DEFAULT_CAPACITY = 50;
-
 /**
  * Resize the hash set. This implementation has a set capacity;
  * hash collisions rise beyond the capacity and `hs_insert` will fail.
@@ -27,7 +25,7 @@ static void hs_resize(hash_set *hs, const int base_capacity) {
 
   hash_set *new_hs = hs_init(base_capacity);
 
-  for (int i = 0; i < hs->capacity; i++) {
+  for (unsigned int i = 0; i < hs->capacity; i++) {
     const char *r = hs->keys[i];
 
     if (r != NULL) {
@@ -38,8 +36,7 @@ static void hs_resize(hash_set *hs, const int base_capacity) {
   hs->base_capacity = new_hs->base_capacity;
   hs->count = new_hs->count;
 
-  const int tmp_capacity = hs->capacity;
-
+  const unsigned int tmp_capacity = hs->capacity;
   hs->capacity = new_hs->capacity;
   new_hs->capacity = tmp_capacity;
 
@@ -57,8 +54,7 @@ static void hs_resize(hash_set *hs, const int base_capacity) {
  * @param hs
  */
 static void hs_resize_up(hash_set *hs) {
-  const int new_capacity = hs->base_capacity * 2;
-
+  const unsigned int new_capacity = hs->base_capacity * 2;
   hs_resize(hs, new_capacity);
 }
 
@@ -69,8 +65,7 @@ static void hs_resize_up(hash_set *hs) {
  * @param hs
  */
 static void hs_resize_down(hash_set *hs) {
-  const int new_capacity = hs->base_capacity / 2;
-
+  const unsigned int new_capacity = hs->base_capacity / 2;
   hs_resize(hs, new_capacity);
 }
 
@@ -83,7 +78,7 @@ static void hs_delete_key(char *r) { free(r); }
 
 hash_set *hs_init(int base_capacity) {
   if (!base_capacity) {
-    base_capacity = H_DEFAULT_CAPACITY;
+    base_capacity = HS_DEFAULT_CAPACITY;
   }
 
   hash_set *hs = malloc(sizeof(hash_set));
@@ -101,45 +96,44 @@ void hs_insert(hash_set *hs, const void *key) {
     return;
   }
 
-  const int load = hs->count * 100 / hs->capacity;
+  const unsigned int load = hs->count * 100 / hs->capacity;
   if (load > 70) {
     hs_resize_up(hs);
   }
 
-  void *new_record = strdup(key);
+  void *new_entry = strdup(key);
 
-  int idx = h_resolve_hash(key, hs->capacity, 0);
+  unsigned int idx = h_compute_hash(key, hs->capacity, 0);
   char *current_key = hs->keys[idx];
-  int i = 1;
 
-  // i.e. if there was a collision
+  unsigned int i = 1;
+  // If there was a collision...
   while (current_key != NULL) {
-    // already exists
+    // Key already exists (update)
     if (strcmp(current_key, key) == 0) {
       return;
     }
 
-    // TODO: verify i is 1..
-    idx = h_resolve_hash(new_record, hs->capacity, i);
+    idx = h_compute_hash(new_entry, hs->capacity, i);
     current_key = hs->keys[idx];
     i++;
   }
 
-  hs->keys[idx] = new_record;
+  hs->keys[idx] = new_entry;
   hs->count++;
 }
 
 int hs_contains(hash_set *hs, const char *key) {
-  int idx = h_resolve_hash(key, hs->capacity, 0);
+  unsigned int idx = h_compute_hash(key, hs->capacity, 0);
   char *current_key = hs->keys[idx];
 
-  int i = 1;
+  unsigned int i = 1;
   while (current_key != NULL) {
     if (strcmp(current_key, key) == 0) {
       return 1;
     }
 
-    idx = h_resolve_hash(key, hs->capacity, i);
+    idx = h_compute_hash(key, hs->capacity, i);
     current_key = hs->keys[idx];
     i++;
 
@@ -154,7 +148,7 @@ int hs_contains(hash_set *hs, const char *key) {
 }
 
 void hs_delete_set(hash_set *hs) {
-  for (int i = 0; i < hs->capacity; i++) {
+  for (unsigned int i = 0; i < hs->capacity; i++) {
     char *r = hs->keys[i];
 
     if (r != NULL) {
@@ -167,14 +161,14 @@ void hs_delete_set(hash_set *hs) {
 }
 
 int hs_delete(hash_set *hs, const char *key) {
-  const int load = hs->count * 100 / hs->capacity;
+  const unsigned int load = hs->count * 100 / hs->capacity;
 
   if (load < 10) {
     hs_resize_down(hs);
   }
 
-  int i = 0;
-  int idx = h_resolve_hash(key, hs->capacity, i);
+  unsigned int i = 0;
+  unsigned int idx = h_compute_hash(key, hs->capacity, i);
 
   char *current_key = hs->keys[idx];
 
@@ -188,7 +182,7 @@ int hs_delete(hash_set *hs, const char *key) {
       return 1;
     }
 
-    idx = h_resolve_hash(key, hs->capacity, ++i);
+    idx = h_compute_hash(key, hs->capacity, ++i);
     current_key = hs->keys[idx];
   }
 
