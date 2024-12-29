@@ -321,6 +321,7 @@ scan_crontabs (hash_table* old_db, hash_table* new_db, dir_config dir_conf, time
         // set the og entry to NULL
         old_db->free_value = NULL;
         ht_insert(old_db, fpath, NULL);
+        // TODO: ??? - also ^this^ causes dangling refs
         old_db->free_value = (free_fn*)free_crontab;
 
         ht_insert(new_db, fpath, ct);

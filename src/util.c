@@ -12,7 +12,7 @@ void*
 xmalloc (size_t sz) {
   void* ptr;
   if ((ptr = malloc(sz)) == NULL) {
-    panic("[%s@L%d] xmalloc failed to allocate memory\n", __func__, __LINE__);
+    panic("xmalloc failed to allocate memory");
   }
 
   return ptr;
@@ -41,7 +41,7 @@ create_uuid (void) {
 array_t*
 get_filenames (char* dirpath) {
   DIR* dir;
-
+  // TODO: Only if modified
   if ((dir = opendir(dirpath)) != NULL) {
     printlogf("scanning dir %s\n", dirpath);
     struct dirent* den;

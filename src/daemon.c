@@ -134,7 +134,7 @@ daemon_lock (void) {
       }
     }
 
-    panic("%s\n", "failed to acquire dedupe lock");
+    panic("failed to acquire dedupe lock");
   }
 
   fchmod(fd, 0644);
@@ -167,7 +167,7 @@ setup_sig_handlers (void) {
   sa.sa_flags   = SA_RESTART;
   sa.sa_handler = daemon_quit;
   if (sigaction(SIGINT, &sa, NULL) < OK || sigaction(SIGTERM, &sa, NULL)) {
-    panic("[%s@L%d] failed to setup signal handler: %s\n", __func__, __LINE__, strerror(errno));
+    panic("failed to setup signal handler: %s", strerror(errno));
   }
   // TODO: reap on sigchld
 }

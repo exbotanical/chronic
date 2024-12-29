@@ -13,6 +13,7 @@
 #include "cronentry.h"
 #include "crontab.h"
 #include "daemon.h"
+#include "ipc.h"
 #include "job.h"
 #include "log.h"
 #include "opt-constants.h"
@@ -84,7 +85,9 @@ main (int argc, char** argv) {
   dir_config usr_dir = {.is_root = false, .path = CRONTABS_DIR};
 
   db                 = update_db(db, start_time, &usr_dir, &sys_dir, NULL);
+
   init_reap_routine();
+  // init_ipc_server();
 
   while (true) {
     printlogf("\n----------------\n");
