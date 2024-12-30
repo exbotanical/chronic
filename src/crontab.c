@@ -11,10 +11,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "config.h"
 #include "constants.h"
 #include "cronentry.h"
 #include "log.h"
-#include "opt-constants.h"
 #include "panic.h"
 #include "parser.h"
 #include "util.h"
@@ -86,15 +86,10 @@ complete_env (crontab_t* ct) {
     ct->envp         = xmalloc(sizeof(char*) * vars->count + 1);
 
     unsigned int idx = 0;
-    for (unsigned int i = 0; i < (unsigned int)vars->capacity; i++) {
-      ht_entry* r = vars->entries[i];
-      if (!r) {
-        continue;
-      }
-
-      ct->envp[idx] = s_fmt("%s=%s", r->key, r->value);
-      idx++;
-    }
+    HT_ITER_START(vars)
+    ct->envp[idx] = s_fmt("%s=%s", entry->key, entry->value);
+    idx++;
+    HT_ITER_END
 
     // `execle` requires it to be NULL-terminated
     ct->envp[idx] = NULL;

@@ -60,13 +60,10 @@ new_crontab_test (void) {
   is(ht_get(ct->vars, "KEY"), "VALUE", "has the KEY environment variable");
 
   array_t* expected_envp_entries = array_init();
-  for (unsigned int i = 0; i < ct->vars->capacity; i++) {
-    ht_entry* r = ct->vars->entries[i];
-    if (!r) {
-      continue;
-    }
-    array_push(expected_envp_entries, s_fmt("%s=%s", r->key, r->value));
-  }
+
+  HT_ITER_START(ct->vars)
+  array_push(expected_envp_entries, s_fmt("%s=%s", entry->key, entry->value));
+  HT_ITER_END
 
   foreach (expected_envp_entries, i) {
     char* expected = array_get(expected_envp_entries, i);

@@ -111,10 +111,10 @@ void ht_delete_table(hash_table *ht);
  * to the given key could be found
  */
 int ht_delete(hash_table *ht, const char *key);
-#include <stdio.h>
-#define HT_ITER_START(ht)                       \
-  node_t *head = ht->occupied_buckets;          \
-  while (head && head != &LIST_SENTINEL_NODE) { \
+
+#define HT_ITER_START(ht)                \
+  node_t *head = ht->occupied_buckets;   \
+  while (!list_is_sentinel_node(head)) { \
     ht_entry *entry = ht->entries[head->value];
 
 #define HT_ITER_END  \

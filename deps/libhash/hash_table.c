@@ -51,7 +51,8 @@ static void ht_resize(hash_table *ht, int base_capacity) {
   // TODO: Figure out why list_free doesnt work but this does
   node_t *head = ht->occupied_buckets;
   node_t *tmp;
-  while (head != &LIST_SENTINEL_NODE) {
+
+  while (!list_is_sentinel_node(head)) {
     tmp = head;
     head = head->next;
     free(tmp);
@@ -203,7 +204,7 @@ hash_table *ht_init(int base_capacity, free_fn *free_value) {
   ht->count = 0;
   ht->entries = calloc((size_t)ht->capacity, sizeof(ht_entry *));
   ht->free_value = free_value;
-  ht->occupied_buckets = list_node_create_head();
+  ht->occupied_buckets = list_create_sentinel_node();
   return ht;
 }
 

@@ -13,6 +13,7 @@
     "src/hash.h",
     "src/prime.c",
     "src/prime.h",
+    "src/list.c",
     "src/list.h",
     "include/libhash.h"
   ],

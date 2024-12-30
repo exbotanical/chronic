@@ -1,5 +1,5 @@
-#ifndef OPT_CONSTANTS_H
-#define OPT_CONSTANTS_H
+#ifndef CONFIG_H
+#define CONFIG_H
 
 #ifndef SYS_CRONTABS_DIR
 #  define SYS_CRONTABS_DIR "/etc/cron.d"
@@ -20,4 +20,4 @@
 // TODO: Allow override
 #define TIMESTAMP_FMT "%Y-%m-%d %H:%M:%S"
 
-#endif /* OPT_CONSTANTS_H */
+#endif /* CONFIG_H */

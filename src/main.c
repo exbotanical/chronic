@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 #include "cli.h"
+#include "config.h"
 #include "constants.h"
 #include "cronentry.h"
 #include "crontab.h"
@@ -16,7 +17,6 @@
 #include "ipc.h"
 #include "job.h"
 #include "log.h"
-#include "opt-constants.h"
 #include "panic.h"
 #include "usr.h"
 #include "util.h"

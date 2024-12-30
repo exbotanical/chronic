@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include <uuid/uuid.h>
 
+#include "config.h"
 #include "log.h"
-#include "opt-constants.h"
 #include "panic.h"
 
 void*

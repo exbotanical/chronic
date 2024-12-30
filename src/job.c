@@ -6,11 +6,11 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include "config.h"
 #include "constants.h"
 #include "cronentry.h"
 #include "libutil/libutil.h"
 #include "log.h"
-#include "opt-constants.h"
 #include "panic.h"
 #include "util.h"
 
@@ -291,24 +291,15 @@ signal_reap_routine (void) {
 
 void
 try_run_jobs (hash_table* db, time_t ts) {
-  // We must iterate the capacity here because hash table entries are not
-  // stored contiguously
   if (db->count > 0) {
-    for (unsigned int i = 0; i < (unsigned int)db->capacity; i++) {
-      ht_entry* r = db->entries[i];
-
-      // If there's no entry in this slot, continue
-      if (!r) {
-        continue;
-      }
-
-      crontab_t* ct = r->value;
-      foreach (ct->entries, i) {
-        cron_entry* entry = array_get_or_panic(ct->entries, i);
-        if (entry->next == ts) {
-          run_cronjob(entry);
-        }
+    HT_ITER_START(db)
+    crontab_t* ct = entry->value;
+    foreach (ct->entries, i) {
+      cron_entry* ce = array_get_or_panic(ct->entries, i);
+      if (ce->next == ts) {
+        run_cronjob(ce);
       }
     }
+    HT_ITER_END
   }
 }

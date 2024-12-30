@@ -24,3 +24,7 @@
 - [x] format mail
   - [ ] test
 - [ ] Fix all gcc warnings/errors and enable strict mode
+- [ ] Store all jobs sorted by timestamp, then perform binary search when we want to execute. Enable this feature at runtime when numjobs > N.
+
+
+We make tradeoffs between runtime op/main loop work and startup work (loading the crontabs).

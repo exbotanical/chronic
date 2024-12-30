@@ -7,9 +7,9 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "config.h"
 #include "constants.h"
 #include "libutil/libutil.h"
-#include "opt-constants.h"
 
 #define LOG_GUARD     \
   if (log_fd == -1) { \
