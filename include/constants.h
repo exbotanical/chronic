@@ -37,9 +37,8 @@ extern pid_t  daemon_pid;
 extern char   hostname[SMALL_BUFFER];
 extern user_t usr;
 
-extern array_t *job_queue;
-extern array_t *mail_queue;
-
-extern const char *job_state_names[];
+extern hash_table *db;
+extern array_t    *job_queue;
+extern array_t    *mail_queue;
 
 #endif /* CONSTANTS_H */

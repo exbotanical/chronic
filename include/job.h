@@ -74,7 +74,13 @@ typedef struct {
    * The return status of the job, once executed. Starts as -1.
    */
   int       ret;
+
+  time_t next_run;
 } job_t;
+
+#define X(e) [e] = #e
+
+extern const char *job_state_names[];
 
 /**
  * Initializes the job reap routine. This is a daemon thread that awaits job

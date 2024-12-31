@@ -15,8 +15,10 @@
 #include "util.h"
 
 // Mutex + cond var for the reaper daemon thread.
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t  cond  = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t mutex         = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t  cond          = PTHREAD_COND_INITIALIZER;
+
+const char* job_state_names[] = {X(PENDING), X(RUNNING), X(EXITED)};
 
 /**
  * Creates a new job of type CRON.
@@ -26,16 +28,17 @@ pthread_cond_t  cond  = PTHREAD_COND_INITIALIZER;
  */
 static job_t*
 new_cronjob (cron_entry* entry) {
-  job_t* job  = xmalloc(sizeof(job_t));
-  job->ident  = create_uuid();
-  job->type   = CRON;
-  job->state  = PENDING;
-  job->cmd    = s_copy_or_panic(entry->cmd);
-  job->ret    = -1;
-  job->pid    = -1;
+  job_t* job    = xmalloc(sizeof(job_t));
+  job->ident    = create_uuid();
+  job->type     = CRON;
+  job->state    = PENDING;
+  job->cmd      = s_copy_or_panic(entry->cmd);
+  job->ret      = -1;
+  job->pid      = -1;
+  job->next_run = entry->next;
 
-  ht_entry* r = ht_search(entry->parent->vars, MAILTO_ENVVAR);
-  job->mailto = s_copy_or_panic(r ? r->value : entry->parent->uname);
+  ht_entry* r   = ht_search(entry->parent->vars, MAILTO_ENVVAR);
+  job->mailto   = s_copy_or_panic(r ? r->value : entry->parent->uname);
 
   return job;
 }

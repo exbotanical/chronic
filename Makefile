@@ -13,8 +13,8 @@ INCDIR      := include
 DEPSDIR     := deps
 TESTDIR     := t
 
-SRC         := $(wildcard $(SRCDIR)/*.c)
-TESTS       := $(wildcard $(TESTDIR)/*/*.c)
+SRC         := $(shell find $(SRCDIR) -name "*.c")
+TESTS       := $(shell find $(TESTDIR) -name "*.c")
 SRC_NOMAIN  := $(filter-out $(SRCDIR)/main.c, $(SRC))
 TEST_DEPS   := $(wildcard $(DEPSDIR)/tap.c/*.c)
 DEPS        := $(filter-out $(wildcard $(DEPSDIR)/tap.c/*), $(wildcard $(DEPSDIR)/*/*.c))

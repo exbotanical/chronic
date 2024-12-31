@@ -1,5 +1,5 @@
-#ifndef cron_entry_H
-#define cron_entry_H
+#ifndef CRON_ENTRY_H
+#define CRON_ENTRY_H
 
 #include <time.h>
 
@@ -62,4 +62,4 @@ void renew_cron_entry(cron_entry *entry, time_t curr);
  */
 void free_cron_entry(cron_entry *entry);
 
-#endif /* cron_entry_H */
+#endif /* CRON_ENTRY_H */

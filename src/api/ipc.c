@@ -1,22 +1,19 @@
-// TODO: Wire all this up - file is currently all rough draft stuff.
-#include "ipc.h"
+#include "api/ipc.h"
 
 #include <pthread.h>
+#include <stdarg.h>
 #include <stdbool.h>
+#include <string.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
 
+#include "api/commands.h"
+#include "constants.h"
+#include "job.h"
 #include "log.h"
 #include "panic.h"
-
-typedef enum {
-  IPC_LIST_JOBS,
-  IPC_PAUSE_JOB,
-  IPC_DELETE_JOB,
-  IPC_RESUME_JOB,
-  IPC_JOB_INFO,
-} ipc_command;
+#include "util.h"
 
 typedef enum {
   JOB_RUN_STATE_ACTIVE,
@@ -33,13 +30,30 @@ typedef struct {
   job_run_state run_state;
 } job_info_t;
 
+// TODO: Dyn
 #define SOCKET_PATH          "/tmp/daemon.sock"
 #define MAX_CONCURRENT_CONNS 5
 #define RECV_BUFFER_SIZE     1024
+#define ERROR_MESSAGE_FMT    "{\"error\":\"%s\"}"
 
 static int server_fd = -1;
 
 static void
+ipc_write_err (int client_fd, const char* msg, ...) {
+  char out_a[128];
+  char out_b[256];
+
+  va_list va;
+  va_start(va, msg);
+  vsnprintf(out_a, sizeof(out_a), msg, va);
+  va_end(va);
+
+  snprintf(out_b, sizeof(out_b), ERROR_MESSAGE_FMT, out_a);
+
+  write(client_fd, out_b, strlen(out_b));
+}
+
+static void*
 ipc_routine (void* _arg) {
   int  client_fd;
   char buffer[RECV_BUFFER_SIZE];
@@ -50,12 +64,39 @@ ipc_routine (void* _arg) {
       perror("accept");
       continue;
     }
-    printlogf(">>> %s\n", "ccccc");
 
     read(client_fd, buffer, sizeof(buffer));
-    printlogf(">>> %s\n", buffer);
+    printlogf("API req: '%s'\n", buffer);
+
+    hash_table* pairs = ht_init(11, free);
+    if (parse_json(buffer, pairs) == -1) {
+      ipc_write_err(client_fd, "invalid json");
+      goto client_done;
+    }
+
+    char* command = ht_get(pairs, "command");
+    if (!command) {
+      ipc_write_err(client_fd, "missing command");
+      goto client_done;
+    }
+
+    printlogf("received command '%s'\n", command);
+    void (*handler)(int) = ht_get(get_command_handlers_map(), command);
+
+    if (!handler) {
+      ipc_write_err(client_fd, "unknown command '%s'", command);
+      goto client_done;
+    }
+
+    handler(client_fd);
+
+  client_done:
+    memset(buffer, 0, RECV_BUFFER_SIZE);
+    ht_delete_table(pairs);
     close(client_fd);
   }
+
+  return NULL;
 }
 
 static void
@@ -69,7 +110,7 @@ init_ipc_routine (void) {
   if ((rc = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED)) != 0) {
     panic("pthread_attr_setdetachstate failed with rc %d\n", rc);
   }
-  // pthread_create(&reaper_thread_id, &attr, &ipc_routine, NULL);
+  pthread_create(&reaper_thread_id, &attr, &ipc_routine, NULL);
 }
 
 void

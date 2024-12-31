@@ -3,6 +3,7 @@
 
 #include <time.h>
 
+#include "libhash/libhash.h"
 #include "libutil/libutil.h"
 
 #define X(e) [e] = #e
@@ -48,5 +49,10 @@ char *create_uuid(void);
  * @param dirpath
  */
 array_t *get_filenames(char *dirpath);
+
+// TODO: Port to lib
+char *concat_strings(char **array, const char *delimiter);
+
+int parse_json(const char *json, hash_table *pairs);
 
 #endif /* UTIL_H */

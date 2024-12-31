@@ -8,13 +8,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "api/ipc.h"
 #include "cli.h"
 #include "config.h"
 #include "constants.h"
 #include "cronentry.h"
 #include "crontab.h"
 #include "daemon.h"
-#include "ipc.h"
 #include "job.h"
 #include "log.h"
 #include "panic.h"
@@ -25,15 +25,15 @@ pid_t  daemon_pid;
 char   hostname[SMALL_BUFFER];
 user_t usr;
 
-array_t* job_queue;
-array_t* mail_queue;
+hash_table* db;
+array_t*    job_queue;
+array_t*    mail_queue;
 
-const char* job_state_names[] = {X(PENDING), X(RUNNING), X(EXITED)};
 // Desired interval in seconds between loop iterations
-const short loop_interval     = 60;
+const short loop_interval = 60;
 
-cli_opts opts                 = {0};
-user_t   usr                  = {0};
+cli_opts opts             = {0};
+user_t   usr              = {0};
 
 static void
 set_hostname (void) {
@@ -66,12 +66,12 @@ main (int argc, char** argv) {
   daemon_lock();  // TODO: check before daemonize
   setup_sig_handlers();
 
+  db                = ht_init_or_panic(0, (free_fn*)free_crontab);
+
   job_queue         = array_init_or_panic();
   mail_queue        = array_init_or_panic();
 
   daemon_pid        = getpid();
-
-  hash_table* db    = ht_init_or_panic(0, (free_fn*)free_crontab);
 
   time_t start_time = time(NULL);
 
@@ -87,7 +87,7 @@ main (int argc, char** argv) {
   db                 = update_db(db, start_time, &usr_dir, &sys_dir, NULL);
 
   init_reap_routine();
-  // init_ipc_server();
+  init_ipc_server();
 
   while (true) {
     printlogf("\n----------------\n");

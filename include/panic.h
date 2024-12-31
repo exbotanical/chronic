@@ -22,6 +22,9 @@ __panic (const char* fmt, ...) {
 #define panic(fmt, ...) \
   __panic("[%s@L%d] " fmt "\n", __func__, __LINE__, ##__VA_ARGS__)
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+
 // See: https://gcc.gnu.org/onlinedocs/gcc/Statement-Exprs.html
 #define array_init_or_panic()                                      \
   ({                                                               \
@@ -72,5 +75,7 @@ __panic (const char* fmt, ...) {
     }                                                        \
     __n;                                                     \
   })
+
+#pragma GCC diagnostic push
 
 #endif /* PANIC_H */

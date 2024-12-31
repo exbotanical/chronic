@@ -83,9 +83,23 @@ get_filenames_test () {
   cleanup_test_directory(dirname);
 }
 
+static void
+json_parser_test (void) {
+  const char* s     = "{\"id\":\"c0687273-4d7b-4873-96f1-0156d988ebc3\","
+                      "\"command\":\"list_tabs\"}";
+
+  hash_table* pairs = ht_init(11, free);
+  int         ret   = parse_json(s, pairs);
+
+  ok(ret == 2, "2 pairs");
+  is(ht_get(pairs, "id"), "c0687273-4d7b-4873-96f1-0156d988ebc3", "xxx");
+  is(ht_get(pairs, "command"), "list_tabs", "xxx");
+}
+
 void
 run_utils_tests (void) {
   round_ts_test();
   get_sleep_duration_test();
   get_filenames_test();
+  json_parser_test();
 }

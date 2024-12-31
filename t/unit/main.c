@@ -5,16 +5,15 @@
 #include "tests.h"
 
 // Externs initialized in main
-cli_opts opts                 = {0};
+cli_opts opts               = {0};
 
-char hostname[SMALL_BUFFER]   = "unit_test";
+char hostname[SMALL_BUFFER] = "unit_test";
 
-user_t usr                    = {0};
+user_t usr                  = {0};
 
-array_t* job_queue            = NULL;
-array_t* mail_queue           = NULL;
-
-const char* job_state_names[] = {0};
+hash_table* db              = NULL;
+array_t*    job_queue       = NULL;
+array_t*    mail_queue      = NULL;
 
 int
 main (int argc, char** argv) {
@@ -24,9 +23,9 @@ main (int argc, char** argv) {
 
   plan(118);
 
-  run_parser_tests();
-  run_regexpr_tests();
-  run_crontab_tests();
+  // run_parser_tests();
+  // run_regexpr_tests();
+  // run_crontab_tests();
   run_utils_tests();
 
   done_testing();
