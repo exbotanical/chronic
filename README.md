@@ -2,6 +2,16 @@
 
 A modern UNIX cron daemon.
 
+Features:
+- Email reports on job completion.
+- Runs jobs for multiple users. Assumes the appropriate user ident for each.
+- Can run in root mode to execute system cron jobs
+- Efficient, lazy updates. New crontabs are synced and scheduled within 60 seconds.
+- Domain socket-based API for querying crontabs and job states.
+- Atomic daemon with singleton support and signal-handling.
+- Logging.
+- Supports crontabs with environment variables.
+
 ## Development
 
 1. Make scripts executable `chmod -R u+x ./scripts`
