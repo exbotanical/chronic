@@ -57,7 +57,6 @@ complete_env (crontab_t* ct) {
   struct passwd* pw = getpwnam(ct->uname);
   if (pw) {
     if (!ht_search(vars, HOMEDIR_ENVVAR)) {
-      // TODO: update ht_insert API to return bool
       ht_insert(vars, HOMEDIR_ENVVAR, s_copy_or_panic(pw->pw_dir));
     }
 
@@ -98,11 +97,11 @@ complete_env (crontab_t* ct) {
 
 int
 get_crontab_fd_if_valid (char* fpath, char* uname, time_t last_mtime, struct stat* statbuf) {
-  int            not_ok     = OK - 1;
-  struct passwd* pw         = NULL;
-  int            crontab_fd = not_ok;
+  int not_ok     = OK - 1;
+  int crontab_fd = not_ok;
 
 #ifndef UNIT_TEST
+  struct passwd* pw = NULL;
   // No user found in passwd
   if (!s_equals(uname, ROOT_UNAME) && (pw = getpwnam(uname)) == NULL) {
     printlogf("user %s not found\n", uname);

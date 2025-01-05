@@ -1,4 +1,4 @@
-#define _BSD_SOURCE 1  // For `gethostname`
+#define _DEFAULT_SOURCE 1  // For `gethostname`
 
 #include <errno.h>
 #include <fcntl.h>

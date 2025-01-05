@@ -13,16 +13,16 @@ is_ascii_space (char b) {
 }
 
 char *
-s_truncate (const char *s, int n) {
-  unsigned int full_len = strlen(s);
-  unsigned int trunclen = abs(n);
+s_truncate (const char *s, ssize_t n) {
+  size_t full_len = strlen(s);
+  size_t trunclen = abs((int)n);
 
   // Simply return a copy if invalid n
   if (n == 0 || trunclen >= full_len) {
     return s_copy(s);
   }
 
-  size_t sz = (size_t)full_len - trunclen;
+  size_t sz = full_len - trunclen;
 
   char *ret = malloc(sz + 1);
   if (!ret) {
@@ -40,15 +40,50 @@ s_truncate (const char *s, int n) {
 
 char *
 s_concat (const char *s1, const char *s2) {
-  unsigned int size = strlen(s1) + strlen(s1);
-  char        *ret  = malloc(size);
+  size_t size = strlen(s1) + strlen(s1) + 2;
+  char  *ret  = malloc(size);
   if (!ret) {
     return NULL;
   }
 
-  snprintf(ret, strlen(s1) + strlen(s2) + 1, "%s%s", s1, s2);
+  snprintf(ret, size, "%s%s", s1, s2);
 
   return ret;
+}
+
+char *
+s_concat_arr (char **arr, const char *delimiter) {
+  if (arr == NULL || *arr == NULL) {
+    return NULL;
+  }
+
+  size_t delimiter_len = strlen(delimiter);
+  size_t total_length  = 0;
+  size_t num_strings   = 0;
+
+  for (char **ptr = arr; *ptr != NULL; ptr++) {
+    total_length += strlen(*ptr);
+    num_strings++;
+  }
+  total_length  += (num_strings - 1) * delimiter_len;
+
+  char *result   = malloc(total_length + 1);
+  char *current  = result;
+
+  for (char **ptr = arr; *ptr != NULL; ptr++) {
+    size_t len = strlen(*ptr);
+    memcpy(current, *ptr, len);
+    current += len;
+
+    if (*(ptr + 1) != NULL) {
+      memcpy(current, delimiter, delimiter_len);
+      current += delimiter_len;
+    }
+  }
+
+  *current = '\0';
+
+  return result;
 }
 
 char *
@@ -57,8 +92,8 @@ s_copy (const char *s) {
     return NULL;
   }
 
-  int   len = strlen(s) + 1;
-  char *buf = malloc(len);
+  size_t len = strlen(s) + 1;
+  char  *buf = malloc(len);
 
   if (buf) {
     memset(buf, 0, len);
@@ -67,7 +102,7 @@ s_copy (const char *s) {
   return buf;
 }
 
-int
+ssize_t
 s_indexof (const char *s, const char *target) {
   if (s == NULL || target == NULL) {
     return -1;
@@ -82,35 +117,35 @@ s_indexof (const char *s, const char *target) {
 }
 
 char *
-s_substr (const char *s, int start, int end, bool inclusive) {
+s_substr (const char *s, size_t start, ssize_t end, bool inclusive) {
   end = inclusive ? end : end - 1;
 
-  if (start > end) {
+  if ((ssize_t)start > end) {
     return NULL;
   }
 
-  int len = strlen(s);
-  if (start < 0 || start > len) {
+  size_t len = strlen(s);
+  if (start > len) {
     return NULL;
   }
 
-  if (end > len) {
+  if (end > (ssize_t)len) {
     return NULL;
   }
 
-  int   size_multiplier = end - start;
+  size_t size_multiplier = end - start;
   // Fix: Fatal glibc error: malloc.c:2593 (sysmalloc): assertion failed:
   // (old_top == initial_top (av) && old_size == 0) || ((unsigned long)
   // (old_size) >= MINSIZE && prev_inuse (old_top) && ((unsigned long) old_end &
   // (pagesize - 1)) == 0)
-  char *ret             = malloc(sizeof(char) * size_multiplier + 2);
+  char  *ret             = malloc(sizeof(char) * size_multiplier + 2);
   if (!ret) {
     return NULL;
   }
 
-  int i = 0;
-  int j = 0;
-  for (i = start, j = 0; i <= end; i++, j++) {
+  size_t i = 0;
+  size_t j = 0;
+  for (i = start, j = 0; (ssize_t)i <= end; i++, j++) {
     ret[j] = s[i];
   }
 
@@ -121,10 +156,10 @@ s_substr (const char *s, int start, int end, bool inclusive) {
 
 bool
 s_casecmp (const char *s1, const char *s2) {
-  unsigned int s1l           = strlen(s1);
-  unsigned int s2l           = strlen(s2);
+  size_t s1l           = strlen(s1);
+  size_t s2l           = strlen(s2);
 
-  unsigned int compare_chars = s1l > s2l ? s1l : s2l;
+  size_t compare_chars = s1l > s2l ? s1l : s2l;
   return strncasecmp(s1, s2, compare_chars) == 0;
 }
 
@@ -236,8 +271,8 @@ s_fmt (char *fmt, ...) {
   va_copy(args_cp, args);
 
   // Pass length of zero first to determine number of bytes needed
-  unsigned int n   = vsnprintf(NULL, 0, fmt, args) + 1;
-  char        *buf = malloc(n);
+  size_t n   = vsnprintf(NULL, 0, fmt, args) + 1;
+  char  *buf = malloc(n);
   if (!buf) {
     return NULL;
   }

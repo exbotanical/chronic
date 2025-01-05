@@ -1,4 +1,3 @@
-
 //
 // strdup.h
 //
@@ -19,8 +18,7 @@
  */
 
 #ifndef strdup
-char *
-strdup(const char *str);
+char *strdup(const char *str);
 #endif
 
 #endif /* HAVE_STRDUP */

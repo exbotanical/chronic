@@ -16,16 +16,16 @@ array_t*    job_queue       = NULL;
 array_t*    mail_queue      = NULL;
 
 int
-main (int argc, char** argv) {
+main (int _argc, char** _argv) {
   usr.uid   = 0;
   usr.uname = "root";
   usr.root  = true;
 
-  plan(118);
+  plan(121);
 
-  // run_parser_tests();
-  // run_regexpr_tests();
-  // run_crontab_tests();
+  run_parser_tests();
+  run_regexpr_tests();
+  run_crontab_tests();
   run_utils_tests();
 
   done_testing();

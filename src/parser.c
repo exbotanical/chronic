@@ -9,7 +9,6 @@
 #include "log.h"
 #include "panic.h"
 #include "regexpr.h"
-#include "strdup/strdup.h"
 
 // Basically whether we support seconds (7)
 #define SPACES_BEFORE_CMD 5

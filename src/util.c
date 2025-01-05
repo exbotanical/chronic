@@ -72,41 +72,6 @@ get_filenames (char* dirpath) {
   return NULL;
 }
 
-char*
-concat_strings (char** array, const char* delimiter) {
-  if (array == NULL || *array == NULL) {
-    return NULL;
-  }
-
-  size_t delimiter_len = strlen(delimiter);
-  size_t total_length  = 0;
-  size_t num_strings   = 0;
-
-  for (char** ptr = array; *ptr != NULL; ptr++) {
-    total_length += strlen(*ptr);
-    num_strings++;
-  }
-  total_length  += (num_strings - 1) * delimiter_len;
-
-  char* result   = xmalloc(total_length + 1);
-  char* current  = result;
-
-  for (char** ptr = array; *ptr != NULL; ptr++) {
-    size_t len = strlen(*ptr);
-    memcpy(current, *ptr, len);
-    current += len;
-
-    if (*(ptr + 1) != NULL) {
-      memcpy(current, delimiter, delimiter_len);
-      current += delimiter_len;
-    }
-  }
-
-  *current = '\0';
-
-  return result;
-}
-
 static char*
 trim_whitespace (char* str) {
   while (isspace((unsigned char)*str)) {

@@ -8,7 +8,8 @@
  * @param x
  * @return int
  */
-int is_prime(const int x) {
+int
+is_prime (const int x) {
   if (x < 2) {
     return 0;
   }
@@ -33,7 +34,8 @@ int is_prime(const int x) {
  * @param x
  * @return int
  */
-int next_prime(int x) {
+int
+next_prime (int x) {
   while (!is_prime(x)) {
     x++;
   }

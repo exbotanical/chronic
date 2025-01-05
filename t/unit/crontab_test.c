@@ -179,9 +179,6 @@ update_db_test (void) {
   ok(array_size(ct3->entries) == 1, "the root1 crontab has 1 entry");
   ok(array_size(ct4->entries) == 1, "the root2 crontab has 1 entry");
 
-  time_t ct1_mtime = ct1->mtime;
-  time_t ct3_mtime = ct3->mtime;
-
   cleanup_test_file(usr_dirname, "user2");
   cleanup_test_file(sys_dirname, "root1");
 

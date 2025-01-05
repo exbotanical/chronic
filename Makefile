@@ -20,9 +20,10 @@ TEST_DEPS   := $(wildcard $(DEPSDIR)/tap.c/*.c)
 DEPS        := $(filter-out $(wildcard $(DEPSDIR)/tap.c/*), $(wildcard $(DEPSDIR)/*/*.c))
 UNIT_TESTS  := $(wildcard $(TESTDIR)/unit/*.c)
 
-# TODO: isystem?
 INCLUDES         := -I$(DEPSDIR) -I$(INCDIR)
-CFLAGS           := -Wall -Wextra -pedantic $(INCLUDES)
+STRICT           := -Wall -Wextra -Wno-missing-field-initializers \
+ -Wno-unused-parameter -Wno-unused-function -Wno-unused-value
+CFLAGS           := $(STRICT) $(INCLUDES)
 UNIT_TEST_CFLAGS := -DUNIT_TEST $(CFLAGS)
 LIBS             := -lm -lpthread -lpcre -luuid
 

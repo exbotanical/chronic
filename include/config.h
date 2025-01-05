@@ -17,7 +17,6 @@
 #  define MAILCMD_PATH "/usr/bin/mail"
 #endif
 
-// TODO: Allow override
 #define TIMESTAMP_FMT "%Y-%m-%d %H:%M:%S"
 
 #endif /* CONFIG_H */

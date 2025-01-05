@@ -92,8 +92,8 @@ json_parser_test (void) {
   int         ret   = parse_json(s, pairs);
 
   ok(ret == 2, "2 pairs");
-  is(ht_get(pairs, "id"), "c0687273-4d7b-4873-96f1-0156d988ebc3", "xxx");
-  is(ht_get(pairs, "command"), "list_tabs", "xxx");
+  is(ht_get(pairs, "id"), "c0687273-4d7b-4873-96f1-0156d988ebc3", "selects the expected json field");
+  is(ht_get(pairs, "command"), "list_tabs", "selects the expected json field");
 }
 
 void

@@ -54,7 +54,7 @@ ipc_write_err (int client_fd, const char* msg, ...) {
 }
 
 static void*
-ipc_routine (void* _arg) {
+ipc_routine (void* arg __attribute__((unused))) {
   int  client_fd;
   char buffer[RECV_BUFFER_SIZE];
   printlogf("in ipc routine\n");

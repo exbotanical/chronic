@@ -66,7 +66,7 @@ write_crontabs_command (int client_fd) {
     char buf[128];
     strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", localtime(&ce->next));
 
-    char* se = concat_strings(ct->envp, ", ");
+    char* se = s_concat_arr(ct->envp, ", ");
 
     char* s  = s_fmt(
       "{\"id\":\"%d\",\"cmd\":\"%s\",\"schedule\":\"%s\",\"owner\":\"%s\","

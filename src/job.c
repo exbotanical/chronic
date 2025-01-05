@@ -228,11 +228,11 @@ reap_job (job_t* job) {
 /**
  * Reaps RUNNING jobs and keeps the process space clean.
  *
- * @param _arg Mandatory (but thus far unused) void pointer thread argument
+ * @param arg Mandatory (but thus far unused) void pointer thread argument
  * @return void* Ditto ^
  */
 static void*
-reap_routine (void* _arg) {
+reap_routine (void* arg __attribute__((unused))) {
   while (true) {
     pthread_mutex_lock(&mutex);
     pthread_cond_wait(&cond, &mutex);

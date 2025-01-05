@@ -18,7 +18,8 @@
  * @param base_capacity
  * @return int
  */
-static void hs_resize(hash_set *hs, const int base_capacity) {
+static void
+hs_resize (hash_set *hs, const int base_capacity) {
   if (base_capacity < 0) {
     return;
   }
@@ -33,16 +34,16 @@ static void hs_resize(hash_set *hs, const int base_capacity) {
     }
   }
 
-  hs->base_capacity = new_hs->base_capacity;
-  hs->count = new_hs->count;
+  hs->base_capacity               = new_hs->base_capacity;
+  hs->count                       = new_hs->count;
 
   const unsigned int tmp_capacity = hs->capacity;
-  hs->capacity = new_hs->capacity;
-  new_hs->capacity = tmp_capacity;
+  hs->capacity                    = new_hs->capacity;
+  new_hs->capacity                = tmp_capacity;
 
-  char **tmp_keys = hs->keys;
-  hs->keys = new_hs->keys;
-  new_hs->keys = tmp_keys;
+  char **tmp_keys                 = hs->keys;
+  hs->keys                        = new_hs->keys;
+  new_hs->keys                    = tmp_keys;
 
   hs_delete_set(new_hs);
 }
@@ -53,7 +54,8 @@ static void hs_resize(hash_set *hs, const int base_capacity) {
  *
  * @param hs
  */
-static void hs_resize_up(hash_set *hs) {
+static void
+hs_resize_up (hash_set *hs) {
   const unsigned int new_capacity = hs->base_capacity * 2;
   hs_resize(hs, new_capacity);
 }
@@ -64,7 +66,8 @@ static void hs_resize_up(hash_set *hs) {
  *
  * @param hs
  */
-static void hs_resize_down(hash_set *hs) {
+static void
+hs_resize_down (hash_set *hs) {
   const unsigned int new_capacity = hs->base_capacity / 2;
   hs_resize(hs, new_capacity);
 }
@@ -74,24 +77,29 @@ static void hs_resize_down(hash_set *hs) {
  *
  * @param r key to delete
  */
-static void hs_delete_key(char *r) { free(r); }
+static void
+hs_delete_key (char *r) {
+  free(r);
+}
 
-hash_set *hs_init(int base_capacity) {
+hash_set *
+hs_init (int base_capacity) {
   if (!base_capacity) {
     base_capacity = HS_DEFAULT_CAPACITY;
   }
 
-  hash_set *hs = malloc(sizeof(hash_set));
+  hash_set *hs      = malloc(sizeof(hash_set));
   hs->base_capacity = base_capacity;
 
-  hs->capacity = next_prime(hs->base_capacity);
-  hs->count = 0;
-  hs->keys = calloc((size_t)hs->capacity, sizeof(char *));
+  hs->capacity      = next_prime(hs->base_capacity);
+  hs->count         = 0;
+  hs->keys          = calloc((size_t)hs->capacity, sizeof(char *));
 
   return hs;
 }
 
-void hs_insert(hash_set *hs, const void *key) {
+void
+hs_insert (hash_set *hs, const void *key) {
   if (hs == NULL) {
     return;
   }
@@ -101,12 +109,12 @@ void hs_insert(hash_set *hs, const void *key) {
     hs_resize_up(hs);
   }
 
-  void *new_entry = strdup(key);
+  void *new_entry          = strdup(key);
 
-  unsigned int idx = h_compute_hash(key, hs->capacity, 0);
-  char *current_key = hs->keys[idx];
+  unsigned int idx         = h_compute_hash(key, hs->capacity, 0);
+  char        *current_key = hs->keys[idx];
 
-  unsigned int i = 1;
+  unsigned int i           = 1;
   // If there was a collision...
   while (current_key != NULL) {
     // Key already exists (update)
@@ -114,7 +122,7 @@ void hs_insert(hash_set *hs, const void *key) {
       return;
     }
 
-    idx = h_compute_hash(new_entry, hs->capacity, i);
+    idx         = h_compute_hash(new_entry, hs->capacity, i);
     current_key = hs->keys[idx];
     i++;
   }
@@ -123,17 +131,18 @@ void hs_insert(hash_set *hs, const void *key) {
   hs->count++;
 }
 
-int hs_contains(hash_set *hs, const char *key) {
-  unsigned int idx = h_compute_hash(key, hs->capacity, 0);
-  char *current_key = hs->keys[idx];
+int
+hs_contains (hash_set *hs, const char *key) {
+  unsigned int idx         = h_compute_hash(key, hs->capacity, 0);
+  char        *current_key = hs->keys[idx];
 
-  unsigned int i = 1;
+  unsigned int i           = 1;
   while (current_key != NULL) {
     if (strcmp(current_key, key) == 0) {
       return 1;
     }
 
-    idx = h_compute_hash(key, hs->capacity, i);
+    idx         = h_compute_hash(key, hs->capacity, i);
     current_key = hs->keys[idx];
     i++;
 
@@ -147,7 +156,8 @@ int hs_contains(hash_set *hs, const char *key) {
   return 0;
 }
 
-void hs_delete_set(hash_set *hs) {
+void
+hs_delete_set (hash_set *hs) {
   for (unsigned int i = 0; i < hs->capacity; i++) {
     char *r = hs->keys[i];
 
@@ -160,15 +170,16 @@ void hs_delete_set(hash_set *hs) {
   free(hs);
 }
 
-int hs_delete(hash_set *hs, const char *key) {
+int
+hs_delete (hash_set *hs, const char *key) {
   const unsigned int load = hs->count * 100 / hs->capacity;
 
   if (load < 10) {
     hs_resize_down(hs);
   }
 
-  unsigned int i = 0;
-  unsigned int idx = h_compute_hash(key, hs->capacity, i);
+  unsigned int i    = 0;
+  unsigned int idx  = h_compute_hash(key, hs->capacity, i);
 
   char *current_key = hs->keys[idx];
 
@@ -182,7 +193,7 @@ int hs_delete(hash_set *hs, const char *key) {
       return 1;
     }
 
-    idx = h_compute_hash(key, hs->capacity, ++i);
+    idx         = h_compute_hash(key, hs->capacity, ++i);
     current_key = hs->keys[idx];
   }
 

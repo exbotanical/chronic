@@ -5,30 +5,42 @@
 
 #include "libutil.h"
 
-bool int_comparator(int a, int b) { return a == b; }
-bool str_comparator(char *a, char *b) { return s_equals(a, b); }
+bool
+int_comparator (int a, int b) {
+  return a == b;
+}
 
-unsigned int array_size(array_t *array) { return ((__array_t *)array)->size; }
+bool
+str_comparator (char *a, char *b) {
+  return s_equals(a, b);
+}
 
-void *array_get(array_t *array, int index) {
-  __array_t *internal = (__array_t *)array;
-  if (internal->size == 0) {
+size_t
+array_size (array_t *self) {
+  return ((__array_t *)self)->size;
+}
+
+void *
+array_get (array_t *self, ssize_t index) {
+  __array_t *unwrapped = (__array_t *)self;
+  if (unwrapped->size == 0) {
     return NULL;
   }
 
-  unsigned int absolute = abs(index);
-  if (absolute > internal->size) {
+  size_t absolute = abs((int)index);
+  if (absolute > unwrapped->size) {
     return NULL;
   }
 
   if (index < 0) {
-    return internal->state[internal->size - absolute];
+    return unwrapped->state[unwrapped->size - absolute];
   }
 
-  return internal->state[index];
+  return unwrapped->state[index];
 }
 
-array_t *array_init(void) {
+array_t *
+array_init (void) {
   __array_t *array = malloc(sizeof(__array_t));
   if (!array) {
     errno = ENOMEM;
@@ -42,13 +54,14 @@ array_t *array_init(void) {
     return NULL;
   }
 
-  array->size = 0;
+  array->size     = 0;
   array->capacity = 0;
 
   return (array_t *)array;
 }
 
-array_t *__array_collect(void *v, ...) {
+array_t *
+__array_collect (void *v, ...) {
   array_t *arr = array_init();
 
   va_list args;
@@ -64,12 +77,12 @@ array_t *__array_collect(void *v, ...) {
   return arr;
 }
 
-bool array_includes(array_t *array, comparator_t *comparator,
-                    void *compare_to) {
-  __array_t *internal = (__array_t *)array;
+bool
+array_includes (array_t *self, comparator_t *comparator, void *compare_to) {
+  __array_t *unwrapped = (__array_t *)self;
 
-  for (unsigned int i = 0; i < internal->size; i++) {
-    if (comparator(internal->state[i], compare_to)) {
+  for (size_t i = 0; i < unwrapped->size; i++) {
+    if (comparator(unwrapped->state[i], compare_to)) {
       return true;
     }
   }
@@ -77,11 +90,12 @@ bool array_includes(array_t *array, comparator_t *comparator,
   return false;
 }
 
-int array_find(array_t *array, comparator_t *comparator, void *compare_to) {
-  __array_t *internal = (__array_t *)array;
+ssize_t
+array_find (array_t *self, comparator_t *comparator, void *compare_to) {
+  __array_t *unwrapped = (__array_t *)self;
 
-  for (unsigned int i = 0; i < internal->size; i++) {
-    if (comparator(internal->state[i], compare_to)) {
+  for (size_t i = 0; i < unwrapped->size; i++) {
+    if (comparator(unwrapped->state[i], compare_to)) {
       return i;
     }
   }
@@ -89,13 +103,12 @@ int array_find(array_t *array, comparator_t *comparator, void *compare_to) {
   return -1;
 }
 
-bool array_push(array_t *array, void *el) {
-  __array_t *internal = (__array_t *)array;
+bool
+array_push (array_t *self, void *el) {
+  __array_t *unwrapped = (__array_t *)self;
 
-  if (internal->size == internal->capacity) {
-    void **next_state = realloc(
-        internal->state,
-        (internal->size + LIB_UTIL_ARRAY_CAPACITY_INCR) * sizeof(void *));
+  if (unwrapped->size == unwrapped->capacity) {
+    void **next_state = realloc(unwrapped->state, (unwrapped->size + LIB_UTIL_ARRAY_CAPACITY_INCR) * sizeof(void *));
     if (!next_state) {
       free(next_state);
       errno = ENOMEM;
@@ -103,26 +116,58 @@ bool array_push(array_t *array, void *el) {
       return false;
     }
 
-    internal->state = next_state;
-    internal->capacity += LIB_UTIL_ARRAY_CAPACITY_INCR;
+    unwrapped->state     = next_state;
+    unwrapped->capacity += LIB_UTIL_ARRAY_CAPACITY_INCR;
   }
 
-  internal->state[internal->size++] = el;
+  unwrapped->state[unwrapped->size++] = el;
 
   return true;
 }
 
-void *array_pop(array_t *array) {
-  __array_t *internal = (__array_t *)array;
+bool
+array_insert (array_t *self, size_t index, void *el, free_fn *free_old_el) {
+  __array_t *unwrapped = (__array_t *)self;
 
-  unsigned int size = internal->size;
+  if (unwrapped->capacity < index) {
+    void **next_state = realloc(unwrapped->state, (index) * sizeof(void *));
+    if (!next_state) {
+      free(next_state);
+      errno = ENOMEM;
+
+      return false;
+    }
+
+    unwrapped->state                    = next_state;
+    unwrapped->capacity                 = index;
+
+    unwrapped->state[unwrapped->size++] = el;
+
+    return true;
+  }
+
+  void *old_el = unwrapped->state[unwrapped->size++];
+  if (old_el && free_old_el) {
+    free_old_el(old_el);
+  }
+
+  unwrapped->state[unwrapped->size] = el;
+
+  return true;
+}
+
+void *
+array_pop (array_t *self) {
+  __array_t *unwrapped = (__array_t *)self;
+
+  size_t size          = unwrapped->size;
 
   if (size > 0) {
-    unsigned int next_size = size - 1;
+    size_t next_size            = size - 1;
 
-    void *el = internal->state[next_size];
-    internal->state[next_size] = NULL;
-    internal->size = next_size;
+    void *el                    = unwrapped->state[next_size];
+    unwrapped->state[next_size] = NULL;
+    unwrapped->size             = next_size;
 
     return el;
   }
@@ -130,82 +175,86 @@ void *array_pop(array_t *array) {
   return NULL;
 }
 
-void *array_shift(array_t *array) {
-  __array_t *internal = (__array_t *)array;
+void *
+array_shift (array_t *self) {
+  __array_t *unwrapped = (__array_t *)self;
 
-  if (internal->size == 0) {
+  if (unwrapped->size == 0) {
     return false;
   }
 
-  void *el = internal->state[0];
+  void *el     = unwrapped->state[0];
   array_t *new = array_init();
 
-  for (unsigned int i = 1; i < internal->size; i++) {
-    array_push(new, internal->state[i]);
+  for (size_t i = 1; i < unwrapped->size; i++) {
+    array_push(new, unwrapped->state[i]);
   }
 
-  free(internal->state);
+  free(unwrapped->state);
 
-  internal->state = ((__array_t *)new)->state;  // Assign the new state
-  internal->size--;
+  unwrapped->state = ((__array_t *)new)->state;  // Assign the new state
+  unwrapped->size--;
 
   free(new);
   return el;
 }
 
-array_t *array_slice(array_t *array, unsigned start, int end) {
-  __array_t *internal = (__array_t *)array;
-  array_t *slice = array_init();
+array_t *
+array_slice (array_t *self, size_t start, ssize_t end) {
+  __array_t *unwrapped  = (__array_t *)self;
+  array_t   *slice      = array_init();
 
   // TODO: fix negative end beyond -1
-  unsigned int normalized_end = end == -1 ? (int)internal->size : end;
-  if (end > (int)internal->size) {
+  size_t normalized_end = end == -1 ? (int)unwrapped->size : end;
+  if (end > (int)unwrapped->size) {
     return NULL;
   }
 
-  for (unsigned int i = start; i < normalized_end; i++) {
-    array_push(slice, internal->state[i]);
+  for (size_t i = start; i < normalized_end; i++) {
+    array_push(slice, unwrapped->state[i]);
   }
 
   return slice;
 }
 
-bool array_remove(array_t *array, unsigned int index) {
-  __array_t *internal = (__array_t *)array;
+bool
+array_remove (array_t *self, size_t index) {
+  __array_t *unwrapped = (__array_t *)self;
 
-  if (internal->size < index) {
+  if (unwrapped->size < index) {
     return false;
   }
 
-  for (unsigned int i = 0; i < internal->size - 1; i++) {
+  for (size_t i = 0; i < unwrapped->size - 1; i++) {
     if (i >= index) {
-      internal->state[i] = internal->state[i + 1];
+      unwrapped->state[i] = unwrapped->state[i + 1];
     }
   }
 
-  internal->size--;
+  unwrapped->size--;
   return true;
 }
 
-array_t *array_map(array_t *array, callback_t *callback) {
-  __array_t *internal = (__array_t *)array;
+array_t *
+array_map (array_t *self, callback_t *callback) {
+  __array_t *unwrapped = (__array_t *)self;
 
-  array_t *ret = array_init();
-  for (unsigned int i = 0; i < internal->size; i++) {
-    array_push(ret, callback(internal->state[i], i, array));
+  array_t *ret         = array_init();
+  for (size_t i = 0; i < unwrapped->size; i++) {
+    array_push(ret, callback(unwrapped->state[i], i, self));
   }
 
   return ret;
 }
 
-array_t *array_filter(array_t *array, predicate_t *predicate,
-                      void *compare_to) {
-  __array_t *internal = (__array_t *)array;
+array_t *
+array_filter (array_t *self, predicate_t *predicate, void *compare_to) {
+  __array_t *unwrapped = (__array_t *)self;
 
-  array_t *ret = array_init();
-  for (unsigned int i = 0; i < internal->size; i++) {
-    void *el = internal->state[i];
-    if (predicate(el, i, array, compare_to)) {
+  array_t *ret         = array_init();
+  for (size_t i = 0; i < unwrapped->size; i++) {
+    void *el = unwrapped->state[i];
+    if (predicate(el, i, self, compare_to)) {
       array_push(ret, el);
     }
   }
@@ -213,22 +262,23 @@ array_t *array_filter(array_t *array, predicate_t *predicate,
   return ret;
 }
 
-void array_foreach(array_t *array, callback_t *callback) {
-  __array_t *internal = (__array_t *)array;
+void
+array_foreach (array_t *self, callback_t *callback) {
+  __array_t *unwrapped = (__array_t *)self;
 
-  for (unsigned int i = 0; i < internal->size; i++) {
-    callback(internal->state[i], i, array);
+  for (size_t i = 0; i < unwrapped->size; i++) {
+    callback(unwrapped->state[i], i, self);
   }
 }
 
-array_t *array_concat(array_t *arr1, array_t *arr2) {
+array_t *
+array_concat (array_t *arr1, array_t *arr2) {
   __array_t *internal1 = (__array_t *)arr1;
   __array_t *internal2 = (__array_t *)arr2;
 
-  __array_t *result = (__array_t *)array_init();
+  __array_t *result    = (__array_t *)array_init();
 
-  result->state = realloc(result->state,
-                          (internal1->size + internal2->size) * sizeof(void *));
+  result->state = realloc(result->state, (internal1->size + internal2->size) * sizeof(void *));
   if (!result->state) {
     errno = ENOMEM;
     return NULL;
@@ -237,20 +287,20 @@ array_t *array_concat(array_t *arr1, array_t *arr2) {
   result->size = internal1->size + internal2->size;
 
   memcpy(result->state, internal1->state, internal1->size * sizeof(void *));
-  memcpy(result->state + internal1->size, internal2->state,
-         internal2->size * sizeof(void *));
+  memcpy(result->state + internal1->size, internal2->state, internal2->size * sizeof(void *));
 
   return (array_t *)result;
 }
 
-void array_free(array_t *array, free_fn *free_fnptr) {
-  __array_t *internal = (__array_t *)array;
+void
+array_free (array_t *self, free_fn *free_fnptr) {
+  __array_t *unwrapped = (__array_t *)self;
   if (free_fnptr) {
-    foreach (array, i) {
-      free(array_get(array, i));
+    foreach (self, i) {
+      free_fnptr(array_get(self, i));
     }
   }
-  free(internal->state);
-  internal->state = NULL;
-  free(internal);
+  free(unwrapped->state);
+  unwrapped->state = NULL;
+  free(unwrapped);
 }

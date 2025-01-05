@@ -8,19 +8,23 @@
 
 #ifndef HAVE_STRDUP
 
-#include <stdlib.h>
-#include <string.h>
-#include "strdup.h"
+#  include "strdup.h"
 
-#ifndef strdup
+#  include <stdlib.h>
+#  include <string.h>
+
+#  ifndef strdup
+
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wnonnull-compare"
 
 char *
-strdup(const char *str) {
-  if (NULL == (char *) str) {
+strdup (const char *str) {
+  if (NULL == (char *)str) {
     return NULL;
   }
 
-  int len = strlen(str) + 1;
+  int   len = strlen(str) + 1;
   char *buf = malloc(len);
 
   if (buf) {
@@ -30,6 +34,8 @@ strdup(const char *str) {
   return buf;
 }
 
-#endif
+#    pragma GCC diagnostic pop
+
+#  endif
 
 #endif /* HAVE_STRDUP */
