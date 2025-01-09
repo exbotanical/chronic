@@ -1,0 +1,35 @@
+.TH CHRONIC "1" "January 2025" "chronic 1.0" "User Commands"
+.SH NAME
+chronic \- A modern cron daemon
+
+.SH SYNOPSIS
+.B chronic
+[\fIOPTION\fR]...
+
+.SH DESCRIPTION
+.B chronic
+is a simple, modern cron daemon.
+
+.SH OPTIONS
+.TP
+\fB\-L\fR, \fB\--log-file\fR \fI<name>\fR
+Specify the log file in which to store execution logs.
+
+.SH EXAMPLES
+.TP
+Run chronic and log outputs to the specified file:
+.B chronic -L /var/log/chronic.log
+
+.SH BUGS
+
+Report bugs to the maintainer. Issues:
+
+.UR https://github.com/exbotanical/chronic/issues
+chronic repo issues page
+.UE
+
+.SH AUTHOR
+Chronic is developed by Matthew Zito.
+
+.SH SEE ALSO
+cron(8), crontab(5)

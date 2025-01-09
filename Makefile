@@ -5,7 +5,15 @@ CC          ?= gcc
 AR          ?= ar
 FMT         ?= clang-format
 
+INSTALL     := install
+
+INSTALL_DIR ?= /usr/local
+MAN_DIR     ?= /usr/share/man/man1
 PROG        := chronic
+MANPAGE     := $(PROG).1
+# TODO: Get from env
+PROGVERS    := 0.0.1
+
 UNIT_TARGET := unit_test
 
 SRCDIR      := src
@@ -29,6 +37,15 @@ LIBS             := -lm -lpthread -lpcre -luuid
 
 all: $(SRC) $(DEPS)
 	$(CC) $(CFLAGS) $^ $(LIBS) -o $(PROG)
+
+install: all
+	$(shell mkdir -p $(INSTALL_DIR)/bin)
+	$(INSTALL) $(PROG) $(INSTALL_DIR)/bin/$(PROG)
+	$(INSTALL) $(MANPAGE) $(MAN_DIR)/$(MANPAGE)
+
+uninstall:
+	$(shell rm $(INSTALL_DIR)/bin/$(PROG))
+	$(shell rm $(MAN_DIR)/$(MANPAGE))
 
 test:
 	@$(MAKE) unit_test
