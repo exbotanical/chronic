@@ -31,11 +31,20 @@ get_sleep_duration (short interval, time_t now) {
 
 /**
  * Converts the given time_t into a stringified timestamp.
+ * Caller must `free`.
  *
- * @param t
- * @return char*
+ * @param ts
  */
 char *to_time_str(time_t ts);
+
+/**
+ * Converts seconds into a string with format:
+ * `%d days, %d hours, %d minutes, %d seconds`.
+ * Caller must `free`.
+ *
+ * @param seconds
+ */
+char *pretty_print_seconds(double seconds);
 
 /**
  * Generates a v4 UUID. Must be freed by caller.

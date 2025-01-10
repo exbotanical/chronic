@@ -34,7 +34,7 @@ typedef struct {
 #define SOCKET_PATH          "/tmp/daemon.sock"
 #define MAX_CONCURRENT_CONNS 5
 #define RECV_BUFFER_SIZE     1024
-#define ERROR_MESSAGE_FMT    "{\"error\":\"%s\"}"
+#define ERROR_MESSAGE_FMT    "{\"error\":\"%s\"}\n"
 
 static int server_fd = -1;
 
@@ -70,7 +70,7 @@ ipc_routine (void* arg __attribute__((unused))) {
 
     hash_table* pairs = ht_init(11, free);
     if (parse_json(buffer, pairs) == -1) {
-      ipc_write_err(client_fd, "invalid json");
+      ipc_write_err(client_fd, "invalid format");
       goto client_done;
     }
 

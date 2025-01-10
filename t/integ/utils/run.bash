@@ -6,6 +6,7 @@ UTILS_F=run_utils.bash
 
 declare -a SKIP_FILES=(
   # 'daemon_shpec.bash'
+  # 'ipc_shpec.bash'
   # 'root_shpec.bash'
   # 'user_shpec.bash'
 )

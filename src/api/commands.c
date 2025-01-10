@@ -7,6 +7,7 @@
 #include "constants.h"
 #include "job.h"
 #include "panic.h"
+#include "proginfo.h"
 #include "util.h"
 
 typedef struct {
@@ -16,10 +17,12 @@ typedef struct {
 
 static void write_jobs_command(int client_fd);
 static void write_crontabs_command(int client_fd);
+static void write_program_info(int client_fd);
 
 static command_handler_entry command_handler_map_index[] = {
   {.command = "IPC_LIST_JOBS",     .handler = write_jobs_command    },
   {.command = "IPC_LIST_CRONTABS", .handler = write_crontabs_command},
+  {.command = "IPC_SHOW_INFO",     .handler = write_program_info    }
 };
 
 static pthread_once_t init_command_handlers_map_once = PTHREAD_ONCE_INIT;
@@ -28,6 +31,7 @@ static hash_table*    command_handlers_map;
 static void
 write_jobs_command (int client_fd) {
   write(client_fd, "[", 2);
+  unsigned int len = array_size(job_queue);
   foreach (job_queue, i) {
     job_t* job = (job_t*)array_get_or_panic(job_queue, i);
     if (job->type != CRON) {
@@ -39,13 +43,13 @@ write_jobs_command (int client_fd) {
 
     char* s = s_fmt(
       "{\"id\":\"%s\",\"cmd\":\"%s\",\"mailto\":\"%s\",\"state\":\"%s\","
-      "\"next\":\"%s\"},"
-      "\n",
+      "\"next\":\"%s\"}%s",
       job->ident,
       job->cmd,
       job->mailto,
       job_state_names[job->state],
-      buf
+      buf,
+      i != len - 1 ? ",\n" : ""
     );
 
     write(client_fd, s, strlen(s));
@@ -58,8 +62,11 @@ static void
 write_crontabs_command (int client_fd) {
   write(client_fd, "[", 2);
 
+  unsigned int entries = db->count;
   HT_ITER_START(db)
-  crontab_t* ct = entry->value;
+  entries--;
+  crontab_t*   ct  = entry->value;
+  unsigned int len = array_size(ct->entries);
   foreach (ct->entries, i) {
     cron_entry* ce = array_get_or_panic(ct->entries, i);
 
@@ -70,15 +77,14 @@ write_crontabs_command (int client_fd) {
 
     char* s  = s_fmt(
       "{\"id\":\"%d\",\"cmd\":\"%s\",\"schedule\":\"%s\",\"owner\":\"%s\","
-       "\"envp\":\"%s\","
-       "\"next\":\"%s\"},"
-       "\n",
+       "\"envp\":\"%s\",\"next\":\"%s\"}%s",
       ce->id,
       ce->cmd,
       ce->schedule,
       ct->uname,
       se,
-      buf
+      buf,
+      entries != 0 || i != len - 1 ? ",\n" : ""
     );
 
     write(client_fd, s, strlen(s));
@@ -87,6 +93,28 @@ write_crontabs_command (int client_fd) {
   HT_ITER_END
 
   write(client_fd, "]\n", 3);
+}
+
+static void
+write_program_info (int client_fd) {
+  char*  st     = to_time_str(proginfo.start);
+  time_t now    = time(NULL);
+
+  double diff   = difftime(now, proginfo.start);
+  char*  uptime = pretty_print_seconds(diff);
+
+  char* s       = s_fmt(
+    "{\n\t\"pid\": \"%d\",\n\t\"started_at\": \"%s\",\n\t\"uptime\": \"%s\","
+          "\n\t\"version\": \"%s\"\n}\n",
+    proginfo.pid,
+    st,
+    uptime,
+    proginfo.version
+  );
+  write(client_fd, s, strlen(s));
+
+  free(s);
+  free(uptime);
 }
 
 static void
@@ -105,3 +133,5 @@ get_command_handlers_map (void) {
 
   return command_handlers_map;
 }
+
+// echo "Your message here" | socat - UNIX-CONNECT:/tmp/daemon.sock

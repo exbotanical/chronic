@@ -33,7 +33,6 @@
 #define DEV_NULL        "/dev/null"
 #define DEV_TTY         "/dev/tty"
 
-extern pid_t  daemon_pid;
 extern char   hostname[SMALL_BUFFER];
 extern user_t usr;
 

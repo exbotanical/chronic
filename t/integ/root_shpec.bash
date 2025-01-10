@@ -30,7 +30,9 @@ describe 'crond run by root'
 
   # Wait for an even minute minus 1 second so we catch the next run
   # 10# to force base10 and avoid `bash: 60 - 08: value too great for base (error token is "08")`
-  sleep $((ONE_MIN_IN_SECS - 10#$(date +%S) - 1))
+  wait_val=$((ONE_MIN_IN_SECS - 10#$(date +%S) - 1))
+  echo "sleeping for $wait_val seconds..."
+  sleep $wait_val
 
   now="$(date -u +'%Y-%m-%dT%H:%M:%S')"
   # Add an additional minute because the daemon will not see any crontabs first pass and will sleep until the next
@@ -40,9 +42,7 @@ describe 'crond run by root'
   setup_user_crondir
   setup_sys_cron
 
-  # Create a user narcissus
   setup_user $uname_1
-  # Create a user demian
   setup_user $uname_2
 
   # Add iaso's crontab (iaso user does not exist)
@@ -63,13 +63,19 @@ describe 'crond run by root'
   add_user_job $uname_2 2
 
   # Wait 3 min
-  sleep $((3 * ONE_MIN_IN_SECS))
+  wait_val=$((3 * ONE_MIN_IN_SECS))
+  echo "sleeping for $wait_val seconds..."
+  sleep $wait_val
+
   # Delete 1 min job for narcissus
   rm_user_job $uname_1 1
   # Delete isao file
   teardown_user_crontab $uname_3
+
   # Total of 5 min now
-  sleep $((2 * ONE_MIN_IN_SECS))
+  wait_val=$((2 * ONE_MIN_IN_SECS))
+  echo "sleeping for $wait_val seconds..."
+  sleep $wait_val
 
   it 'runs all jobs'
     assert file_present "/tmp/$uname_1.1min"

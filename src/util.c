@@ -31,6 +31,21 @@ to_time_str (time_t t) {
 }
 
 char*
+pretty_print_seconds (double seconds) {
+  int          ns           = (int)seconds;
+  unsigned int days         = ns / 86400;
+  ns                       %= 86400;
+  unsigned int hours        = ns / 3600;
+  ns                       %= 3600;
+  unsigned int minutes      = ns / 60;
+  ns                       %= 60;
+  unsigned int rem_seconds  = ns;
+
+  char* s = s_fmt("%d days, %d hours, %d minutes, %d seconds", days, hours, minutes, rem_seconds);
+  return s;
+}
+
+char*
 create_uuid (void) {
   char uuid[UUID_STR_LEN];
 
@@ -90,6 +105,7 @@ trim_whitespace (char* str) {
   return str;
 }
 
+// No arrays
 int
 parse_json (const char* json, hash_table* pairs) {
   char* mutable_json = s_copy_or_panic(json);

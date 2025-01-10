@@ -96,10 +96,39 @@ json_parser_test (void) {
   is(ht_get(pairs, "command"), "list_tabs", "selects the expected json field");
 }
 
+static void
+pretty_print_seconds_test (void) {
+  typedef struct {
+    char*  expect;
+    double seconds;
+  } TestCase;
+
+  TestCase tests[] = {
+    {.seconds = 5,        .expect = "0 days, 0 hours, 0 minutes, 5 seconds"     },
+    {.seconds = 65,       .expect = "0 days, 0 hours, 1 minutes, 5 seconds"     },
+    {.seconds = 3600,     .expect = "0 days, 1 hours, 0 minutes, 0 seconds"     },
+    {.seconds = 3601,     .expect = "0 days, 1 hours, 0 minutes, 1 seconds"     },
+    {.seconds = 3721,     .expect = "0 days, 1 hours, 2 minutes, 1 seconds"     },
+    {.seconds = 86400,    .expect = "1 days, 0 hours, 0 minutes, 0 seconds"     },
+    {.seconds = 86401,    .expect = "1 days, 0 hours, 0 minutes, 1 seconds"     },
+    {.seconds = 86520,    .expect = "1 days, 0 hours, 2 minutes, 0 seconds"     },
+    {.seconds = 17341938, .expect = "200 days, 17 hours, 12 minutes, 18 seconds"},
+  };
+
+  ITER_CASES_TEST(tests, TestCase) {
+    TestCase tc = tests[i];
+
+    char* ret   = pretty_print_seconds(tc.seconds);
+    is(tc.expect, ret, "expect %s (got %s)", tc.expect, ret);
+    free(ret);
+  }
+}
+
 void
 run_utils_tests (void) {
   round_ts_test();
   get_sleep_duration_test();
   get_filenames_test();
   json_parser_test();
+  pretty_print_seconds_test();
 }

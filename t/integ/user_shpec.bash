@@ -27,9 +27,7 @@ describe 'crond run by non-root'
   setup_user_crondir
   setup_sys_cron
 
-  # Create a user narcissus
   setup_user $uname_1
-  # Create a user demian
   setup_user $uname_2
 
   # Add 1 min job for narcissus
@@ -46,7 +44,9 @@ describe 'crond run by non-root'
 
   # Wait for an even minute minus 1 second so we catch the next run
   # 10# to force base10 and avoid `bash: 60 - 08: value too great for base (error token is "08")`
-  sleep $((ONE_MIN_IN_SECS - 10#$(date +%S) - 1))
+  wait_val=$((ONE_MIN_IN_SECS - 10#$(date +%S) - 1))
+  echo "sleeping for $wait_val seconds..."
+  sleep $wait_val
 
   it 'runs only jobs owned by the current user'
     ls /tmp

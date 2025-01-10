@@ -6,6 +6,7 @@
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "api/ipc.h"
@@ -18,10 +19,12 @@
 #include "job.h"
 #include "log.h"
 #include "panic.h"
+#include "proginfo.h"
 #include "usr.h"
 #include "util.h"
 
-pid_t  daemon_pid;
+prog_info_t proginfo;
+
 char   hostname[SMALL_BUFFER];
 user_t usr;
 
@@ -71,12 +74,13 @@ main (int argc, char** argv) {
   job_queue         = array_init_or_panic();
   mail_queue        = array_init_or_panic();
 
-  daemon_pid        = getpid();
-
   time_t start_time = time(NULL);
+  memcpy(proginfo.version, CHRONIC_VERSION, 32);
+  proginfo.start = start_time;
+  proginfo.pid   = getpid();
 
-  char* s_ts        = to_time_str(start_time);
-  printlogf("cron daemon (pid=%d) started at %s\n", daemon_pid, s_ts);
+  char* s_ts     = to_time_str(start_time);
+  printlogf("cron daemon (pid=%d) started at %s\n", proginfo.pid, s_ts);
   free(s_ts);
 
   time_t current_iter_time;

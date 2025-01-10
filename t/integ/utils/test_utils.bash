@@ -18,7 +18,8 @@ validate_timestamps () {
   while IFS= read -r timestamp; do
     # Ensure the timestamp in the file matches the expected time
     [ "$timestamp" = "$expected_time" ] || {
-      echo "Mismatch in $file. Expected $expected_time, found $timestamp"; echo 1;
+      echo "Mismatch in $file. Expected $expected_time, found $timestamp"
+      echo 1
     }
 
     # Calculate the next expected time
