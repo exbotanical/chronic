@@ -1,7 +1,7 @@
 #ifndef DAEMON_H
 #define DAEMON_H
 
-#include "util.h"
+#include "utils.h"
 
 /**
  * Daemonizes the current running process and detaches it from the TTY.
@@ -24,6 +24,6 @@ void daemon_lock(void);
  * Sets up signal handlers e.g. SIGINT/SIGTERM so we can manage the daemon
  * process.
  */
-void setup_sig_handlers(void);
+void sig_handlers_init(void);
 
 #endif /* DAEMON_H */

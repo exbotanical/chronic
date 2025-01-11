@@ -10,8 +10,6 @@ typedef struct {
   char* log_file;
 } cli_opts;
 
-extern cli_opts opts;
-
 /**
  * Initializes the CLI configuration and parses the argument vector immediately.
  */

@@ -1,6 +1,7 @@
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef UTILS_H
+#define UTILS_H
 
+#include <stddef.h>
 #include <time.h>
 
 #include "libhash/libhash.h"
@@ -59,6 +60,8 @@ char *create_uuid(void);
  */
 array_t *get_filenames(char *dirpath);
 
+bool file_exists(const char *path);
+
 int parse_json(const char *json, hash_table *pairs);
 
-#endif /* UTIL_H */
+#endif /* UTILS_H */

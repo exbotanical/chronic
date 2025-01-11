@@ -1,5 +1,3 @@
-#define _DEFAULT_SOURCE 1  // For `gethostname`
-
 #include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>
@@ -20,13 +18,10 @@
 #include "log.h"
 #include "panic.h"
 #include "proginfo.h"
-#include "usr.h"
-#include "util.h"
+#include "user.h"
+#include "utils.h"
 
-prog_info_t proginfo;
-
-char   hostname[SMALL_BUFFER];
-user_t usr;
+proginfo_t proginfo;
 
 hash_table* db;
 array_t*    job_queue;
@@ -38,19 +33,9 @@ const short loop_interval = 60;
 cli_opts opts             = {0};
 user_t   usr              = {0};
 
-static void
-set_hostname (void) {
-  if (gethostname(hostname, sizeof(hostname)) == 0) {
-    hostname[sizeof(hostname) - 1] = 0;
-  } else {
-    hostname[0] = 0;
-  }
-}
-
 int
 main (int argc, char** argv) {
   cli_init(argc, argv);
-  set_hostname();
 
 #ifndef VALGRIND
   // Become a daemon process
@@ -60,14 +45,12 @@ main (int argc, char** argv) {
 #endif
 
   logger_init();
+  user_init();
 
-  usr.uid   = getuid();
-  usr.root  = usr.uid == 0;
-  usr.uname = getpwuid(usr.uid)->pw_name;
   printlogf("running as %s (uid=%d, root?=%s)\n", usr.uname, usr.uid, usr.root ? "y" : "n");
 
   daemon_lock();  // TODO: check before daemonize
-  setup_sig_handlers();
+  sig_handlers_init();
 
   db                = ht_init_or_panic(0, (free_fn*)free_crontab);
 
@@ -75,11 +58,9 @@ main (int argc, char** argv) {
   mail_queue        = array_init_or_panic();
 
   time_t start_time = time(NULL);
-  memcpy(proginfo.version, CHRONIC_VERSION, 32);
-  proginfo.start = start_time;
-  proginfo.pid   = getpid();
+  set_proginfo(start_time);
 
-  char* s_ts     = to_time_str(start_time);
+  char* s_ts = to_time_str(start_time);
   printlogf("cron daemon (pid=%d) started at %s\n", proginfo.pid, s_ts);
   free(s_ts);
 
@@ -91,7 +72,7 @@ main (int argc, char** argv) {
   db                 = update_db(db, start_time, &usr_dir, &sys_dir, NULL);
 
   init_reap_routine();
-  init_ipc_server();
+  ipc_init();
 
   while (true) {
     printlogf("\n----------------\n");

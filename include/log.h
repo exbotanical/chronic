@@ -14,6 +14,11 @@
 void logger_init();
 
 /**
+ * Closes any file descriptors used by the logger.
+ */
+void logger_close(void);
+
+/**
  * Printf but for logs! Prints to the log fd we've configured in
  * `logger_init`.
  *
@@ -21,10 +26,5 @@ void logger_init();
  * @param ... Everything else
  */
 void printlogf(const char *fmt, ...);
-
-/**
- * Closes any file descriptors used by the logger.
- */
-void logger_close(void);
 
 #endif /* LOG_H */

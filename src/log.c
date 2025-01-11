@@ -8,8 +8,9 @@
 #include <unistd.h>
 
 #include "config.h"
-#include "constants.h"
+#include "globals.h"
 #include "libutil/libutil.h"
+#include "proginfo.h"
 
 #define LOG_GUARD     \
   if (log_fd == -1) { \
@@ -37,7 +38,7 @@ vlog (int fd, const char *fmt, va_list va) {
     char header[SMALL_BUFFER];
 
     if (strftime(header, sizeof(header), LOG_HEADER, ts_info)) {
-      if ((headerlen = snprintf(buf, sizeof(header), header, hostname)) >= sizeof(header)) {
+      if ((headerlen = snprintf(buf, sizeof(header), header, proginfo.hostname)) >= sizeof(header)) {
         headerlen = sizeof(header) - 1;
       }
     }

@@ -4,14 +4,17 @@
 #include <fcntl.h>
 #include <time.h>
 
+#include "constants.h"
+
 // TODO: Ensure all time is at least long
 
 typedef struct {
   pid_t  pid;
   time_t start;
-  char   version[32];
-} prog_info_t;
+  char   version[TINY_BUFFER];
+  char   hostname[SMALL_BUFFER];
+} proginfo_t;
 
-extern prog_info_t proginfo;
+void set_proginfo(time_t start_time);
 
 #endif /* PROGINFO_H */

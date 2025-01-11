@@ -1,15 +1,33 @@
-#include "util.h"
+#include "utils.h"
 
 #include <ctype.h>
 #include <dirent.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <uuid/uuid.h>
 
 #include "config.h"
 #include "log.h"
 #include "panic.h"
-#include "util.h"
+
+static char*
+trim_whitespace (char* str) {
+  while (isspace((unsigned char)*str)) {
+    str++;
+  }
+  if (*str == '\0') {
+    return str;
+  }
+
+  char* end = str + strlen(str) - 1;
+  while (end > str && isspace((unsigned char)*end)) {
+    end--;
+  }
+
+  *(end + 1) = '\0';
+  return str;
+}
 
 void*
 xmalloc (size_t sz) {
@@ -87,22 +105,10 @@ get_filenames (char* dirpath) {
   return NULL;
 }
 
-static char*
-trim_whitespace (char* str) {
-  while (isspace((unsigned char)*str)) {
-    str++;
-  }
-  if (*str == '\0') {
-    return str;
-  }
-
-  char* end = str + strlen(str) - 1;
-  while (end > str && isspace((unsigned char)*end)) {
-    end--;
-  }
-
-  *(end + 1) = '\0';
-  return str;
+bool
+file_exists (const char* path) {
+  struct stat buf;
+  return stat(path, &buf) == 0;
 }
 
 // No arrays

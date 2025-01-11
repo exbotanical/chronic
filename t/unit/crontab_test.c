@@ -6,7 +6,7 @@
 #include "cronentry.h"
 #include "tap.c/tap.h"
 #include "tests.h"
-#include "util.h"
+#include "utils.h"
 
 static void
 validate_entry (cron_entry* entry, cron_entry* expected) {

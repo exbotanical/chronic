@@ -12,12 +12,12 @@
 #include <unistd.h>
 
 #include "config.h"
-#include "constants.h"
 #include "cronentry.h"
+#include "globals.h"
 #include "log.h"
 #include "panic.h"
 #include "parser.h"
-#include "util.h"
+#include "utils.h"
 
 // Some systems won't have this option and we'll just have to live without it.
 #ifndef O_NOFOLLOW

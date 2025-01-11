@@ -1,7 +1,7 @@
 #include "cli.h"
 
 #include "commander/commander.h"
-#include "constants.h"
+#include "globals.h"
 #include "panic.h"
 
 /**

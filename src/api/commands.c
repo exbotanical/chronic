@@ -4,11 +4,11 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "constants.h"
+#include "globals.h"
 #include "job.h"
 #include "panic.h"
 #include "proginfo.h"
-#include "util.h"
+#include "utils.h"
 
 typedef struct {
   const char* command;
@@ -133,5 +133,3 @@ get_command_handlers_map (void) {
 
   return command_handlers_map;
 }
-
-// echo "Your message here" | socat - UNIX-CONNECT:/tmp/daemon.sock

@@ -1,5 +1,7 @@
-#ifndef USR_H
-#define USR_H
+#ifndef USER_H
+#define USER_H
+
+#include <stdbool.h>
 
 /**
  * Stores information about the user that executed this program.
@@ -10,4 +12,6 @@ typedef struct user {
   bool         root;
 } user_t;
 
-#endif /* USR_H */
+void user_init(void);
+
+#endif /* USER_H */

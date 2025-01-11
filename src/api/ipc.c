@@ -13,7 +13,7 @@
 #include "job.h"
 #include "log.h"
 #include "panic.h"
-#include "util.h"
+#include "utils.h"
 
 typedef enum {
   JOB_RUN_STATE_ACTIVE,
@@ -30,7 +30,6 @@ typedef struct {
   job_run_state run_state;
 } job_info_t;
 
-// TODO: Dyn
 #define SOCKET_PATH          "/tmp/daemon.sock"
 #define MAX_CONCURRENT_CONNS 5
 #define RECV_BUFFER_SIZE     1024
@@ -114,7 +113,7 @@ init_ipc_routine (void) {
 }
 
 void
-init_ipc_server (void) {
+ipc_init (void) {
   struct sockaddr_un addr;
 
   if ((server_fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
@@ -125,7 +124,10 @@ init_ipc_server (void) {
   memset(&addr, 0, sizeof(addr));
   addr.sun_family = AF_UNIX;
   strncpy(addr.sun_path, SOCKET_PATH, sizeof(addr.sun_path) - 1);
-  unlink(SOCKET_PATH);
+  if (file_exists(SOCKET_PATH)) {
+    printlogf("[WARN] socket path %s already exists. removing...\n", SOCKET_PATH);
+    unlink(SOCKET_PATH);
+  }
 
   if (bind(server_fd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
     perror("bind");
@@ -139,4 +141,11 @@ init_ipc_server (void) {
 
   init_ipc_routine();
   printlogf("listening on domain socket");
+}
+
+void
+ipc_shutdown (void) {
+  printlogf("shutting down socket server...\n");
+  close(server_fd);
+  unlink(SOCKET_PATH);
 }

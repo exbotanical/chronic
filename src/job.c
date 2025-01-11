@@ -7,12 +7,13 @@
 #include <unistd.h>
 
 #include "config.h"
-#include "constants.h"
 #include "cronentry.h"
+#include "globals.h"
 #include "libutil/libutil.h"
 #include "log.h"
 #include "panic.h"
-#include "util.h"
+#include "proginfo.h"
+#include "utils.h"
 
 // Mutex + cond var for the reaper daemon thread.
 pthread_mutex_t mutex         = PTHREAD_MUTEX_INITIALIZER;
@@ -73,7 +74,7 @@ new_mailjob (job_t* og_job) {
     MAILCMD_FMT,
     MAILCMD_PATH,
     DAEMON_IDENT,
-    hostname,
+    proginfo.hostname,
     MAIL_SUBJECT,
     og_job->mailto
   );

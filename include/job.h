@@ -79,7 +79,6 @@ typedef struct {
 } job_t;
 
 #define X(e) [e] = #e
-
 extern const char *job_state_names[];
 
 /**

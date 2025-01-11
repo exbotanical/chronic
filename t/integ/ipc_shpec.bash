@@ -14,7 +14,7 @@ DEVMODE=0
 # TODO: Allow set proc name
 
 sock_call () {
-  echo "$*" | socat - UNIX-CONNECT:/tmp/daemon.sock
+  echo "$*" | socat - UNIX-CONNECT:/tmp/chronic.sock
 }
 
 start_chronic () {

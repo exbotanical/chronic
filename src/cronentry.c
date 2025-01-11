@@ -4,7 +4,7 @@
 
 #include "log.h"
 #include "parser.h"
-#include "util.h"
+#include "utils.h"
 
 unsigned int id_counter = 0;
 

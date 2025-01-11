@@ -14,8 +14,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "api/ipc.h"
 #include "cli.h"
-#include "constants.h"
+#include "globals.h"
 #include "job.h"
 #include "libutil/libutil.h"
 #include "log.h"
@@ -149,8 +150,11 @@ daemon_lock (void) {
 void
 daemon_quit () {
   printlogf("received a kill signal; shutting down...\n");
+
+  ipc_shutdown();
   logger_close();
   unlink(get_lockfile_path());
+
   free(opts.log_file);
   array_free(job_queue, (free_fn*)free_cronjob);
   array_free(mail_queue, (free_fn*)free_mailjob);
@@ -159,7 +163,7 @@ daemon_quit () {
 }
 
 void
-setup_sig_handlers (void) {
+sig_handlers_init (void) {
   struct sigaction sa;
 
   sigemptyset(&sa.sa_mask);

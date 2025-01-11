@@ -1,6 +1,7 @@
 #ifndef IPC_H
 #define IPC_H
 
-void init_ipc_server(void);
+void ipc_init(void);
+void ipc_shutdown(void);
 
 #endif /* IPC_H */
