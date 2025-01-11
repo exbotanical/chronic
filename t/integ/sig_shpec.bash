@@ -7,7 +7,7 @@ ROOT_DIR="$(dirname "$(readlink -f $BASH_SOURCE)")"
 
 describe 'signal handling functionality'
   alias setup='./chronic -L .log'
-  alias teardown='quietly_kill'
+  alias teardown='quietly_kill && rm .log'
 
   it 'cleanly exits on SIGINT'
     kill -SIGINT $(get_chronic_pid)
@@ -24,6 +24,13 @@ describe 'signal handling functionality'
   it 'cleanly exits on SIGTERM'
     kill -SIGTERM $(get_chronic_pid)
     grep 'received a kill signal (15)' .log > /dev/null
+    assert equal "$?" 0
+  ti
+
+  it 're-creates a deleted log file on SIGHUP'
+    rm .log
+    kill -SIGHUP $(get_chronic_pid)
+    grep 'logfile was closed (SIGHUP); re-opened' .log > /dev/null
     assert equal "$?" 0
   ti
 end_describe

@@ -65,7 +65,7 @@ handle_sigsegv (int sig, siginfo_t* info, void* context) {
 static void
 handle_sighup (int sig) {
   // TODO: inotify
-  logger_init();
+  logger_reinit();
   printlogf("logfile was closed (SIGHUP); re-opened\n");
 }
 
@@ -75,9 +75,9 @@ sigaction_init (struct sigaction* sa) {
 
   sa->sa_flags =
     // restart any system calls that were interrupted by signal
-    SA_RESTART;
-  // Extended signal info
-  // | SA_SIGINFO;
+    SA_RESTART
+    // Extended signal info
+    | SA_SIGINFO;
 }
 
 // TODO: reap on sigchld

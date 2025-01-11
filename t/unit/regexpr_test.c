@@ -5,7 +5,7 @@
 #include "tests.h"
 
 void
-match_variable_test () {
+match_variable_test (void) {
   typedef struct {
     char* key;
     char* value;

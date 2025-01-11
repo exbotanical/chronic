@@ -7,7 +7,7 @@
 #include "tests.h"
 
 char*
-setup_test_directory () {
+setup_test_directory (void) {
   char template[] = "/tmp/tap_test_dir.XXXXXX";
   // Need to copy because mkdtemp overwrites ^ which is locally scoped
   char* dirname   = s_copy(mkdtemp(template));

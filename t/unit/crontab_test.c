@@ -75,7 +75,7 @@ new_crontab_test (void) {
 }
 
 void
-scan_crontabs_test () {
+scan_crontabs_test (void) {
   char* usr_dirname = setup_test_directory();
   setup_test_file(usr_dirname, "user1", "* * * * * echo 'test1'\n");
   setup_test_file(usr_dirname, "user2", "* * * * * echo 'test2'\n");

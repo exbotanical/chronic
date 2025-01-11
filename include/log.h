@@ -14,6 +14,12 @@
 void logger_init(void);
 
 /**
+ * Reinitializes the logger, provided the log file and/or file descriptor
+ * was closed or invalidated.
+ */
+void logger_reinit(void);
+
+/**
  * Closes any file descriptors used by the logger.
  */
 void logger_close(void);

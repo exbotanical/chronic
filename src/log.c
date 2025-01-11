@@ -5,12 +5,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "config.h"
 #include "globals.h"
 #include "libutil/libutil.h"
 #include "proginfo.h"
+#include "utils.h"
 
 #define LOG_GUARD     \
   if (log_fd == -1) { \
@@ -75,9 +77,27 @@ printlogf (const char *fmt, ...) {
 }
 
 void
-logger_init () {
+logger_init (void) {
   if (opts.log_file) {
     logger_open(opts.log_file);
+  }
+}
+
+void
+logger_reinit (void) {
+  struct stat fd_stat;
+  struct stat file_stat;
+
+  // Check for invalidated fd
+  if (fstat(log_fd, &fd_stat) < 0) {
+    logger_init();
+  }
+
+  if (opts.log_file) {
+    // Was the log file removed? Or do the fd and file have different inodes now?
+    if (stat(opts.log_file, &file_stat) < 0 || fd_stat.st_ino != file_stat.st_ino) {
+      logger_init();
+    }
   }
 }
 

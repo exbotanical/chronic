@@ -8,6 +8,7 @@
 #include <uuid/uuid.h>
 
 #include "config.h"
+#include "libhash/libhash.h"
 #include "log.h"
 #include "panic.h"
 

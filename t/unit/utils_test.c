@@ -27,7 +27,7 @@ round_ts_test (void) {
 }
 
 void
-get_sleep_duration_test () {
+get_sleep_duration_test (void) {
   typedef struct {
     unsigned short ival;
     time_t         now;
@@ -62,7 +62,7 @@ get_sleep_duration_test () {
 }
 
 void
-get_filenames_test () {
+get_filenames_test (void) {
   char* dirname = setup_test_directory();
   setup_test_file(dirname, "file1.txt", NULL);
   setup_test_file(dirname, "file2.txt", NULL);
