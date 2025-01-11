@@ -45,8 +45,8 @@ main (int argc, char** argv) {
   }
 #endif
 
-  logger_init();
   user_init();
+  logger_init();
 
   printlogf("running as %s (uid=%d, root?=%s)\n", usr.uname, usr.uid, usr.root ? "y" : "n");
 
@@ -72,7 +72,7 @@ main (int argc, char** argv) {
 
   db                 = update_db(db, start_time, &usr_dir, &sys_dir, NULL);
 
-  init_reap_routine();
+  reap_routine_init();
   ipc_init();
 
   while (true) {

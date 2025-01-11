@@ -91,7 +91,7 @@ extern const char *job_state_names[];
  * child processes and cleans them up.
  * It works while the main daemon loop is paused for sleeping.
  */
-void init_reap_routine(void);
+void reap_routine_init(void);
 
 /**
  * Signals the reap routine to wake up and begin processing RUNNING state jobs.

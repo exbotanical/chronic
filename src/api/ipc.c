@@ -99,7 +99,7 @@ ipc_routine (void* arg __attribute__((unused))) {
 }
 
 static void
-init_ipc_routine (void) {
+ipc_routine_init (void) {
   pthread_t      reaper_thread_id;
   pthread_attr_t attr;
   int            rc = pthread_attr_init(&attr);
@@ -139,7 +139,7 @@ ipc_init (void) {
     panic("failed to listen on socket");
   }
 
-  init_ipc_routine();
+  ipc_routine_init();
   printlogf("listening on domain socket");
 }
 

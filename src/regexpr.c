@@ -16,17 +16,17 @@ static const char *VARIABLE_PATTERN
 static int ovecsize = 32;
 static int ovector[32];  // TODO:
 
-static pthread_once_t init_regex_cache_once = PTHREAD_ONCE_INIT;
+static pthread_once_t regex_cache_init_once = PTHREAD_ONCE_INIT;
 static hash_table    *regex_cache;
 
 static void
-init_regex_cache (void) {
+regex_cache_init (void) {
   regex_cache = ht_init_or_panic(1, NULL);
 }
 
 static hash_table *
 get_regex_cache (void) {
-  pthread_once(&init_regex_cache_once, init_regex_cache);
+  pthread_once(&regex_cache_init_once, regex_cache_init);
 
   return regex_cache;
 }

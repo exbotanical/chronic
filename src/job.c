@@ -271,7 +271,7 @@ reap_routine (void* arg __attribute__((unused))) {
 }
 
 void
-init_reap_routine (void) {
+reap_routine_init (void) {
   pthread_t      reaper_thread_id;
   pthread_attr_t attr;
   int            rc = pthread_attr_init(&attr);

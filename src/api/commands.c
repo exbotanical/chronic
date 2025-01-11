@@ -25,7 +25,7 @@ static command_handler_entry command_handler_map_index[] = {
   {.command = "IPC_SHOW_INFO",     .handler = write_program_info    }
 };
 
-static pthread_once_t init_command_handlers_map_once = PTHREAD_ONCE_INIT;
+static pthread_once_t command_handlers_map_init_once = PTHREAD_ONCE_INIT;
 static hash_table*    command_handlers_map;
 
 static void
@@ -118,7 +118,7 @@ write_program_info (int client_fd) {
 }
 
 static void
-init_command_handlers_map (void) {
+command_handlers_map_init (void) {
   command_handlers_map = ht_init(11, NULL);
 
   for (unsigned int i = 0; i < sizeof(command_handler_map_index) / sizeof(command_handler_entry); i++) {
@@ -129,7 +129,7 @@ init_command_handlers_map (void) {
 
 hash_table*
 get_command_handlers_map (void) {
-  pthread_once(&init_command_handlers_map_once, init_command_handlers_map);
+  pthread_once(&command_handlers_map_init_once, command_handlers_map_init);
 
   return command_handlers_map;
 }

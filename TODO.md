@@ -29,6 +29,10 @@
 - [ ] os compat
 - [ ] load test
 - [ ] ensure time is synchronized
+- [ ] IPC features
+  - [ ] print info for job <id>
+  - [ ] print info for crontab <id>
+  - [ ] pause job/crontab <id>
 
 
 We make tradeoffs between runtime op/main loop work and startup work (loading the crontabs).

@@ -25,18 +25,18 @@
 #define SYS_LOCKFILE_PATH     "/var/run/crond.pid"
 #define USR_LOCKFILE_PATH_FMT "/tmp/%s.crond.pid"
 
-static pthread_once_t init_lockfile_path_once = PTHREAD_ONCE_INIT;
+static pthread_once_t lockfile_path_init_once = PTHREAD_ONCE_INIT;
 static char*          lockfile_path;
 
 static void
-init_lockfile_path (void) {
+lockfile_path_init (void) {
   lockfile_path
     = usr.root ? SYS_LOCKFILE_PATH : s_fmt(USR_LOCKFILE_PATH_FMT, usr.uname);
 }
 
 static char*
 get_lockfile_path (void) {
-  pthread_once(&init_lockfile_path_once, init_lockfile_path);
+  pthread_once(&lockfile_path_init_once, lockfile_path_init);
 
   return lockfile_path;
 }
