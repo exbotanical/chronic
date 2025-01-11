@@ -1,5 +1,4 @@
-#define _XOPEN_SOURCE   1  // For sigaction
-#define _DEFAULT_SOURCE 1  // For SA_RESTART
+
 #include "daemon.h"
 
 #include <errno.h>
@@ -148,9 +147,7 @@ daemon_lock (void) {
 }
 
 void
-daemon_quit () {
-  printlogf("received a kill signal; shutting down...\n");
-
+daemon_shutdown (void) {
   ipc_shutdown();
   logger_close();
   unlink(get_lockfile_path());
@@ -160,18 +157,4 @@ daemon_quit () {
   array_free(mail_queue, (free_fn*)free_mailjob);
 
   exit(EXIT_SUCCESS);
-}
-
-void
-sig_handlers_init (void) {
-  struct sigaction sa;
-
-  sigemptyset(&sa.sa_mask);
-  // restart any system calls that were interrupted by signal
-  sa.sa_flags   = SA_RESTART;
-  sa.sa_handler = daemon_quit;
-  if (sigaction(SIGINT, &sa, NULL) < OK || sigaction(SIGTERM, &sa, NULL)) {
-    panic("failed to setup signal handler: %s", strerror(errno));
-  }
-  // TODO: reap on sigchld
 }

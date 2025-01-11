@@ -21,9 +21,9 @@ retval_t daemonize(void);
 void daemon_lock(void);
 
 /**
- * Sets up signal handlers e.g. SIGINT/SIGTERM so we can manage the daemon
- * process.
+ * Shuts down the daemon and calls cleanup functions.
+ * This is effectively our program exit routine.
  */
-void sig_handlers_init(void);
+void daemon_shutdown(void);
 
 #endif /* DAEMON_H */

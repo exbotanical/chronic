@@ -74,11 +74,16 @@ typedef struct {
    * The return status of the job, once executed. Starts as -1.
    */
   int       ret;
-
-  time_t next_run;
+  /**
+   * The time at which this job will next run.
+   */
+  time_t    next_run;
 } job_t;
 
 #define X(e) [e] = #e
+/**
+ * Stores stringified job state enum names for convenience.
+ */
 extern const char *job_state_names[];
 
 /**
@@ -100,8 +105,7 @@ void signal_reap_routine(void);
  * Iterates the crontab db and runs any job whose `next` timestamp matches the
  * current rounded timestamp.
  *
- * @param db A hash table of eligible jobs, in the form
- * HashTable<char*, crontab_t*>
+ * @param db A hash table of eligible jobs, in the form HashTable<char*, crontab_t*>
  * @param ts The current rounded time.
  */
 void try_run_jobs(hash_table *db, time_t ts);

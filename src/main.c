@@ -18,6 +18,7 @@
 #include "log.h"
 #include "panic.h"
 #include "proginfo.h"
+#include "sig.h"
 #include "user.h"
 #include "utils.h"
 
@@ -58,7 +59,7 @@ main (int argc, char** argv) {
   mail_queue        = array_init_or_panic();
 
   time_t start_time = time(NULL);
-  set_proginfo(start_time);
+  proginfo_init(start_time);
 
   char* s_ts = to_time_str(start_time);
   printlogf("cron daemon (pid=%d) started at %s\n", proginfo.pid, s_ts);

@@ -11,7 +11,7 @@
  *
  * TODO: sink struct - allow different logger impls
  */
-void logger_init();
+void logger_init(void);
 
 /**
  * Closes any file descriptors used by the logger.

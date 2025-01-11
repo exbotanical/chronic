@@ -6,15 +6,33 @@
 
 #include "constants.h"
 
-// TODO: Ensure all time is at least long
-
+/**
+ * Program info and metadata.
+ */
 typedef struct {
+  /**
+   * The pid of this program once daemon.
+   */
   pid_t  pid;
+  /**
+   * Time at which the program started.
+   */
   time_t start;
+  /**
+   * The current version of this program.
+   */
   char   version[TINY_BUFFER];
+  /**
+   * The hostname of the system running the program.
+   */
   char   hostname[SMALL_BUFFER];
 } proginfo_t;
 
-void set_proginfo(time_t start_time);
+/**
+ * Initializes the proginfo global.
+ *
+ * @param start_time
+ */
+void proginfo_init(time_t start_time);
 
 #endif /* PROGINFO_H */

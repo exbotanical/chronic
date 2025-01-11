@@ -9,7 +9,13 @@
 
 typedef enum { ENV_VAR_ADDED, SKIP_LINE, ENTRY, DONE } parse_ln_result;
 
-void            strip_comment(char *str);
+/**
+ * Strips the preceding '#'s out of a string and return it.
+ * This is a dumb function and it doesn't handle any edge cases, so use it judiciously.
+ * @param str
+ */
+void strip_comment(char *str);
+
 char           *until_nth_of_char(const char *str, char c, int n);
 bool            is_comment_line(const char *str);
 bool            should_parse_line(const char *line);

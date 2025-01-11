@@ -40,10 +40,12 @@ typedef struct {
   char       *uname;
   /**
    * An array of this crontab's entries.
+   * i.e. List<cron_entry*>
    */
   array_t    *entries;
   /**
    * A mapping of variables (key/value pairs) set in the crontab.
+   * i.e. HashTable<char*, char*>
    */
   hash_table *vars;
   /**

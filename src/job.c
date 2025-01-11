@@ -144,9 +144,7 @@ run_mailjob (job_t* exited_job) {
       exit(EXIT_FAILURE);
     }
 
-    char* email_body = s_fmt("command: %s", exited_job->cmd);
-    fprintf(mail_pipe, email_body);
-    free(email_body);
+    fprintf(mail_pipe, "command: %s", exited_job->cmd);
 
     if (pclose(mail_pipe) == -1) {
       perror("pclose");

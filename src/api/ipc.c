@@ -30,7 +30,7 @@ typedef struct {
   job_run_state run_state;
 } job_info_t;
 
-#define SOCKET_PATH          "/tmp/daemon.sock"
+#define SOCKET_PATH          "/tmp/chronic.sock"
 #define MAX_CONCURRENT_CONNS 5
 #define RECV_BUFFER_SIZE     1024
 #define ERROR_MESSAGE_FMT    "{\"error\":\"%s\"}\n"

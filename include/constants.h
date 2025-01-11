@@ -20,7 +20,7 @@
 #define MED_BUFFER      SMALL_BUFFER * 4
 #define LARGE_BUFFER    MED_BUFFER * 2
 
-// Mail command path | sender | hostname | subject |  recipient
+/* Mail command path | sender | hostname | subject |  recipient */
 #define MAILCMD_FMT     "%s -r%s@%s -s '%s' %s"
 #define MAIL_SUBJECT    "cron job completed"
 

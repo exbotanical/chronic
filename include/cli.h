@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 /**
- * CLI configuration options.
+ * Command-line interface configuration options.
  */
 typedef struct {
   char* log_file;
