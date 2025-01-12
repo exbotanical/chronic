@@ -14,13 +14,14 @@
 #include "cronentry.h"
 #include "crontab.h"
 #include "daemon.h"
+#include "globals.h"
 #include "job.h"
-#include "log.h"
+#include "logger.h"
 #include "panic.h"
 #include "proginfo.h"
 #include "sig.h"
 #include "user.h"
-#include "utils.h"
+#include "util.h"
 
 proginfo_t proginfo;
 
@@ -44,11 +45,10 @@ main (int argc, char** argv) {
     panic("[%s@L%d] daemonize fail\n", __func__, __LINE__);
   }
 #endif
-
   user_init();
   logger_init();
 
-  printlogf("running as %s (uid=%d, root?=%s)\n", usr.uname, usr.uid, usr.root ? "y" : "n");
+  log_info("running as %s (uid=%d, root?=%s)\n", usr.uname, usr.uid, usr.root ? "y" : "n");
 
   daemon_lock();  // TODO: check before daemonize
   sig_handlers_init();
@@ -62,7 +62,7 @@ main (int argc, char** argv) {
   proginfo_init(start_time);
 
   char* s_ts = to_time_str(start_time);
-  printlogf("cron daemon (pid=%d) started at %s\n", proginfo.pid, s_ts);
+  log_info("cron daemon (pid=%d) started at %s\n", proginfo.pid, s_ts);
   free(s_ts);
 
   time_t current_iter_time;
@@ -76,13 +76,13 @@ main (int argc, char** argv) {
   ipc_init();
 
   while (true) {
-    printlogf("\n----------------\n");
+    log_debug("\n%s\n", "----------------");
 
     // Take advantage of our sleep time to run reap routines
     signal_reap_routine();
 
     unsigned short sleep_dur = get_sleep_duration(loop_interval, time(NULL));
-    printlogf("Sleeping for %d seconds...\n", sleep_dur);
+    log_debug("Sleeping for %d seconds...\n", sleep_dur);
     sleep(sleep_dur);
 
     current_iter_time        = time(NULL);
@@ -90,7 +90,7 @@ main (int argc, char** argv) {
 
     char* c_ts               = to_time_str(current_iter_time);
     char* r_ts               = to_time_str(rounded_timestamp);
-    printlogf("Current iter time: %s (rounded to %s)\n", c_ts, r_ts);
+    log_debug("Current iter time: %s (rounded to %s)\n", c_ts, r_ts);
     free(c_ts);
     free(r_ts);
 

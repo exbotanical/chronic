@@ -1,9 +1,23 @@
-#ifndef LOG_H
-#define LOG_H
+#ifndef LOGGER_H
+#define LOGGER_H
 
+#include <stdarg.h>
+#include <sys/syslog.h>
 #include <time.h>
 
 #include "cli.h"
+
+typedef enum {
+  LOG_LEVEL_ERROR = LOG_ERR,
+  LOG_LEVEL_WARN  = LOG_WARNING,
+  LOG_LEVEL_INFO  = LOG_INFO,
+  LOG_LEVEL_DEBUG = LOG_DEBUG,
+} log_level;
+
+#define log_error(fmt, ...) printlogf(LOG_LEVEL_ERROR, fmt, ##__VA_ARGS__)
+#define log_warn(fmt, ...)  printlogf(LOG_LEVEL_WARN, fmt, ##__VA_ARGS__)
+#define log_info(fmt, ...)  printlogf(LOG_LEVEL_INFO, fmt, ##__VA_ARGS__)
+#define log_debug(fmt, ...) printlogf(LOG_LEVEL_DEBUG, fmt, ##__VA_ARGS__)
 
 /**
  * Initializes the logger using the CLI options to determine things such as
@@ -31,6 +45,6 @@ void logger_close(void);
  * @param fmt The format string
  * @param ... Everything else
  */
-void printlogf(const char *fmt, ...);
+void printlogf(log_level lvl, const char* fmt, ...);
 
-#endif /* LOG_H */
+#endif /* LOGGER_H */

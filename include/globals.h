@@ -40,4 +40,9 @@ extern array_t *job_queue;
  */
 extern array_t *mail_queue;
 
+/**
+ * Stores stringified job state enum names for convenience.
+ */
+extern const char *job_state_names[];
+
 #endif /* GLOBALS_H */

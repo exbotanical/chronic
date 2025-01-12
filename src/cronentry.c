@@ -2,9 +2,9 @@
 
 #include <stdlib.h>
 
-#include "log.h"
+#include "logger.h"
 #include "parser.h"
-#include "utils.h"
+#include "util.h"
 
 unsigned int id_counter = 0;
 
@@ -13,7 +13,7 @@ new_cron_entry (char* raw, time_t curr, crontab_t* ct) {
   cron_entry* entry = xmalloc(sizeof(cron_entry));
 
   if (parse_entry(entry, raw) != OK) {
-    printlogf("[ERROR] Failed to parse entry line %s\n", raw);
+    log_error("Failed to parse entry line %s\n", raw);
     return NULL;
   }
 
@@ -26,7 +26,7 @@ new_cron_entry (char* raw, time_t curr, crontab_t* ct) {
 
 void
 renew_cron_entry (cron_entry* entry, time_t curr) {
-  printlogf("Updating time for entry %d\n", entry->id);
+  log_debug("Updating time for entry %d\n", entry->id);
 
   entry->next = cron_next(entry->expr, curr);
 }

@@ -5,7 +5,7 @@
 
 #include "cronentry.h"
 #include "libhash/libhash.h"
-#include "utils.h"
+#include "util.h"
 
 typedef enum { ENV_VAR_ADDED, SKIP_LINE, ENTRY, DONE } parse_ln_result;
 

@@ -8,7 +8,7 @@
 #include "job.h"
 #include "panic.h"
 #include "proginfo.h"
-#include "utils.h"
+#include "util.h"
 
 typedef struct {
   const char* command;

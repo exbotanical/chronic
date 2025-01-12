@@ -18,7 +18,7 @@
 #include "globals.h"
 #include "job.h"
 #include "libutil/libutil.h"
-#include "log.h"
+#include "logger.h"
 #include "panic.h"
 
 #define LOCKFILE_BUFFER_SZ    512
@@ -102,7 +102,7 @@ daemon_lock (void) {
   char buf[LOCKFILE_BUFFER_SZ];
 
   char* lp = get_lockfile_path();
-  printlogf("lockfile path: %s\n", lp);
+  log_debug("lockfile path: %s\n", lp);
   // Initially, we set the perms to be r/w by owner only to prevent race
   // conds.
   if ((fd = open(lp, O_RDWR | O_CREAT, 0600)) == -1) {
@@ -110,11 +110,11 @@ daemon_lock (void) {
   }
 
   if (flock(fd, LOCK_EX /* exclusive */ | LOCK_NB /* non-blocking */) < OK) {
-    printlogf("flock error %s\n", strerror(errno));
+    log_error("flock error %s\n", strerror(errno));
 
     int read_bytes = -1;
     if ((read_bytes = read(fd, buf, sizeof(buf) - 1) < OK)) {
-      printlogf("read error %s\n", strerror(errno));
+      log_error("read error %s\n", strerror(errno));
     }
     close(fd);
 
@@ -123,10 +123,13 @@ daemon_lock (void) {
       char* endptr;
       long  pid = strtol(buf, &endptr, 10);
       if (errno != 0 || (endptr && *endptr != '\n')) {
-        printlogf("cannot acquire dedupe lock; unable to determine if that's "
-                  "because there's already a running instance\n");
+        log_error(
+          "cannot acquire dedupe lock; unable to determine if that's "
+          "because there's already a running instance (reason: %s)\n",
+          strerror(errno)
+        );
       } else {
-        printlogf(
+        log_error(
           "cannot acquire dedupe lock; there's already a running instance "
           "with pid %ld\n",
           pid
@@ -152,7 +155,6 @@ daemon_shutdown (void) {
   logger_close();
   unlink(get_lockfile_path());
 
-  free(opts.log_file);
   array_free(job_queue, (free_fn*)free_cronjob);
   array_free(mail_queue, (free_fn*)free_mailjob);
 

@@ -1,8 +1,10 @@
 #include "job.h"
 
+#include <errno.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -10,16 +12,16 @@
 #include "cronentry.h"
 #include "globals.h"
 #include "libutil/libutil.h"
-#include "log.h"
+#include "logger.h"
 #include "panic.h"
 #include "proginfo.h"
-#include "utils.h"
+#include "util.h"
+
+const char* job_state_names[] = {X(PENDING), X(RUNNING), X(EXITED)};
 
 // Mutex + cond var for the reaper daemon thread.
 pthread_mutex_t mutex         = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t  cond          = PTHREAD_COND_INITIALIZER;
-
-const char* job_state_names[] = {X(PENDING), X(RUNNING), X(EXITED)};
 
 /**
  * Creates a new job of type CRON.
@@ -106,7 +108,7 @@ static bool
 check_job (pid_t pid, int* status) {
   int r = waitpid(pid, status, WNOHANG);
 
-  printlogf("[pid=%d] waitpid result is %d\n", pid, r);
+  log_info("[pid=%d] waitpid result is %d\n", pid, r);
 
   // -1 == error; 0 == still running; pid == dead
   if (r < 0 || r == pid) {
@@ -131,7 +133,7 @@ run_mailjob (job_t* exited_job) {
   job_t* job = new_mailjob(exited_job);
   array_push_or_panic(mail_queue, job);
 
-  printlogf("[job %s] going to run mail cmd: %s\n", job->ident, job->cmd);
+  log_info("[job %s] going to run mail cmd: %s\n", job->ident, job->cmd);
 
   if ((job->pid = fork()) == 0) {
     setsid();
@@ -140,14 +142,14 @@ run_mailjob (job_t* exited_job) {
     FILE* mail_pipe = popen(job->cmd, "w");
 
     if (mail_pipe == NULL) {
-      perror("popen");
+      log_error("mail pipe was NULL in job %s (reason: %s)\n", strerror(errno));
       exit(EXIT_FAILURE);
     }
 
     fprintf(mail_pipe, "command: %s", exited_job->cmd);
 
     if (pclose(mail_pipe) == -1) {
-      perror("pclose");
+      log_error("failed to close mail pipe in job %s (reason: %s)\n", strerror(errno));
       exit(EXIT_FAILURE);
     }
 
@@ -178,7 +180,7 @@ run_cronjob (cron_entry* entry) {
 
     dup2(STDERR_FILENO, STDOUT_FILENO);
 
-    printlogf(
+    log_debug(
       "[job %s] Writing log from child process pid=%d homedir=%s shell=%s "
       "cmd=%s\n",
       job->ident,
@@ -191,12 +193,11 @@ run_cronjob (cron_entry* entry) {
     chdir(home);
     int rc = execle(shell, shell, "-c", job->cmd, NULL, entry->parent->envp);
 
-    printlogf("execle failed with %d\n", rc);
-    perror("execle");
+    log_error("execle failed with %d (reason: %s)\n", rc, strerror(errno));
     _exit(EXIT_FAILURE);
   }
 
-  printlogf("[job %s] New running job with pid %d\n", job->ident, job->pid);
+  log_info("[job %s] New running job with pid %d\n", job->ident, job->pid);
   job->state = RUNNING;
 }
 
@@ -208,7 +209,7 @@ reap_job (job_t* job) {
     case RUNNING: {
       int status;
       if (check_job(job->pid, &status)) {
-        printlogf(
+        log_debug(
           "[job %s] transition RUNNING->EXITED (pid=%d, status=%d)\n",
           job->ident,
           job->pid,
@@ -236,7 +237,7 @@ reap_routine (void* arg __attribute__((unused))) {
     pthread_mutex_lock(&mutex);
     pthread_cond_wait(&cond, &mutex);
 
-    printlogf("in reaper thread\n");
+    log_debug("%s\n", "in reaper thread");
 
     foreach (job_queue, i) {
       job_t* job = array_get_or_panic(job_queue, i);
@@ -258,7 +259,7 @@ reap_routine (void* arg __attribute__((unused))) {
       reap_job(job);
 
       if (job->state == EXITED) {
-        printlogf("[mail %s] finally exited\n", job->ident);
+        log_debug("[mail %s] finally exited\n", job->ident);
         array_remove(mail_queue, i);
         free_mailjob(job);
       }

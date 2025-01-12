@@ -80,12 +80,6 @@ typedef struct {
   time_t    next_run;
 } job_t;
 
-#define X(e) [e] = #e
-/**
- * Stores stringified job state enum names for convenience.
- */
-extern const char *job_state_names[];
-
 /**
  * Initializes the job reap routine. This is a daemon thread that awaits job
  * child processes and cleans them up.

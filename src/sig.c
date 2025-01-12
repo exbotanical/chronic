@@ -11,52 +11,52 @@
 
 #include "daemon.h"
 #include "globals.h"
-#include "log.h"
+#include "logger.h"
 #include "panic.h"
 
 static void
 handle_exit (int sig) {
-  printlogf("received a kill signal (%d); shutting down...\n", sig);
+  log_info("received a kill signal (%d); shutting down...\n", sig);
   daemon_shutdown();
 }
 
 static void
 handle_sigsegv (int sig, siginfo_t* info, void* context) {
-  printlogf("Caught SIGSEGV (signal %d)\n", sig);
-  printlogf("Fault address: %p\n", info->si_addr);
+  log_error("Caught SIGSEGV (signal %d)\n", sig);
+  log_error("Fault address: %p\n", info->si_addr);
 
   switch (info->si_code) {
     case SEGV_MAPERR:
-      printlogf("Reason: Address not mapped to object (SEGV_MAPERR)\n");
+      log_error("Reason: Address not mapped to object (SEGV_MAPERR)\n");
       break;
     case SEGV_ACCERR:
-      printlogf("Reason: Invalid permissions for mapped object (SEGV_ACCERR)\n");
+      log_error("Reason: Invalid permissions for mapped object (SEGV_ACCERR)\n");
       break;
-    default: printlogf("Reason: Unknown (code %d)\n", info->si_code); break;
+    default: log_error("Reason: Unknown (code %d)\n", info->si_code); break;
   }
 
   ucontext_t* uc = (ucontext_t*)context;
 #ifdef __x86_64__
-  printlogf(
+  log_debug(
     "Instruction Pointer (%%rip): 0x%llx\n",
     (unsigned long long)uc->uc_mcontext.gregs[REG_RIP]
   );
-  printlogf(
+  log_debug(
     "Stack Pointer (%%rsp): 0x%llx\n",
     (unsigned long long)uc->uc_mcontext.gregs[REG_RSP]
   );
-  printlogf(
+  log_debug(
     "Faulting Address Register (%%cr2): 0x%llx\n",
     (unsigned long long)info->si_addr
   );
 #elif __i386__
-  printlogf(
+  log_debug(
     "Instruction Pointer (%%eip): 0x%lx\n",
     (unsigned long)uc->uc_mcontext.gregs[REG_EIP]
   );
-  printlogf("Stack Pointer (%%esp): 0x%lx\n", (unsigned long)uc->uc_mcontext.gregs[REG_ESP]);
+  log_debug("Stack Pointer (%%esp): 0x%lx\n", (unsigned long)uc->uc_mcontext.gregs[REG_ESP]);
 #else
-  printlogf("CPU context not supported on this architecture.\n");
+  log_debug("CPU context not supported on this architecture.\n");
 #endif
 
   daemon_shutdown();
@@ -66,7 +66,7 @@ static void
 handle_sighup (int sig) {
   // TODO: inotify
   logger_reinit();
-  printlogf("logfile was closed (SIGHUP); re-opened\n");
+  log_info("logfile was closed (SIGHUP); re-opened\n");
 }
 
 static void

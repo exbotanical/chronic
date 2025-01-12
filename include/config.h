@@ -21,7 +21,4 @@
 #  define MAILCMD_PATH "/usr/bin/mail"
 #endif
 
-/* Logger timestamp format */
-#define TIMESTAMP_FMT "%Y-%m-%d %H:%M:%S"
-
 #endif /* CONFIG_H */

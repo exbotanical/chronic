@@ -6,7 +6,7 @@
 
 #include "libhash/libhash.h"
 #include "libutil/libutil.h"
-#include "log.h"
+#include "logger.h"
 #include "panic.h"
 #include "regexpr.h"
 
@@ -93,7 +93,7 @@ parse_entry (cron_entry* entry, char* line) {
   cron_parse_expr(entry->schedule, expr, &err);
 
   if (err) {
-    printlogf("error parsing cron expression: %s\n\n", err);
+    log_warn("error parsing cron expression: %s\n\n", err);
     return ERR;
   }
 

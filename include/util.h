@@ -1,5 +1,5 @@
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef UTIL_H
+#define UTIL_H
 
 #include <stddef.h>
 #include <time.h>
@@ -65,4 +65,4 @@ bool file_exists(const char *path);
 
 int parse_json(const char *json, hash_table *pairs);
 
-#endif /* UTILS_H */
+#endif /* UTIL_H */

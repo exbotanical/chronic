@@ -7,7 +7,7 @@
 #include <string.h>
 
 #include "libutil/libutil.h"
-#include "log.h"
+#include "logger.h"
 #include "panic.h"
 
 static const char *VARIABLE_PATTERN

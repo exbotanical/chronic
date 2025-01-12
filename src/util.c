@@ -1,15 +1,16 @@
-#include "utils.h"
+#include "util.h"
 
 #include <ctype.h>
 #include <dirent.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <uuid/uuid.h>
 
-#include "config.h"
+#include "constants.h"
 #include "libhash/libhash.h"
-#include "log.h"
+#include "logger.h"
 #include "panic.h"
 
 static char*
@@ -80,7 +81,7 @@ get_filenames (char* dirpath) {
   DIR* dir;
   // TODO: Only if modified
   if ((dir = opendir(dirpath)) != NULL) {
-    printlogf("scanning dir %s\n", dirpath);
+    log_debug("scanning dir %s\n", dirpath);
     struct dirent* den;
 
     array_t* file_names = array_init_or_panic();
@@ -91,7 +92,7 @@ get_filenames (char* dirpath) {
         continue;
       }
 
-      printlogf("found file %s/%s\n", dirpath, den->d_name);
+      log_debug("found file %s/%s\n", dirpath, den->d_name);
 
       array_push_or_panic(file_names, s_copy_or_panic(den->d_name));
     }
@@ -99,8 +100,7 @@ get_filenames (char* dirpath) {
     closedir(dir);
     return file_names;
   } else {
-    perror("opendir");
-    printlogf("unable to scan dir %s\n", dirpath);
+    log_warn("unable to scan dir %s (reason: %s)\n", dirpath, strerror(errno));
   }
 
   return NULL;
@@ -120,7 +120,7 @@ parse_json (const char* json, hash_table* pairs) {
   char* start        = strchr(mutable_json, '{');
   char* end          = strrchr(mutable_json, '}');
   if (!start || !end || start >= end) {
-    printlogf("Invalid JSON format\n");
+    log_warn("%s\n", "Invalid JSON format");
     free(mutable_json);
     return -1;
   }
@@ -134,7 +134,7 @@ parse_json (const char* json, hash_table* pairs) {
   while (pair_str) {
     char* colon = strchr(pair_str, ':');
     if (!colon) {
-      printlogf("Invalid key-value pair: %s\n", pair_str);
+      log_warn("Invalid key-value pair: %s\n", pair_str);
       free(mutable_json);
       return -1;
     }

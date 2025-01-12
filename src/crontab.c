@@ -14,10 +14,10 @@
 #include "config.h"
 #include "cronentry.h"
 #include "globals.h"
-#include "log.h"
+#include "logger.h"
 #include "panic.h"
 #include "parser.h"
-#include "utils.h"
+#include "util.h"
 
 // Some systems won't have this option and we'll just have to live without it.
 #ifndef O_NOFOLLOW
@@ -72,8 +72,8 @@ complete_env (crontab_t* ct) {
       ht_insert(vars, PATH_ENVVAR, DEFAULT_PATH);
     }
   } else {
-    printlogf(
-      "[ERROR] Something went really awry and uname=%s wasn't found in the "
+    log_error(
+      "Something went really awry and uname=%s wasn't found in the "
       "system user db\n",
       ct->uname
     );
@@ -104,7 +104,7 @@ get_crontab_fd_if_valid (char* fpath, char* uname, time_t last_mtime, struct sta
   struct passwd* pw = NULL;
   // No user found in passwd
   if (!s_equals(uname, ROOT_UNAME) && (pw = getpwnam(uname)) == NULL) {
-    printlogf("user %s not found\n", uname);
+    log_warn("user %s not found\n", uname);
     goto dont_process;
   }
 #endif
@@ -112,24 +112,24 @@ get_crontab_fd_if_valid (char* fpath, char* uname, time_t last_mtime, struct sta
   // Open in readonly, non-blocking mode. Don't follow symlinks.
   // Not following symlinks is largely for security
   if ((crontab_fd = open(fpath, O_RDONLY | O_NONBLOCK | O_NOFOLLOW, 0)) < OK) {
-    printlogf("cannot read %s (reason=%s)\n", fpath, strerror(errno));
+    log_warn("cannot read %s (reason=%s)\n", fpath, strerror(errno));
     goto dont_process;
   }
 
   if (fstat(crontab_fd, statbuf) < OK) {
-    printlogf("fstat failed for fd %d (file %s)\n", crontab_fd, fpath);
+    log_warn("fstat failed for fd %d (file %s)\n", crontab_fd, fpath);
     goto dont_process;
   }
 
   if (!S_ISREG(statbuf->st_mode)) {
-    printlogf("file %s is not a regular file");
+    log_warn("file %s is not a regular file", fpath);
     goto dont_process;
   }
 
 #ifndef UNIT_TEST
   int file_perms = statbuf->st_mode & ALL_PERMS;
   if (file_perms != OWNER_RW_PERMS) {
-    printlogf(
+    log_warn(
       "file %s has invalid permissions (should be r/w by owner only but got "
       "%o)\n",
       fpath,
@@ -141,28 +141,28 @@ get_crontab_fd_if_valid (char* fpath, char* uname, time_t last_mtime, struct sta
   // Verify that the user the file is named after actually owns said file,
   // unless we're root.
   if (!usr.root && !is_file_owner(statbuf, pw)) {
-    printlogf("file %s not owned by specified user %s (it's owned by %s)\n", fpath, uname, pw->pw_name);
+    log_warn("file %s not owned by specified user %s (it's owned by %s)\n", fpath, uname, pw->pw_name);
     goto dont_process;
   }
 
   // This time we're checking that the user who executed this program matches
   // the crontab owner, unless we're root;.
   if (!usr.root && pw->pw_uid != usr.uid) {
-    printlogf("current user %s must own this crontab (%s) or be root to schedule it\n ", uname, fpath);
+    log_warn("current user %s must own this crontab (%s) or be root to schedule it\n ", uname, fpath);
     goto dont_process;
   }
 #endif
 
   // Ensure there aren't any hard links
   if (statbuf->st_nlink != 1) {
-    printlogf("file %s has hard symlinks (%d)\n", fpath, statbuf->st_nlink);
+    log_warn("file %s has hard symlinks (%d)\n", fpath, statbuf->st_nlink);
     goto dont_process;
   }
 
   if (last_mtime > -1) {
     // It shouldn't ever be greater than but whatever
     if (last_mtime >= statbuf->st_mtime) {
-      printlogf(
+      log_warn(
         "file has not changed (last mtime: %ld, curr mtime: %ld)\n",
         fpath,
         last_mtime,
@@ -182,8 +182,7 @@ crontab_t*
 new_crontab (int crontab_fd, bool is_root, time_t curr_time, time_t mtime, char* uname) {
   FILE* fd;
   if (!(fd = fdopen(crontab_fd, "r"))) {
-    printlogf("fdopen on crontab_fd %d failed\n", crontab_fd);
-    perror("fdopen");
+    log_warn("fdopen on crontab_fd %d failed (reason: %s)\n", crontab_fd, strerror(errno));
     return NULL;
   }
 
@@ -217,7 +216,7 @@ new_crontab (int crontab_fd, bool is_root, time_t curr_time, time_t mtime, char*
       case ENTRY: {
         cron_entry* entry = new_cron_entry(ptr, curr_time, ct);
         if (!entry) {
-          printlogf(
+          log_warn(
             "Failed to parse what was thought to be a cron entry: %s (user "
             "%s)\n",
             ptr,
@@ -226,7 +225,7 @@ new_crontab (int crontab_fd, bool is_root, time_t curr_time, time_t mtime, char*
           continue;
         }
 
-        printlogf("New entry (%d) for crontab %s\n", entry->id, uname);
+        log_debug("New entry (%d) for crontab %s\n", entry->id, uname);
         array_push_or_panic(ct->entries, entry);
         max_entries--;
       }
@@ -262,35 +261,35 @@ scan_crontabs (hash_table* old_db, hash_table* new_db, dir_config dir_conf, time
 
       char* fpath;
       if (!(fpath = s_fmt("%s/%s", dir_conf.path, fname))) {
-        printlogf("failed to concatenate as %s/%s\n", dir_conf.path, fname);
+        log_warn("failed to concatenate as %s/%s\n", dir_conf.path, fname);
         continue;
       }
       crontab_t*  ct = ht_get(old_db, fpath);
       int         crontab_fd;
       struct stat statbuf;
 
-      printlogf("scanning file %s...\n", fpath);
+      log_debug("scanning file %s...\n", fpath);
 
       char* uname = dir_conf.is_root ? ROOT_UNAME : fname;
       // File hasn't been processed before
       if (!ct) {
         if ((crontab_fd = get_crontab_fd_if_valid(fpath, uname, 0, &statbuf)) < OK) {
-          printlogf("file %s not valid; continuing...\n", fpath);
+          log_warn("file %s not valid; continuing...\n", fpath);
           continue;
         }
 
-        printlogf("creating new crontab from file %s...\n", fpath);
+        log_debug("creating new crontab from file %s...\n", fpath);
 
         ct = new_crontab(crontab_fd, dir_conf.is_root, curr, statbuf.st_mtime, s_copy_or_panic(fname));
         ht_insert(new_db, fpath, ct);
       }
       // File exists in db
       else {
-        printlogf("crontab for file %s exists...\n", fpath);
+        log_debug("crontab for file %s exists...\n", fpath);
 
         // Renew the fd and statbuf
         if ((crontab_fd = get_crontab_fd_if_valid(fpath, uname, -1, &statbuf)) < OK) {
-          printlogf(
+          log_warn(
             "existing crontab file %s not valid; it won't be carried over. "
             "continuing...\n",
             fpath
@@ -301,13 +300,13 @@ scan_crontabs (hash_table* old_db, hash_table* new_db, dir_config dir_conf, time
         // The crontab was not modified, just renew the entries so we know when
         // to run them next
         if (ct->mtime >= statbuf.st_mtime) {
-          printlogf("existing file %s not modified, renewing entries if any\n", fpath);
+          log_debug("existing file %s not modified, renewing entries if any\n", fpath);
           foreach (ct->entries, i) {
             cron_entry* entry = array_get_or_panic(ct->entries, i);
             renew_cron_entry(entry, curr);
           }
         } else {
-          printlogf("existing file %s was modified, recreating crontab\n", fpath);
+          log_debug("existing file %s was modified, recreating crontab\n", fpath);
           // modified, re-process
           ct = new_crontab(crontab_fd, dir_conf.is_root, curr, statbuf.st_mtime, s_copy_or_panic(fname));
         }
