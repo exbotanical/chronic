@@ -10,8 +10,6 @@
 /**
  * Holds metadata and configuration for one of the crontab directories being
  * tracked.
- *
- * TODO: check dir mtime as well?
  */
 typedef struct {
   /**

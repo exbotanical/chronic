@@ -4,20 +4,20 @@
 - [x] ~~allow user to interpolate a `RELATIVE_DIR` in crontabs (so they can reference files relative to the crontab)~~
 - [x] allow variables in crontab
 - [ ] schedule and run overdue jobs
-- [ ] job reporting
-- [ ] figure out better logging
+- [x] job reporting
+- [x] figure out better logging
 - [x] synchronize updates to crontab
 - [x] actually read the sys ~~and user crontabs~~
   - [x] perms
 - [ ] special crontab config support (toml or yaml?)
 - [x] ~~log to syslog~~
   - [x] ~~syslog levels?~~
-- [ ] Allow log feature flags (fs logs, job logs, time logs, etc)
+- [x] Allow log feature flags (fs logs, job logs, time logs, etc)
 - [x] integ testing
 - [x] unit tests
 - [x] ~~Ensure tests don't log to syslog or whatever (maybe a test sink?)~~
 - [x] handle signals
-  - [ ] and log getting closed or deleted (or segfault and anything else)
+  - [x] and log getting closed or deleted (or segfault and anything else)
 - [x] daemon lock
 - [x] kill chronic anywhere integ test stops (e.g. TRAP)
 - [x] ~~crontab program~~ no point - just use a text editor!
@@ -34,6 +34,7 @@
   - [ ] print info for crontab <id>
   - [ ] pause job/crontab <id>
 - [ ] all ts should be UTC
+- [ ] Name processes
 
 
 We make tradeoffs between runtime op/main loop work and startup work (loading the crontabs).

@@ -22,8 +22,6 @@ typedef enum {
 /**
  * Initializes the logger using the CLI options to determine things such as
  * where the log output goes.
- *
- * TODO: sink struct - allow different logger impls
  */
 void logger_init(void);
 

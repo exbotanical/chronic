@@ -11,8 +11,6 @@ SETUP_PATH="$ROOT_DIR/utils/setup.bash"
 # This will prevent the test setup/teardown hooks from running and ruining your day.
 DEVMODE=0
 
-# TODO: Allow set proc name
-
 sock_call () {
   echo "$*" | socat - UNIX-CONNECT:/tmp/chronic.sock
 }

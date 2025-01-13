@@ -50,7 +50,7 @@ main (int argc, char** argv) {
 
   log_info("running as %s (uid=%d, root?=%s)\n", usr.uname, usr.uid, usr.root ? "y" : "n");
 
-  daemon_lock();  // TODO: check before daemonize
+  daemon_lock();
   sig_handlers_init();
 
   db                = ht_init_or_panic(0, (free_fn*)free_crontab);
