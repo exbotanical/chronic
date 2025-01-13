@@ -97,10 +97,10 @@ write_crontabs_command (int client_fd) {
 
 static void
 write_program_info (int client_fd) {
-  char*  st     = to_time_str(proginfo.start);
+  char*  st     = to_time_str_millis(proginfo.start);
   time_t now    = time(NULL);
 
-  double diff   = difftime(now, proginfo.start);
+  double diff   = difftime(now, proginfo.start->tv_sec);
   char*  uptime = pretty_print_seconds(diff);
 
   char* s       = s_fmt(
@@ -114,6 +114,7 @@ write_program_info (int client_fd) {
   write(client_fd, s, strlen(s));
 
   free(s);
+  free(st);
   free(uptime);
 }
 

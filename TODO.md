@@ -12,7 +12,7 @@
 - [ ] special crontab config support (toml or yaml?)
 - [x] ~~log to syslog~~
   - [x] ~~syslog levels?~~
-- [x] Allow log feature flags (fs logs, job logs, time logs, etc)
+- [x] Allow loglogloglogloglog feature flags (fs logs, job logs, time logs, etc)
 - [x] integ testing
 - [x] unit tests
 - [x] ~~Ensure tests don't log to syslog or whatever (maybe a test sink?)~~
@@ -33,8 +33,9 @@
   - [ ] print info for job <id>
   - [ ] print info for crontab <id>
   - [ ] pause job/crontab <id>
-- [ ] all ts should be UTC
+- [x] all ts should be UTC
 - [ ] Name processes
+- [ ] default log file
 
 
 We make tradeoffs between runtime op/main loop work and startup work (loading the crontabs).

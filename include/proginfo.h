@@ -13,19 +13,19 @@ typedef struct {
   /**
    * The pid of this program once daemon.
    */
-  pid_t  pid;
+  pid_t            pid;
   /**
    * Time at which the program started.
    */
-  time_t start;
+  struct timespec* start;
   /**
    * The current version of this program.
    */
-  char   version[TINY_BUFFER];
+  char             version[TINY_BUFFER];
   /**
    * The hostname of the system running the program.
    */
-  char   hostname[SMALL_BUFFER];
+  char             hostname[SMALL_BUFFER];
 } proginfo_t;
 
 /**
@@ -33,6 +33,6 @@ typedef struct {
  *
  * @param start_time
  */
-void proginfo_init(time_t start_time);
+void proginfo_init(struct timespec* start_time);
 
 #endif /* PROGINFO_H */

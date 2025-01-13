@@ -41,13 +41,54 @@ xmalloc (size_t sz) {
   return ptr;
 }
 
-char*
-to_time_str (time_t t) {
-  char       msg[512];
-  struct tm* time_info = localtime(&t);
-  strftime(msg, sizeof(msg), TIMESTAMP_FMT, time_info);
+void
+get_time (struct timespec* ts) {
+  // TODO: Make OSX path non-monotonic
+#ifdef __MACH__
+  clock_serv_t    cclock;
+  mach_timespec_t mts;
+  host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &cclock);
+  clock_get_time(cclock, &mts);
+  mach_port_deallocate(mach_task_self(), cclock);
+  ts->tv_sec  = mts.tv_sec;
+  ts->tv_nsec = mts.tv_nsec;
+#else
+  clock_gettime(CLOCK_REALTIME, ts);
+#endif
+}
 
-  return s_fmt("%s", msg);
+char*
+to_time_str_millis (struct timespec* ts) {
+  struct tm* utc_time = gmtime(&ts->tv_sec);
+  if (!utc_time) {
+    perror("gmtime");
+    return NULL;
+  }
+
+  char buffer[32];
+  strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%S", utc_time);
+
+  char result[64];
+  snprintf(result, sizeof(result), "%s.%03ldZ", buffer, ts->tv_nsec / 1000000);
+
+  return s_copy(result);
+}
+
+char*
+to_time_str_secs (time_t ts) {
+  struct tm* utc_time = gmtime(&ts);
+  if (!utc_time) {
+    perror("gmtime");
+    return NULL;
+  }
+
+  char buffer[30];
+  strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%S", utc_time);
+
+  char result[40];
+  snprintf(result, sizeof(result), "%s.%03ldZ", buffer, 0L);
+
+  return s_copy(result);
 }
 
 char*
@@ -79,7 +120,6 @@ create_uuid (void) {
 array_t*
 get_filenames (char* dirpath) {
   DIR* dir;
-  // TODO: Only if modified
   if ((dir = opendir(dirpath)) != NULL) {
     log_debug("scanning dir %s\n", dirpath);
     struct dirent* den;

@@ -31,12 +31,15 @@ get_sleep_duration (short interval, time_t now) {
 }
 
 /**
- * Converts the given time_t into a stringified timestamp.
+ * Converts the given time_t into a  stringified  timestamp.
  * Caller must `free`.
  *
  * @param ts
  */
-char *to_time_str(time_t ts);
+char *to_time_str_secs(time_t ts);
+char *to_time_str_millis(struct timespec *ts);
+
+void get_time(struct timespec *ts);
 
 /**
  * Converts seconds into a string with format:

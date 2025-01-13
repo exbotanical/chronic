@@ -17,7 +17,7 @@ set_hostname (void) {
 }
 
 void
-proginfo_init (time_t start_time) {
+proginfo_init (struct timespec* start_time) {
   memcpy(proginfo.version, CHRONIC_VERSION, strlen(CHRONIC_VERSION));
   proginfo.start = start_time;
   proginfo.pid   = getpid();

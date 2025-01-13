@@ -15,12 +15,10 @@
 #include "proginfo.h"
 #include "util.h"
 
-#define LOG_TIMESTAMP_FMT TIMESTAMP_FMT
-#define LOG_LEVEL_FMT     "[%%s]"
+#define LOG_LEVEL_FMT "[%s]"
 
 //   "%Y-%m-%d %H:%M:%S - [%s] %%s crond: "
-#define LOG_HEADER \
-  LOG_TIMESTAMP_FMT " - " LOG_LEVEL_FMT " %%s " DAEMON_IDENT ": "
+#define LOG_HEADER    "%s - " LOG_LEVEL_FMT " %s " DAEMON_IDENT ": "
 
 #define LOG_GUARD     \
   if (log_fd == -1) { \
@@ -46,27 +44,28 @@ printlogf (log_level lvl, const char *fmt, ...) {
     // Used to omit the header in the case of multi-line logs
     static short suppress_header = 0;
 
-    time_t     ts                = time(NULL);
-    struct tm *ts_info           = localtime(&ts);
+    struct timespec ts_info;
+    get_time(&ts_info);
 
     unsigned int buflen, headerlen = 0;
     buf[0] = 0;
 
     if (!suppress_header) {
-      char header[SMALL_BUFFER];
+      char *ts = to_time_str_millis(&ts_info);
 
-      if (strftime(header, sizeof(header), LOG_HEADER, ts_info)) {
-        if ((headerlen = snprintf(
-               buf,
-               sizeof(header),
-               header,
-               log_level_names[lvl],
-               proginfo.hostname
-             ))
-            >= sizeof(header)) {
-          headerlen = sizeof(header) - 1;
-        }
+      if ((headerlen = snprintf(
+             buf,
+             SMALL_BUFFER,
+             LOG_HEADER,
+             ts,
+             log_level_names[lvl],
+             proginfo.hostname
+           ))
+          >= SMALL_BUFFER) {
+        headerlen = SMALL_BUFFER - 1;
       }
+
+      free(ts);
     }
 
     if ((buflen = vsnprintf(buf + headerlen, sizeof(buf) - headerlen, fmt, va) + headerlen) >= sizeof(buf)) {

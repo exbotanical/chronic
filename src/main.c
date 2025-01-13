@@ -53,18 +53,20 @@ main (int argc, char** argv) {
   daemon_lock();
   sig_handlers_init();
 
-  db                = ht_init_or_panic(0, (free_fn*)free_crontab);
+  db         = ht_init_or_panic(0, (free_fn*)free_crontab);
 
-  job_queue         = array_init_or_panic();
-  mail_queue        = array_init_or_panic();
+  job_queue  = array_init_or_panic();
+  mail_queue = array_init_or_panic();
 
-  time_t start_time = time(NULL);
-  proginfo_init(start_time);
+  struct timespec ts;
+  get_time(&ts);
+  proginfo_init(&ts);
 
-  char* s_ts = to_time_str(start_time);
+  char* s_ts = to_time_str_millis(&ts);
   log_info("cron daemon (pid=%d) started at %s\n", proginfo.pid, s_ts);
   free(s_ts);
 
+  time_t start_time = ts.tv_sec;
   time_t current_iter_time;
 
   dir_config sys_dir = {.is_root = true, .path = SYS_CRONTABS_DIR};
@@ -88,8 +90,8 @@ main (int argc, char** argv) {
     current_iter_time        = time(NULL);
     time_t rounded_timestamp = round_ts(current_iter_time, loop_interval);
 
-    char* c_ts               = to_time_str(current_iter_time);
-    char* r_ts               = to_time_str(rounded_timestamp);
+    char* c_ts               = to_time_str_secs(current_iter_time);
+    char* r_ts               = to_time_str_secs(rounded_timestamp);
     log_debug("Current iter time: %s (rounded to %s)\n", c_ts, r_ts);
     free(c_ts);
     free(r_ts);
