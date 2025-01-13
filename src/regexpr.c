@@ -10,11 +10,17 @@
 #include "logger.h"
 #include "panic.h"
 
+// This should be proportional to the number of anticipated capture groups.
+// Each capture group needs three slots (start and end offsets plus internal-use slot).
+// We also must account for the main capture group. Thus:
+// (1 + n) * 3, where n is the number of desired capture groups.
+#define NCAPTGRPS 9
+#define OVECSIZE  (1 + NCAPTGRPS) * 3
+
 static const char *VARIABLE_PATTERN
   = "^([a-zA-Z_-][a-zA-Z0-9_-]*)=\"([^\"]*)\"(?<! )$";
 
-static int ovecsize = 32;
-static int ovector[32];  // TODO:
+static int ovector[OVECSIZE];
 
 static pthread_once_t regex_cache_init_once = PTHREAD_ONCE_INIT;
 static hash_table    *regex_cache;
@@ -63,7 +69,7 @@ regex_cache_get (hash_table *cache, const char *pattern) {
 
 array_t *
 regex_matches (pcre *re, char *cmp) {
-  int rc = pcre_exec(re, NULL, cmp, strlen(cmp), 0, 0, ovector, ovecsize);
+  int rc = pcre_exec(re, NULL, cmp, strlen(cmp), 0, 0, ovector, OVECSIZE);
   if (rc >= 0) {
     array_t *matches = array_init_or_panic();
 

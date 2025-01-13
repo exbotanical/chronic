@@ -33,6 +33,7 @@
   - [ ] print info for job <id>
   - [ ] print info for crontab <id>
   - [ ] pause job/crontab <id>
+- [ ] all ts should be UTC
 
 
 We make tradeoffs between runtime op/main loop work and startup work (loading the crontabs).

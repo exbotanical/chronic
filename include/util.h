@@ -9,7 +9,6 @@
 
 #define X(e) [e] = #e
 
-// TODO: Remove
 typedef enum { OK, ERR } retval_t;
 
 /**

@@ -162,12 +162,7 @@ get_crontab_fd_if_valid (char* fpath, char* uname, time_t last_mtime, struct sta
   if (last_mtime > -1) {
     // It shouldn't ever be greater than but whatever
     if (last_mtime >= statbuf->st_mtime) {
-      log_warn(
-        "file has not changed (last mtime: %ld, curr mtime: %ld)\n",
-        fpath,
-        last_mtime,
-        statbuf->st_mtime
-      );
+      log_debug("file has not changed (mtime: %ld)\n", fpath, last_mtime);
       goto dont_process;
     }
   }
@@ -250,28 +245,39 @@ free_crontab (crontab_t* ct) {
   free(ct);
 }
 
+static inline void
+renew_crontab_entries (crontab_t* ct, time_t curr) {
+  foreach (ct->entries, i) {
+    cron_entry* entry = array_get_or_panic(ct->entries, i);
+    renew_cron_entry(entry, curr);
+  }
+}
+
 void
-scan_crontabs (hash_table* old_db, hash_table* new_db, dir_config dir_conf, time_t curr) {
-  array_t* fnames = get_filenames(dir_conf.path);
-  // If no files, fall through to db replacement
-  // This will handle removal of any files that were deleted during runtime
+scan_crontabs (hash_table* old_db, hash_table* new_db, dir_config* dir_conf, time_t curr) {
+  array_t* fnames = get_filenames(dir_conf->path);
+
+  // If no files are found in the directory, fall through to the database
+  // replacement. This will handle removal of any files that were deleted during
+  // runtime. If there are files, we check each.
   if (has_elements(fnames)) {
     foreach (fnames, i) {
       char* fname = array_get_or_panic(fnames, i);
 
       char* fpath;
-      if (!(fpath = s_fmt("%s/%s", dir_conf.path, fname))) {
-        log_warn("failed to concatenate as %s/%s\n", dir_conf.path, fname);
+      if (!(fpath = s_fmt("%s/%s", dir_conf->path, fname))) {
+        log_warn("failed to concatenate as %s/%s\n", dir_conf->path, fname);
         continue;
       }
+
       crontab_t*  ct = ht_get(old_db, fpath);
       int         crontab_fd;
       struct stat statbuf;
+      char*       uname = dir_conf->is_root ? ROOT_UNAME : fname;
 
       log_debug("scanning file %s...\n", fpath);
 
-      char* uname = dir_conf.is_root ? ROOT_UNAME : fname;
-      // File hasn't been processed before
+      // The file hasn't been processed before. Create the new crontab.
       if (!ct) {
         if ((crontab_fd = get_crontab_fd_if_valid(fpath, uname, 0, &statbuf)) < OK) {
           log_warn("file %s not valid; continuing...\n", fpath);
@@ -280,11 +286,10 @@ scan_crontabs (hash_table* old_db, hash_table* new_db, dir_config dir_conf, time
 
         log_debug("creating new crontab from file %s...\n", fpath);
 
-        ct = new_crontab(crontab_fd, dir_conf.is_root, curr, statbuf.st_mtime, s_copy_or_panic(fname));
-        ht_insert(new_db, fpath, ct);
-      }
-      // File exists in db
-      else {
+        ct = new_crontab(crontab_fd, dir_conf->is_root, curr, statbuf.st_mtime, s_copy_or_panic(fname));
+      } else {
+        // The file has been processed before. If the file has been modified, we need to re-process it.
+        // Otherwise, renewing the next run time is sufficient.
         log_debug("crontab for file %s exists...\n", fpath);
 
         // Renew the fd and statbuf
@@ -297,28 +302,21 @@ scan_crontabs (hash_table* old_db, hash_table* new_db, dir_config dir_conf, time
           continue;
         }
 
-        // The crontab was not modified, just renew the entries so we know when
-        // to run them next
         if (ct->mtime >= statbuf.st_mtime) {
+          // The crontab was not modified, just renew the entries so we know when to run them next.
           log_debug("existing file %s not modified, renewing entries if any\n", fpath);
-          foreach (ct->entries, i) {
-            cron_entry* entry = array_get_or_panic(ct->entries, i);
-            renew_cron_entry(entry, curr);
-          }
+          renew_crontab_entries(ct, curr);
         } else {
+          // The crontab was modified, re-process.
           log_debug("existing file %s was modified, recreating crontab\n", fpath);
-          // modified, re-process
-          ct = new_crontab(crontab_fd, dir_conf.is_root, curr, statbuf.st_mtime, s_copy_or_panic(fname));
+          ct = new_crontab(crontab_fd, dir_conf->is_root, curr, statbuf.st_mtime, s_copy_or_panic(fname));
         }
 
-        // set the og entry to NULL
-        old_db->free_value = NULL;
+        // Make sure we don't accidentally free the old entries since they have been copied over.
         ht_insert(old_db, fpath, NULL);
-        // TODO: ??? - also ^this^ causes dangling refs
-        old_db->free_value = (free_fn*)free_crontab;
-
-        ht_insert(new_db, fpath, ct);
       }
+
+      ht_insert(new_db, fpath, ct);
     }
 
     array_free(fnames, free);
@@ -335,8 +333,7 @@ update_db (hash_table* db, time_t curr, dir_config* dir_conf, ...) {
   va_start(args, dir_conf);
 
   while (dir_conf != NULL) {
-    scan_crontabs(db, new_db, *dir_conf, curr);
-
+    scan_crontabs(db, new_db, dir_conf, curr);
     dir_conf = va_arg(args, dir_config*);
   }
 

@@ -45,7 +45,8 @@ cli_init (int argc, char** argv) {
   clicontext ctx;
 
   command_init(&cmd, argv[0], CHRONIC_VERSION);
-  cmd.data = (void*)&ctx;
+  cmd.data   = (void*)&ctx;
+  ctx.logopt = 0;
 
   command_option(&cmd, "-L", "--log-file [path]", "log to specified file", setopt_logfile);
   command_option(&cmd, "-S", "--syslog", "log to syslog", setopt_syslog);

@@ -38,7 +38,9 @@ printlogf (log_level lvl, const char *fmt, ...) {
   va_start(va, fmt);
 
   if (opts.syslog) {
-    syslog(lvl, fmt, va);
+    char buf[LARGE_BUFFER];
+    vsnprintf(buf, LARGE_BUFFER, fmt, va);
+    syslog(lvl, buf);
   } else {
     char         buf[LARGE_BUFFER];
     // Used to omit the header in the case of multi-line logs
@@ -133,7 +135,6 @@ logger_close (void) {
   LOG_GUARD
   close(log_fd);
 
-  // TODO: CLI dealloc
   if (opts.log_file) {
     free(opts.log_file);
   }

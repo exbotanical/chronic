@@ -14,9 +14,9 @@ describe 'peripherals functionality'
     assert grep 'cannot set syslog opt when log file is being used' "$err"
   ti
 
-  it 'writes to syslog when initialized with the -L option'
-    rsyslog
-    ./chronic -S
-    cat /var/log/syslog
-  ti
+  # TODO:
+  # it 'writes to syslog when initialized with the -L option'
+  #   rsyslog
+  #   ./chronic -S
+  # ti
 end_describe

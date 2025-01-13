@@ -82,7 +82,7 @@ void free_crontab(crontab_t *ct);
  * @param curr The current time.
  *
  */
-void scan_crontabs(hash_table *old_db, hash_table *new_db, dir_config dir_conf, time_t curr);
+void scan_crontabs(hash_table *old_db, hash_table *new_db, dir_config *dir_conf, time_t curr);
 
 /**
  * Updates the crontab database by scanning all files that have been modified.
