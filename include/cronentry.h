@@ -6,6 +6,10 @@
 #include "ccronexpr/ccronexpr.h"
 #include "crontab.h"
 
+#define HOURLY_EXPR "0 * * * *"
+#define DAILY_EXPR  "0 0 * * *"
+#define WEEKLY_EXPR "0 0 * * 0"
+
 /**
  * Represents a single line (entry) in a crontab.
  */
@@ -44,9 +48,11 @@ typedef struct {
  * @param raw The raw line/entry.
  * @param curr The current crond iteration time.
  * @param ct The crontab object to which this entry belongs. We pass in the
- * crontab because we want the entry to have a pointer to its parent.
+ *    crontab because we want the entry to have a pointer to its parent.
+ * @param cadence Optional cadence override. Pass CADENCE_NA if none; otherwise,
+ *    these are for expression parsing overrides such as hourly/daily/weekly.
  */
-cron_entry *new_cron_entry(char *raw, time_t curr, crontab_t *ct);
+cron_entry *new_cron_entry(char *raw, time_t curr, crontab_t *ct, cadence_t cadence);
 
 /**
  * Renews the `next` field on the given cron entry based on the current crond

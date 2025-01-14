@@ -1,11 +1,21 @@
-#ifndef FS_H
-#define FS_H
+#ifndef CRONTAB_H
+#define CRONTAB_H
 
 #include <stdbool.h>
 #include <time.h>
 
 #include "libhash/libhash.h"
 #include "libutil/libutil.h"
+
+typedef enum {
+  /**
+   * No cadence i.e. parse the cron entry and figure out the expr.
+   */
+  CADENCE_NA,
+  CADENCE_HOURLY,
+  CADENCE_DAILY,
+  CADENCE_WEEKLY,
+} cadence_t;
 
 /**
  * Holds metadata and configuration for one of the crontab directories being
@@ -15,11 +25,24 @@ typedef struct {
   /**
    * Does this directory house system i.e. root crontabs?
    */
-  bool  is_root;
+  bool      is_root;
+  /**
+   * Is this a virtual crontab dir e.g. cron.daily, or does it have actual crontabs?
+   */
+  bool      is_virtual;
+  /**
+   * A cadence for virtual, recurring cron jobs. These are directories such as cron.daily,
+   * which don't actually have any crontabs therein. Instead, they have a number of scripts
+   * which should be executed at the cadence specified by the directory's name. We call these
+   * virtual crontabs because we create a "virtual" crontab and fill out the details at runtime.
+   *
+   * If this is CADENCE_NA, the directory has actual crontabs and will be processed normally.
+   */
+  cadence_t cadence;
   /**
    * The absolute path of the directory.
    */
-  char *path;
+  char     *path;
 } dir_config;
 
 /**
@@ -82,6 +105,9 @@ void free_crontab(crontab_t *ct);
  */
 void scan_crontabs(hash_table *old_db, hash_table *new_db, dir_config *dir_conf, time_t curr);
 
+// TODO:
+void scan_virtual_crontabs(hash_table *old_db, hash_table *new_db, dir_config *dir_conf, time_t curr, cadence_t cadence);
+
 /**
  * Updates the crontab database by scanning all files that have been modified.
  *
@@ -92,4 +118,4 @@ void scan_crontabs(hash_table *old_db, hash_table *new_db, dir_config *dir_conf,
  */
 hash_table *update_db(hash_table *db, time_t curr, dir_config *dir_conf, ...);
 
-#endif /* FS_H */
+#endif /* CRONTAB_H */

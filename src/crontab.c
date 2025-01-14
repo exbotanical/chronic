@@ -72,7 +72,7 @@ complete_env (crontab_t* ct) {
       ht_insert(vars, PATH_ENVVAR, DEFAULT_PATH);
     }
   } else {
-    log_error(
+    log_warn(
       "Something went really awry and uname=%s wasn't found in the "
       "system user db\n",
       ct->uname
@@ -127,13 +127,12 @@ get_crontab_fd_if_valid (char* fpath, char* uname, time_t last_mtime, struct sta
   }
 
 #ifndef UNIT_TEST
-  int file_perms = statbuf->st_mode & ALL_PERMS;
-  if (file_perms != OWNER_RW_PERMS) {
+  if ((statbuf->st_mode & OWNER_RW_PERMS) == 0) {
     log_warn(
       "file %s has invalid permissions (should be r/w by owner only but got "
       "%o)\n",
       fpath,
-      file_perms
+      statbuf->st_mode & ALL_PERMS
     );
     goto dont_process;
   }
@@ -174,6 +173,33 @@ dont_process:
 }
 
 crontab_t*
+new_virtual_crontab (time_t curr_time, time_t mtime, char* uname, char* fpath, cadence_t cadence) {
+  crontab_t* ct     = xmalloc(sizeof(crontab_t));
+  ct->mtime         = mtime;
+  ct->uname         = uname;
+  ct->envp          = NULL;
+  ct->entries       = array_init_or_panic();
+  ct->vars          = ht_init_or_panic(0, free);
+
+  cron_entry* entry = new_cron_entry(fpath, curr_time, ct, cadence);
+  if (!entry) {
+    log_warn(
+      "Failed to parse what was thought to be a cron entry: %s (user "
+      "%s)\n",
+      fpath,
+      uname
+    );
+
+    return NULL;
+  }
+
+  array_push_or_panic(ct->entries, entry);
+  complete_env(ct);
+
+  return ct;
+}
+
+crontab_t*
 new_crontab (int crontab_fd, bool is_root, time_t curr_time, time_t mtime, char* uname) {
   FILE* fd;
   if (!(fd = fdopen(crontab_fd, "r"))) {
@@ -209,7 +235,7 @@ new_crontab (int crontab_fd, bool is_root, time_t curr_time, time_t mtime, char*
       case SKIP_LINE: continue;
       case DONE: break;
       case ENTRY: {
-        cron_entry* entry = new_cron_entry(ptr, curr_time, ct);
+        cron_entry* entry = new_cron_entry(ptr, curr_time, ct, CADENCE_NA);
         if (!entry) {
           log_warn(
             "Failed to parse what was thought to be a cron entry: %s (user "
@@ -258,69 +284,115 @@ scan_crontabs (hash_table* old_db, hash_table* new_db, dir_config* dir_conf, tim
   array_t* fnames = get_filenames(dir_conf->path);
 
   // If no files are found in the directory, fall through to the database
-  // replacement. This will handle removal of any files that were deleted during
-  // runtime. If there are files, we check each.
-  if (has_elements(fnames)) {
-    foreach (fnames, i) {
-      char* fname = array_get_or_panic(fnames, i);
+  // replacement. This will handle removal of any files that were deleted
+  // during runtime. If there are files, we check each.
+  foreach (fnames, i) {
+    char* fname = array_get_or_panic(fnames, i);
 
-      char* fpath;
-      if (!(fpath = s_fmt("%s/%s", dir_conf->path, fname))) {
-        log_warn("failed to concatenate as %s/%s\n", dir_conf->path, fname);
+    char* fpath;
+    if (!(fpath = s_fmt("%s/%s", dir_conf->path, fname))) {
+      log_warn("failed to concatenate as %s/%s\n", dir_conf->path, fname);
+      continue;
+    }
+
+    crontab_t*  ct = ht_get(old_db, fpath);
+    int         crontab_fd;
+    struct stat statbuf;
+    char*       uname = dir_conf->is_root ? ROOT_UNAME : fname;
+
+    log_debug("scanning file %s...\n", fpath);
+
+    // The file hasn't been processed before. Create the new crontab.
+    if (!ct) {
+      if ((crontab_fd = get_crontab_fd_if_valid(fpath, uname, 0, &statbuf)) < OK) {
+        log_warn("file %s not valid; continuing...\n", fpath);
         continue;
       }
 
-      crontab_t*  ct = ht_get(old_db, fpath);
-      int         crontab_fd;
-      struct stat statbuf;
-      char*       uname = dir_conf->is_root ? ROOT_UNAME : fname;
+      log_debug("creating new crontab from file %s...\n", fpath);
 
-      log_debug("scanning file %s...\n", fpath);
+      ct = new_crontab(crontab_fd, dir_conf->is_root, curr, statbuf.st_mtime, s_copy_or_panic(uname));
+    } else {
+      // The file has been processed before. If the file has been modified, we need to re-process it.
+      // Otherwise, renewing the next run time is sufficient.
+      log_debug("crontab for file %s exists...\n", fpath);
 
-      // The file hasn't been processed before. Create the new crontab.
-      if (!ct) {
-        if ((crontab_fd = get_crontab_fd_if_valid(fpath, uname, 0, &statbuf)) < OK) {
-          log_warn("file %s not valid; continuing...\n", fpath);
-          continue;
-        }
+      // Renew the fd and statbuf
+      if ((crontab_fd = get_crontab_fd_if_valid(fpath, uname, -1, &statbuf)) < OK) {
+        log_warn(
+          "existing crontab file %s not valid; it won't be carried over. "
+          "continuing...\n",
+          fpath
+        );
+        continue;
+      }
 
-        log_debug("creating new crontab from file %s...\n", fpath);
-
-        ct = new_crontab(crontab_fd, dir_conf->is_root, curr, statbuf.st_mtime, s_copy_or_panic(fname));
-      } else {
-        // The file has been processed before. If the file has been modified, we need to re-process it.
-        // Otherwise, renewing the next run time is sufficient.
-        log_debug("crontab for file %s exists...\n", fpath);
-
-        // Renew the fd and statbuf
-        if ((crontab_fd = get_crontab_fd_if_valid(fpath, uname, -1, &statbuf)) < OK) {
-          log_warn(
-            "existing crontab file %s not valid; it won't be carried over. "
-            "continuing...\n",
-            fpath
-          );
-          continue;
-        }
-
-        if (ct->mtime >= statbuf.st_mtime) {
-          // The crontab was not modified, just renew the entries so we know when to run them next.
-          log_debug("existing file %s not modified, renewing entries if any\n", fpath);
-          renew_crontab_entries(ct, curr);
-        } else {
-          // The crontab was modified, re-process.
-          log_debug("existing file %s was modified, recreating crontab\n", fpath);
-          ct = new_crontab(crontab_fd, dir_conf->is_root, curr, statbuf.st_mtime, s_copy_or_panic(fname));
-        }
+      if (ct->mtime >= statbuf.st_mtime) {
+        // The crontab was not modified, just renew the entries so we know when to run them next.
+        log_debug("existing file %s not modified, renewing entries if any\n", fpath);
+        renew_crontab_entries(ct, curr);
 
         // Make sure we don't accidentally free the old entries since they have been copied over.
         ht_insert(old_db, fpath, NULL);
+      } else {
+        // The crontab was modified, re-process.
+        log_debug("existing file %s was modified, recreating crontab\n", fpath);
+        ct = new_crontab(crontab_fd, dir_conf->is_root, curr, statbuf.st_mtime, s_copy_or_panic(fname));
       }
-
-      ht_insert(new_db, fpath, ct);
     }
 
-    array_free(fnames, free);
+    ht_insert(new_db, fpath, ct);
   }
+
+  array_free(fnames, free);
+}
+
+void
+scan_virtual_crontabs (hash_table* old_db, hash_table* new_db, dir_config* dir_conf, time_t curr, cadence_t cadence) {
+  array_t* fnames = get_filenames(dir_conf->path);
+  foreach (fnames, i) {
+    char* fname = array_get_or_panic(fnames, i);
+
+    char* fpath;
+    if (!(fpath = s_fmt("%s/%s", dir_conf->path, fname))) {
+      log_warn("failed to concatenate as %s/%s\n", dir_conf->path, fname);
+      continue;
+    }
+
+    log_debug("scanning cadence file %s...\n", fpath);
+
+    int         crontab_fd;
+    struct stat statbuf;
+    if ((crontab_fd = get_crontab_fd_if_valid(fpath, ROOT_UNAME, 0, &statbuf)) < OK) {
+      log_warn("cadence file %s not valid; continuing...\n", fpath);
+      continue;
+    }
+    close(crontab_fd);
+
+    crontab_t* ct    = ht_get(old_db, fpath);
+    char*      uname = s_copy(ROOT_UNAME);
+
+    if (!ct) {
+      log_debug("creating new virtual crontab from cadence file %s...\n", fpath);
+      ct = new_virtual_crontab(curr, statbuf.st_mtime, uname, fpath, cadence);
+    } else {
+      if (ct->mtime >= statbuf.st_mtime) {
+        log_debug("existing cadence file %s not modified, renewing the entry\n", fpath);
+
+        renew_crontab_entries(ct, curr);
+        ht_insert(old_db, fpath, NULL);
+      } else {
+        log_debug("existing cadence file %s was modified, recreating virtual crontab\n", fpath);
+
+        ct = new_virtual_crontab(curr, statbuf.st_mtime, uname, s_copy_or_panic(fname), cadence);
+        // Dont set null in else path because we recreate the crontab and want the old one to be freed
+      }
+    }
+
+    ht_insert(new_db, fpath, ct);
+  }
+
+  array_free(fnames, free);
 }
 
 hash_table*
@@ -333,7 +405,11 @@ update_db (hash_table* db, time_t curr, dir_config* dir_conf, ...) {
   va_start(args, dir_conf);
 
   while (dir_conf != NULL) {
-    scan_crontabs(db, new_db, dir_conf, curr);
+    if (dir_conf->cadence != CADENCE_NA) {
+      scan_virtual_crontabs(db, new_db, dir_conf, curr, dir_conf->cadence);
+    } else {
+      scan_crontabs(db, new_db, dir_conf, curr);
+    }
     dir_conf = va_arg(args, dir_config*);
   }
 

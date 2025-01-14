@@ -77,17 +77,7 @@ parse_cmd (char* line, cron_entry* entry, int count) {
 }
 
 retval_t
-parse_entry (cron_entry* entry, char* line) {
-  char* line_cp = s_trim(line);
-  strip_comment(line_cp);
-
-  if (parse_cmd(line_cp, entry, SPACES_BEFORE_CMD) != OK) {
-    free(line_cp);
-    return ERR;
-  }
-
-  free(line_cp);
-
+parse_schedule (cron_entry* entry) {
   cron_expr*  expr = xmalloc(sizeof(cron_expr));
   const char* err  = NULL;
   cron_parse_expr(entry->schedule, expr, &err);
@@ -99,6 +89,21 @@ parse_entry (cron_entry* entry, char* line) {
 
   entry->expr = expr;
   return OK;
+}
+
+retval_t
+parse_entry (cron_entry* entry, char* line) {
+  char* line_cp = s_trim(line);
+  strip_comment(line_cp);
+
+  if (parse_cmd(line_cp, entry, SPACES_BEFORE_CMD) != OK) {
+    free(line_cp);
+    return ERR;
+  }
+
+  free(line_cp);
+
+  return parse_schedule(entry);
 }
 
 parse_ln_result

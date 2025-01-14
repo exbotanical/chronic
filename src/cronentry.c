@@ -6,14 +6,39 @@
 #include "parser.h"
 #include "util.h"
 
-unsigned int id_counter = 0;
+static unsigned int id_counter = 0;
+
+static inline char*
+get_cadence (cadence_t cadence) {
+  switch (cadence) {
+    case CADENCE_HOURLY: return HOURLY_EXPR;
+    case CADENCE_DAILY: return DAILY_EXPR;
+    case CADENCE_WEEKLY: return WEEKLY_EXPR;
+    default: return NULL;
+  }
+}
 
 cron_entry*
-new_cron_entry (char* raw, time_t curr, crontab_t* ct) {
-  cron_entry* entry = xmalloc(sizeof(cron_entry));
+new_cron_entry (char* raw, time_t curr, crontab_t* ct, cadence_t cadence) {
+  cron_entry* entry         = xmalloc(sizeof(cron_entry));
+  char*       expr_override = get_cadence(cadence);
 
-  if (parse_entry(entry, raw) != OK) {
+  if (expr_override) {
+    entry->schedule = s_copy(expr_override);
+    if (parse_schedule(entry) != OK) {
+      log_error("Failed to parse entry schedule %s / %s\n", raw, expr_override);
+
+      free(expr_override);
+      free(entry);
+
+      return NULL;
+    }
+    entry->cmd = s_copy(raw);
+  } else if (parse_entry(entry, raw) != OK) {
     log_error("Failed to parse entry line %s\n", raw);
+
+    free(entry);
+
     return NULL;
   }
 

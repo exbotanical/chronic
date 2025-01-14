@@ -22,6 +22,7 @@ bool            should_parse_line(const char *line);
 void            extract_vars(const char *s, hash_table *ht);
 retval_t        parse_cmd(char *line, cron_entry *entry, int count);
 retval_t        parse_entry(cron_entry *entry, char *line);
+retval_t        parse_schedule(cron_entry *entry);
 parse_ln_result parse_line(char *ptr, int max_entries, hash_table *ht);
 
 #endif /* PARSER_H */

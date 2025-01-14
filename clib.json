@@ -20,6 +20,7 @@
     "clibs/commander": "1.3.2"
   },
   "development": {
-    "thlorenz/tap.c": "*"
+    "thlorenz/tap.c": "*",
+    "entr": "5.4"
   }
 }

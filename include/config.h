@@ -1,7 +1,12 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-/* Crontab directory path for system jobs */
+/* Crontab directory path for system daemons and applications */
+#ifndef SYS_APP_CRONTABS_DIR
+#  define SYS_APP_CRONTABS_DIR "/etc/crontab"
+#endif
+
+/* Crontab directory path for general system-wide jobs */
 #ifndef SYS_CRONTABS_DIR
 #  define SYS_CRONTABS_DIR "/etc/cron.d"
 #endif

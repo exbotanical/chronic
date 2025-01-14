@@ -23,7 +23,7 @@ validate_entry (cron_entry* entry, cron_entry* expected) {
   );
 }
 
-void
+static void
 new_crontab_test (void) {
   unsigned int num_expected_entries = 4;
   char*        test_fpath           = "./t/fixtures/new_crontab_test";
@@ -77,7 +77,7 @@ new_crontab_test (void) {
   close(crontab_fd);
 }
 
-void
+static void
 scan_crontabs_test (void) {
   char* usr_dirname = setup_test_directory();
   setup_test_file(usr_dirname, "user1", "* * * * * echo 'test1'\n");
@@ -141,7 +141,7 @@ scan_crontabs_test (void) {
   ht_delete_table(db);
 }
 
-void
+static void
 update_db_test (void) {
   char* usr_dirname = setup_test_directory();
   setup_test_file(usr_dirname, "user1", "* * * * * echo 'test1'\n");
@@ -199,24 +199,6 @@ update_db_test (void) {
   ok(array_size(ct1->entries) == 2, "user1's crontab has 2 entries");
   ok(array_size(ct4->entries) == 2, "the root2 crontab has 2 entries");
 
-  //
-  // update_dir_modtime(usr_dir.path);
-  // db = update_db(db, now, &usr_dir, &sys_dir, NULL);
-
-  // ct1 = (crontab_t*)ht_get(db, s_fmt("%s/%s", usr_dirname, "user1"));
-  // ct2 = (crontab_t*)ht_get(db, s_fmt("%s/%s", usr_dirname, "user2"));
-  // ct3 = (crontab_t*)ht_get(db, s_fmt("%s/%s", sys_dirname, "root1"));
-  // ct4 = (crontab_t*)ht_get(db, s_fmt("%s/%s", sys_dirname, "root2"));
-
-  // ok(ct1 != NULL, "user1's crontab should exist in the database");
-  // ok(ct2 == NULL, "user2's crontab was deleted from the database");
-  // ok(ct3 == NULL, "the root1 crontab was deleted from the database");
-  // ok(ct4 != NULL, "the root2 crontab should exist in the database");
-
-  // ok(array_size(ct1->entries) == 2, "user1's crontab has 2 entries");
-  // ok(array_size(ct4->entries) == 2, "the root2 crontab has 2 entries");
-  //
-
   // Cleanup
   cleanup_test_file(usr_dirname, "user1");
   cleanup_test_file(sys_dirname, "root2");
@@ -225,9 +207,57 @@ update_db_test (void) {
   ht_delete_table(db);
 }
 
+static void
+run_virtual_crontabs_tests (void) {
+  char* dirname = setup_test_directory();
+  // TODO: must be exec by curr
+  setup_test_file(dirname, "1", "doesnt matter");
+  setup_test_file(dirname, "2", "doesnt matter either");
+  dir_config dir = {.is_root = true, .path = dirname, .cadence = CADENCE_HOURLY};
+  char* fpath1   = s_fmt("%s/%s", dirname, "1");
+  char* fpath2   = s_fmt("%s/%s", dirname, "2");
+
+  hash_table* db = ht_init(0, (free_fn*)free_crontab);
+  db             = update_db(db, time(NULL), &dir, NULL);
+
+  ok(db->count == 2, "Two virtual crontab files should have been processed");
+
+  crontab_t* ct1 = (crontab_t*)ht_get(db, fpath1);
+  crontab_t* ct2 = (crontab_t*)ht_get(db, fpath2);
+
+  ok(ct1 != NULL, "a virtual crontab for executable '1' should exist in the database");
+  ok(ct2 != NULL, "a virtual crontab for executable '2' should exist in the database");
+
+  ok(array_size(ct1->entries) == 1, "the virtual crontab should have a singleton entry");
+  ok(array_size(ct2->entries) == 1, "the virtual crontab should have a singleton entry");
+
+  cron_entry* ce1 = array_get(ct1->entries, 0);
+  cron_entry* ce2 = array_get(ct2->entries, 0);
+
+  is(ce1->cmd, fpath1, "uses executable name as cmd");
+  is(ce2->cmd, fpath2, "uses executable name as cmd");
+
+  is(ce1->schedule, HOURLY_EXPR, "has a once hourly schedule");
+  is(ce2->schedule, HOURLY_EXPR, "has a once hourly schedule");
+
+  cleanup_test_file(dirname, "1");
+
+  time_t now = time(NULL);
+
+  db         = update_db(db, time(NULL), &dir, NULL);
+
+  ok(db->count == 1, "Only one virtual crontab file exists in the database after deleting one and re-processing");
+
+  free(fpath1);
+  free(fpath2);
+  cleanup_test_file(dirname, "2");
+  cleanup_test_directory(dirname);
+}
+
 void
 run_crontab_tests (void) {
   new_crontab_test();
   scan_crontabs_test();
   update_db_test();
+  run_virtual_crontabs_tests();
 }
