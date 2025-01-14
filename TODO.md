@@ -35,7 +35,9 @@
   - [ ] pause job/crontab <id>
 - [x] all ts should be UTC
 - [ ] Name processes
-- [ ] default log file
+- [x] default log file
+- [ ] daily, weekly, etc
+- [ ] detect shebang
 
 
 We make tradeoffs between runtime op/main loop work and startup work (loading the crontabs).

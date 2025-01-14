@@ -47,7 +47,6 @@ match_variable_test (void) {
 
       free(input);
     } else {
-      // TODO: figure out this weird behavior with the PATH=... test and `free`
       char* input = s_fmt("%s=\"%s\"", s_copy(tc.key), s_copy(tc.value));
 
       match_variable(input, ht);

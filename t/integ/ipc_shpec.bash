@@ -138,8 +138,8 @@ describe 'ipc API IPC_SHOW_INFO command'
   ti
 
   it 'displays valid started_at'
-    today=$(date +%Y-%m-%d)
-    expect="^${today} [0-2][0-9]:[0-5][0-9]:[0-5][0-9]$"
+    today=$(date -u +%Y-%m-%dT)
+    expect="^${today}[0-2][0-9]:[0-5][0-9]:[0-5][0-9]\.[0-9]{3}Z$"
     out="$(sock_call '{ "command" : "IPC_SHOW_INFO"}' )"
 
     assert egrep "$(jq -r '.started_at' <<< $out)" "$expect"

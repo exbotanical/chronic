@@ -11,7 +11,6 @@ ONE_MIN_IN_SECS=60
 
 describe 'crond run by non-root'
   # Needed for invoking chronic as another user
-  # TODO: scope down
   chmod -R 777 .
 
   # Required - Docker doesn't save running processes so we need to start the mail server here

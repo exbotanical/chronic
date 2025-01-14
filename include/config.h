@@ -3,7 +3,6 @@
 
 /* Crontab directory path for system jobs */
 #ifndef SYS_CRONTABS_DIR
-// TODO: daily, weekly, monthly, etc
 #  define SYS_CRONTABS_DIR "/etc/cron.d"
 #endif
 
