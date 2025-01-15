@@ -67,7 +67,7 @@ get_filenames_test (void) {
   setup_test_file(dirname, "file2.txt", NULL);
   setup_test_file(dirname, "file3.txt", NULL);
 
-  array_t* result = get_filenames(dirname);
+  array_t* result = get_filenames(dirname, NULL);
 
   ok(result != NULL, "Expect non-NULL result");
   ok(array_size(result) == 3, "Expect 3 files in the test directory");
@@ -80,6 +80,29 @@ get_filenames_test (void) {
   cleanup_test_file(dirname, "file1.txt");
   cleanup_test_file(dirname, "file2.txt");
   cleanup_test_file(dirname, "file3.txt");
+  cleanup_test_directory(dirname);
+}
+
+void
+get_filenames_with_regex_test (void) {
+  char* dirname = setup_test_directory();
+  setup_test_file(dirname, "file1.txt", NULL);
+  setup_test_file(dirname, "file2.md", NULL);
+  setup_test_file(dirname, "file3.cd", NULL);
+
+  array_t* result = get_filenames(dirname, ".*d$");
+
+  ok(result != NULL, "Expect non-NULL result");
+  ok(array_size(result) == 2, "Expect 3 files in the test directory");
+
+  // // Depending on the OS, the order may be different
+  ok(array_includes(result, has_filename_comparator, "file1.txt") == false, "Should not contain file1.txt");
+  ok(array_includes(result, has_filename_comparator, "file2.md") == true, "Should contain file2.md");
+  ok(array_includes(result, has_filename_comparator, "file3.cd") == true, "Should contain file3.cd");
+
+  cleanup_test_file(dirname, "file1.txt");
+  cleanup_test_file(dirname, "file2.md");
+  cleanup_test_file(dirname, "file3.cd");
   cleanup_test_directory(dirname);
 }
 
@@ -129,6 +152,7 @@ run_utils_tests (void) {
   round_ts_test();
   get_sleep_duration_test();
   get_filenames_test();
+  get_filenames_with_regex_test();
   json_parser_test();
   pretty_print_seconds_test();
 }

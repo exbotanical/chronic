@@ -12,6 +12,11 @@
 #include "libhash/libhash.h"
 #include "logger.h"
 #include "panic.h"
+#include "regexpr.h"
+
+#ifndef UUID_STR_LEN
+#  define UUID_STR_LEN 37
+#endif
 
 static char*
 trim_whitespace (char* str) {
@@ -118,7 +123,7 @@ create_uuid (void) {
 }
 
 array_t*
-get_filenames (char* dirpath) {
+get_filenames (char* dirpath, const char* regex) {
   DIR* dir;
   if ((dir = opendir(dirpath)) != NULL) {
     log_debug("scanning dir %s\n", dirpath);
@@ -129,6 +134,11 @@ get_filenames (char* dirpath) {
     while ((den = readdir(dir)) != NULL) {
       // Skip pointer files
       if (s_equals(den->d_name, ".") || s_equals(den->d_name, "..")) {
+        continue;
+      }
+
+      if (regex && !match_string(den->d_name, regex)) {
+        log_debug("skipping file %s (did not match regex %s)\n", den->d_name, regex);
         continue;
       }
 

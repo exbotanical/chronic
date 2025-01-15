@@ -202,7 +202,7 @@ __ht_delete_table (hash_table *ht) {
 
 hash_table *
 ht_init (int base_capacity, free_fn *free_value) {
-  if (!base_capacity) {
+  if (base_capacity < HT_DEFAULT_CAPACITY) {
     base_capacity = HT_DEFAULT_CAPACITY;
   }
 
@@ -224,10 +224,12 @@ ht_insert (hash_table *ht, const char *key, void *value) {
 
 ht_entry *
 ht_search (hash_table *ht, const char *key) {
-  unsigned int idx           = h_compute_hash(key, ht->capacity, 0);
-  ht_entry    *current_entry = ht->entries[idx];
+  unsigned int idx        = h_compute_hash(key, ht->capacity, 0);
 
-  unsigned int i             = 1;
+  ht_entry *current_entry = ht->entries[idx];
+
+  unsigned int i          = 1;
+
   while (current_entry != NULL && current_entry != &HT_SENTINEL_ENTRY) {
     if (strcmp(current_entry->key, key) == 0) {
       return current_entry;

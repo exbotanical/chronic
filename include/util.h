@@ -60,8 +60,9 @@ char *create_uuid(void);
  * therein.
  *
  * @param dirpath
+ * @param regex optional - if passed, only matches will be returned
  */
-array_t *get_filenames(char *dirpath);
+array_t *get_filenames(char *dirpath, const char *regex);
 
 bool file_exists(const char *path);
 

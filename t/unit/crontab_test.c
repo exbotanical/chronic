@@ -242,9 +242,7 @@ run_virtual_crontabs_tests (void) {
 
   cleanup_test_file(dirname, "1");
 
-  time_t now = time(NULL);
-
-  db         = update_db(db, time(NULL), &dir, NULL);
+  db = update_db(db, time(NULL), &dir, NULL);
 
   ok(db->count == 1, "Only one virtual crontab file exists in the database after deleting one and re-processing");
 

@@ -26,11 +26,11 @@ typedef struct {
   /**
    * Does this directory house system i.e. root crontabs?
    */
-  bool      is_root;
+  bool        is_root;
   /**
    * Is this a virtual crontab dir e.g. cron.daily, or does it have actual crontabs?
    */
-  bool      is_virtual;
+  bool        is_virtual;
   /**
    * A cadence for virtual, recurring cron jobs. These are directories such as cron.daily,
    * which don't actually have any crontabs therein. Instead, they have a number of scripts
@@ -39,11 +39,15 @@ typedef struct {
    *
    * If this is CADENCE_NA, the directory has actual crontabs and will be processed normally.
    */
-  cadence_t cadence;
+  cadence_t   cadence;
   /**
    * The absolute path of the directory.
    */
-  char     *path;
+  char       *path;
+  /**
+   * Optional regex to match against when scanning the directory for crontabs.
+   */
+  const char *regex;
 } dir_config;
 
 /**

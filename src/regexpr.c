@@ -67,7 +67,7 @@ regex_cache_get (hash_table *cache, const char *pattern) {
   return re;
 }
 
-array_t *
+static array_t *
 regex_matches (pcre *re, char *cmp) {
   int rc = pcre_exec(re, NULL, cmp, strlen(cmp), 0, 0, ovector, OVECSIZE);
   if (rc >= 0) {
@@ -114,4 +114,18 @@ match_variable (char *line, hash_table *vars) {
   }
 
   return false;
+}
+
+bool
+match_string (const char *string, const char *pattern) {
+  hash_table *cache = get_regex_cache();
+
+  pcre *re          = regex_cache_get(cache, pattern);
+  if (!re) {
+    panic("[%s@L%d] Failed to compile regex pattern: %s\n", __func__, __LINE__, pattern);
+  }
+
+  int rc = pcre_exec(re, NULL, string, strlen(string), 0, 0, ovector, OVECSIZE);
+
+  return rc >= 0;
 }

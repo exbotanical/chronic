@@ -299,7 +299,7 @@ renew_crontab_entries (crontab_t* ct, time_t curr) {
 
 void
 scan_crontabs (hash_table* old_db, hash_table* new_db, dir_config* dir_conf, time_t curr) {
-  array_t* fnames = get_filenames(dir_conf->path);
+  array_t* fnames = get_filenames(dir_conf->path, dir_conf->regex);
 
   // If no files are found in the directory, fall through to the database
   // replacement. This will handle removal of any files that were deleted
@@ -372,7 +372,7 @@ scan_crontabs (hash_table* old_db, hash_table* new_db, dir_config* dir_conf, tim
 
 void
 scan_virtual_crontabs (hash_table* old_db, hash_table* new_db, dir_config* dir_conf, time_t curr, cadence_t cadence) {
-  array_t* fnames = get_filenames(dir_conf->path);
+  array_t* fnames = get_filenames(dir_conf->path, NULL);
   if (!fnames) {
     return;
   }

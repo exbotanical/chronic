@@ -4,7 +4,7 @@
 #include "tap.c/tap.h"
 #include "tests.h"
 
-void
+static void
 match_variable_test (void) {
   typedef struct {
     char* key;
@@ -56,7 +56,31 @@ match_variable_test (void) {
   }
 }
 
+static void
+match_string_test (void) {
+  typedef struct {
+    const char* input;
+    const char* regex;
+    bool        expect_match;
+  } TestCase;
+
+  TestCase tests[] = {
+    {.input = "crontabs", .regex = "crontabs", .expect_match = true },
+    {.input = "whatever", .regex = "^w.*",     .expect_match = true },
+    {.input = "whatever", .regex = "crontabs", .expect_match = false},
+    {.input = "whatever", .regex = "^w.*e$",   .expect_match = false},
+  };
+
+  ITER_CASES_TEST(tests, TestCase) {
+    TestCase tc = tests[i];
+
+    bool actual = match_string(tc.input, tc.regex);
+    ok(actual == tc.expect_match, "should return expected match result");
+  }
+}
+
 void
 run_regexpr_tests (void) {
   match_variable_test();
+  match_string_test();
 }

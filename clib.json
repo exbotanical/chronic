@@ -16,7 +16,7 @@
   "uninstall": "echo TODO",
   "dependencies": {
     "exbotanical/libutil": "*",
-    "exbotanical/libhash": "1.1.2",
+    "exbotanical/libhash": "1.1.3",
     "clibs/commander": "1.3.2"
   },
   "development": {
