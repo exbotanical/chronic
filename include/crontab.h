@@ -15,6 +15,7 @@ typedef enum {
   CADENCE_HOURLY,
   CADENCE_DAILY,
   CADENCE_WEEKLY,
+  CADENCE_MONTHLY,
 } cadence_t;
 
 /**

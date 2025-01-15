@@ -8,6 +8,7 @@
 
 #define ALL_PERMS            07777
 #define OWNER_RW_PERMS       0600
+#define OWNER_RX_PERMS       0500
 
 #define HOMEDIR_ENVVAR       "HOME"
 #define SHELL_ENVVAR         "SHELL"

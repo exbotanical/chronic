@@ -69,11 +69,17 @@ main (int argc, char** argv) {
   time_t start_time = ts.tv_sec;
   time_t current_iter_time;
 
-  dir_config sys_dir    = {.is_root = true, .path = SYS_CRONTABS_DIR};
-  dir_config sysapp_dir = {.is_root = true, .path = SYS_APP_CRONTABS_DIR};
-  dir_config usr_dir    = {.is_root = false, .path = CRONTABS_DIR};
+  dir_config sys_dir = {.is_root = true, .path = SYS_CRONTABS_DIR};
+  // dir_config sysapp_dir = {.is_root = true, .path = SYS_APP_CRONTABS_DIR};
+  dir_config hourly_dir = {.is_root = true, .path = SYS_HOURLY_CRONTABS_DIR, .cadence = CADENCE_HOURLY};
+  dir_config daily_dir = {.is_root = true, .path = SYS_DAILY_CRONTABS_DIR, .cadence = CADENCE_DAILY};
+  dir_config weekly_dir = {.is_root = true, .path = SYS_WEEKLY_CRONTABS_DIR, .cadence = CADENCE_WEEKLY};
+  dir_config monthly_dir = {.is_root = true, .path = SYS_MONTHLY_CRONTABS_DIR, .cadence = CADENCE_MONTHLY};
 
-  db = update_db(db, start_time, &usr_dir, &sys_dir, &sysapp_dir, NULL);
+  dir_config usr_dir = {.is_root = false, .path = CRONTABS_DIR};
+
+  // TODO: Check all inserts for statics
+  db = update_db(db, start_time, &usr_dir, &sys_dir, &hourly_dir, &daily_dir, &weekly_dir, &monthly_dir, NULL);
 
   reap_routine_init();
   ipc_init();
@@ -98,7 +104,7 @@ main (int argc, char** argv) {
     free(r_ts);
 
     try_run_jobs(db, rounded_timestamp);
-    db = update_db(db, current_iter_time, &usr_dir, &sys_dir, &sysapp_dir, NULL);
+    db = update_db(db, current_iter_time, &usr_dir, &sys_dir, &hourly_dir, &daily_dir, &weekly_dir, &monthly_dir, NULL);
   }
 
   exit(EXIT_FAILURE);

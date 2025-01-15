@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "logger.h"
+#include "panic.h"
 #include "parser.h"
 #include "util.h"
 
@@ -14,7 +15,11 @@ get_cadence (cadence_t cadence) {
     case CADENCE_HOURLY: return HOURLY_EXPR;
     case CADENCE_DAILY: return DAILY_EXPR;
     case CADENCE_WEEKLY: return WEEKLY_EXPR;
-    default: return NULL;
+    case CADENCE_MONTHLY: return MONTHLY_EXPR;
+    case CADENCE_NA: return NULL;
+    default: {
+      panic("unhandled cadence %d - this is a bug\n", cadence);
+    }
   }
 }
 

@@ -38,22 +38,23 @@ write_jobs_command (int client_fd) {
       continue;
     }
 
-    char buf[128];
-    strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", localtime(&job->next_run));
+    char* ts = to_time_str_secs(job->next_run);
 
-    char* s = s_fmt(
+    char* s  = s_fmt(
       "{\"id\":\"%s\",\"cmd\":\"%s\",\"mailto\":\"%s\",\"state\":\"%s\","
-      "\"next\":\"%s\"}%s",
+       "\"next\":\"%s\"}%s",
       job->ident,
       job->cmd,
       job->mailto,
       job_state_names[job->state],
-      buf,
+      ts,
       i != len - 1 ? ",\n" : ""
     );
 
     write(client_fd, s, strlen(s));
+
     free(s);
+    free(ts);
   }
   write(client_fd, "]\n", 3);
 }
@@ -70,25 +71,26 @@ write_crontabs_command (int client_fd) {
   foreach (ct->entries, i) {
     cron_entry* ce = array_get_or_panic(ct->entries, i);
 
-    char buf[128];
-    strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", localtime(&ce->next));
+    char* ts       = to_time_str_secs(ce->next);
+    char* se       = s_concat_arr(ct->envp, ", ");
 
-    char* se = s_concat_arr(ct->envp, ", ");
-
-    char* s  = s_fmt(
+    char* s        = s_fmt(
       "{\"id\":\"%d\",\"cmd\":\"%s\",\"schedule\":\"%s\",\"owner\":\"%s\","
-       "\"envp\":\"%s\",\"next\":\"%s\"}%s",
+             "\"envp\":\"%s\",\"next\":\"%s\"}%s",
       ce->id,
       ce->cmd,
       ce->schedule,
       ct->uname,
       se,
-      buf,
+      ts,
       entries != 0 || i != len - 1 ? ",\n" : ""
     );
 
     write(client_fd, s, strlen(s));
+
     free(s);
+    free(se);
+    free(ts);
   }
   HT_ITER_END
 

@@ -6,9 +6,10 @@
 #include "ccronexpr/ccronexpr.h"
 #include "crontab.h"
 
-#define HOURLY_EXPR "0 * * * *"
-#define DAILY_EXPR  "0 0 * * *"
-#define WEEKLY_EXPR "0 0 * * 0"
+#define HOURLY_EXPR  "0 * * * *"
+#define DAILY_EXPR   "0 0 * * *"  // TODO: Run starting now
+#define WEEKLY_EXPR  "0 0 * * 0"  // TODO: Run starting now
+#define MONTHLY_EXPR "0 0 1 * *"  // TODO: Run starting now
 
 /**
  * Represents a single line (entry) in a crontab.

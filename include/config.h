@@ -11,6 +11,26 @@
 #  define SYS_CRONTABS_DIR "/etc/cron.d"
 #endif
 
+/* Crontab directory path for general hourly system-wide jobs */
+#ifndef SYS_HOURLY_CRONTABS_DIR
+#  define SYS_HOURLY_CRONTABS_DIR "/etc/cron.hourly"
+#endif
+
+/* Crontab directory path for general daily system-wide jobs */
+#ifndef SYS_DAILY_CRONTABS_DIR
+#  define SYS_DAILY_CRONTABS_DIR "/etc/cron.daily"
+#endif
+
+/* Crontab directory path for general weekly system-wide jobs */
+#ifndef SYS_WEEKLY_CRONTABS_DIR
+#  define SYS_WEEKLY_CRONTABS_DIR "/etc/cron.weekly"
+#endif
+
+/* Crontab directory path for general monthly system-wide jobs */
+#ifndef SYS_MONTHLY_CRONTABS_DIR
+#  define SYS_MONTHLY_CRONTABS_DIR "/etc/cron.monthly"
+#endif
+
 /* Crontab directory path for per-user jobs */
 #ifndef CRONTABS_DIR
 #  define CRONTABS_DIR "/var/spool/cron/crontabs"
