@@ -26,7 +26,7 @@ validate_entry (cron_entry* entry, cron_entry* expected) {
 static void
 new_crontab_test (void) {
   unsigned int num_expected_entries = 4;
-  char*        test_fpath           = "./t/fixtures/new_crontab_test";
+  char*        test_fpath           = "./t/fixtures/crontab.party";
 
   int crontab_fd                    = OK - 1;
   if ((crontab_fd = get_fd(test_fpath)) < OK) {
@@ -39,12 +39,14 @@ new_crontab_test (void) {
   crontab_t* ct      = new_crontab(crontab_fd, false, now, now, test_uname);
   array_t*   entries = ct->entries;
 
+  // clang-format off
   cron_entry expected_entries[] = {
-    {.cmd = "script.sh",               .schedule = "*/1 * * * *",  .parent = ct},
-    {.cmd = "exec.sh",                 .schedule = "*/2 * * * *",  .parent = ct},
-    {.cmd = "echo whatever > /tmp/hi", .schedule = "*/10 * * * *", .parent = ct},
-    {.cmd = "date",                    .schedule = "*/15 * * * *", .parent = ct}
+    { .cmd = "script.sh",               .schedule = "*/1 * * * *",  .parent = ct },
+    { .cmd = "exec.sh",                 .schedule = "*/2 * * * *",  .parent = ct },
+    { .cmd = "echo whatever > /tmp/hi", .schedule = "*/10 * * * *", .parent = ct },
+    { .cmd = "date",                    .schedule = "*/15 * * * *", .parent = ct }
   };
+  // clang-format on
 
   ok(ct->mtime == now, "Expect mtime to equal given mtime (%ld == %ld)", ct->mtime, now);
   ok(array_size(entries) == num_expected_entries, "Expect %d entries to have been created", num_expected_entries);
@@ -61,6 +63,73 @@ new_crontab_test (void) {
   is(ht_get(ct->vars, "PATH"), "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", "has the PATH environment variable");
   is(ht_get(ct->vars, "SHELL"), "/bin/echo", "has the SHELL environment variable");
   is(ht_get(ct->vars, "KEY"), "VALUE", "has the KEY environment variable");
+
+  array_t* expected_envp_entries = array_init();
+
+  HT_ITER_START(ct->vars)
+  array_push(expected_envp_entries, s_fmt("%s=%s", entry->key, entry->value));
+  HT_ITER_END
+
+  foreach (expected_envp_entries, i) {
+    char* expected = array_get(expected_envp_entries, i);
+    is(ct->envp[i], expected, "expect to find %s", expected);
+  }
+
+  array_free(expected_envp_entries, free);
+  close(crontab_fd);
+}
+
+static void
+new_crontab_test_2 (void) {
+  unsigned int num_expected_entries = 4;
+  char*        test_fpath           = "./t/fixtures/crontab.basic";
+
+  int crontab_fd                    = OK - 1;
+  if ((crontab_fd = get_fd(test_fpath)) < OK) {
+    fail();
+  }
+
+  time_t now         = time(NULL);
+  char*  test_uname  = "some_user";
+
+  crontab_t* ct      = new_crontab(crontab_fd, false, now, now, test_uname);
+  array_t*   entries = ct->entries;
+
+  // clang-format off
+  cron_entry expected_entries[] = {
+    { .cmd      = "root    cd / && run-parts --report /etc/cron.hourly",
+      .schedule = "17 * * * *",
+      .parent   = ct
+    },
+    { .cmd      = "root	test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.daily )",
+      .schedule = "25 6 * * *",
+      .parent   = ct
+    },
+    { .cmd      = "root	test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.weekly )",
+      .schedule = "47 6 * * 7",
+      .parent   = ct
+    },
+    { .cmd      = "root	test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.monthly )",
+      .schedule = "52 6 1 * *",
+      .parent   = ct
+    }
+  };
+  // clang-format on
+
+  ok(ct->mtime == now, "Expect mtime to equal given mtime (%ld == %ld)", ct->mtime, now);
+  ok(array_size(entries) == num_expected_entries, "Expect %d entries to have been created", num_expected_entries);
+
+  for (unsigned int i = 0; i < num_expected_entries; i++) {
+    cron_entry  expected = expected_entries[i];
+    cron_entry* actual   = array_get(entries, i);
+
+    validate_entry(actual, &expected);
+    free(actual);
+  }
+
+  ok(ct->vars->count == 2, "has 2 environment variables");
+  is(ht_get(ct->vars, "PATH"), "/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin", "has the PATH environment variable");
+  is(ht_get(ct->vars, "SHELL"), "/bin/sh", "has the SHELL environment variable");
 
   array_t* expected_envp_entries = array_init();
 
@@ -255,6 +324,7 @@ run_virtual_crontabs_tests (void) {
 void
 run_crontab_tests (void) {
   new_crontab_test();
+  new_crontab_test_2();
   scan_crontabs_test();
   update_db_test();
   run_virtual_crontabs_tests();

@@ -11,7 +11,7 @@
 #include "regexpr.h"
 
 // Basically whether we support seconds (7)
-#define SPACES_BEFORE_CMD 5
+#define SUPPORTED_CRONEXPR_COLS 5
 
 bool
 is_comment_line (const char* str) {
@@ -24,28 +24,17 @@ is_comment_line (const char* str) {
 
 bool
 should_parse_line (const char* line) {
-  if (strlen(line) < (SPACES_BEFORE_CMD * 2) + 1 || (*line == 0) || is_comment_line(line)) {
+  // 3 is the absolute minimum for a crontab line e.g.
+  // K=V
+  if ((*line == 0) || strlen(line) < 3 || is_comment_line(line)) {
     return false;
   }
 
-  return true;
-}
-
-char*
-until_nth_of_char (const char* str, char c, int n) {
-  int count = 0;
-  while (*str) {
-    if (*str == c && ++count == n) {
-      // If it's just an empty space...
-      if (*(str + 1) == '\0') {
-        return NULL;
-      }
-      return (char*)str;
-    }
-    str++;
+  while (*line == ' ' || *line == '\t') {
+    line++;
   }
 
-  return NULL;
+  return (*line != 0);
 }
 
 void
@@ -57,33 +46,88 @@ strip_comment (char* str) {
   }
 }
 
-retval_t
-parse_cmd (char* line, cron_entry* entry, int count) {
-  char* line_cp = s_copy_or_panic(line);
+static int
+get_end_of_schedule (const char* s) {
+  bool         on    = false;
+  unsigned int idx   = 0;
+  unsigned int count = 0;
 
-  entry->cmd = until_nth_of_char(line_cp, ' ', line_cp[0] == '@' ? 1 : count);
-  if (s_nullish(entry->cmd)) {
+  unsigned int len   = strlen(s);
+
+  while (len--) {
+    if (count == SUPPORTED_CRONEXPR_COLS) {
+      break;
+    }
+
+    if (s[idx] != ' ' && s[idx] != '\t') {
+      on = true;
+    } else if (on) {
+      on = false;
+      count++;
+    }
+
+    idx++;
+  }
+
+  return idx;
+}
+
+retval_t
+parse_schedule (const char* s, char* dest) {
+  if (!s) {
     return ERR;
   }
 
-  entry->schedule = line_cp;
-  // splits the string in two; note: shared memory block so only one `free` may
-  // be called
-  *entry->cmd     = '\0';
-  ++entry->cmd;
-  entry->cmd = s_trim(entry->cmd);
+  unsigned int idx = get_end_of_schedule(s);
+  if (idx == 0 || idx == strlen(s) || idx > MAX_SCHEDULE_LENGTH) {
+    return ERR;
+  }
+
+  memcpy(dest, s, idx);
+  dest[idx - 1] = '\0';
 
   return OK;
 }
 
 retval_t
-parse_schedule (cron_entry* entry) {
+parse_cmd (char* s, char* dest) {
+  if (!s) {
+    return ERR;
+  }
+
+  unsigned int len = strlen(s);
+
+  unsigned int idx = get_end_of_schedule(s);
+  if (idx == 0 || idx == len || idx > MAX_SCHEDULE_LENGTH) {
+    return ERR;
+  }
+
+  s   += idx;
+  len  = strlen(s);
+
+  if (len > MAX_COMMAND_LENGTH) {
+    return ERR;
+  }
+
+  memcpy(dest, s, len);
+  dest[len] = '\0';
+
+  return OK;
+}
+
+retval_t
+parse_expr (cron_entry* entry) {
   cron_expr*  expr = xmalloc(sizeof(cron_expr));
   const char* err  = NULL;
+
+  replace_tabs_with_spaces(entry->schedule);
   cron_parse_expr(entry->schedule, expr, &err);
 
   if (err) {
+    printf("XXX %s\n\n", entry->schedule);
+
     log_warn("error parsing cron expression: %s\n\n", err);
+    free(expr);
     return ERR;
   }
 
@@ -92,18 +136,21 @@ parse_schedule (cron_entry* entry) {
 }
 
 retval_t
-parse_entry (cron_entry* entry, char* line) {
-  char* line_cp = s_trim(line);
-  strip_comment(line_cp);
+parse_entry (cron_entry* entry, const char* line) {
+  if (!line) {
+    return ERR;
+  }
 
-  if (parse_cmd(line_cp, entry, SPACES_BEFORE_CMD) != OK) {
+  strip_comment(line);
+  char* line_cp = s_trim(line);
+  if (parse_schedule(line_cp, entry->schedule) != OK || parse_cmd(line_cp, entry->cmd) != OK) {
     free(line_cp);
     return ERR;
   }
 
   free(line_cp);
 
-  return parse_schedule(entry);
+  return parse_expr(entry);
 }
 
 parse_ln_result

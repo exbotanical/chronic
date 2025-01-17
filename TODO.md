@@ -36,8 +36,9 @@
 - [x] all ts should be UTC
 - [ ] Name processes
 - [x] default log file
-- [ ] daily, weekly, etc
+- [x] daily, weekly, etc
 - [ ] detect shebang
+- [ ] Way to prevent scan entire dir? e.g. use mtime and if mtime hasnt changed use an index of known crontabs therein
 
 
 We make tradeoffs between runtime op/main loop work and startup work (loading the crontabs).

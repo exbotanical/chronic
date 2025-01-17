@@ -6,10 +6,13 @@
 #include "ccronexpr/ccronexpr.h"
 #include "crontab.h"
 
-#define HOURLY_EXPR  "0 * * * *"
-#define DAILY_EXPR   "0 0 * * *"  // TODO: Run starting now
-#define WEEKLY_EXPR  "0 0 * * 0"  // TODO: Run starting now
-#define MONTHLY_EXPR "0 0 1 * *"  // TODO: Run starting now
+#define HOURLY_EXPR         "0 * * * *"
+#define DAILY_EXPR          "0 0 * * *"  // TODO: Run starting now
+#define WEEKLY_EXPR         "0 0 * * 0"  // TODO: Run starting now
+#define MONTHLY_EXPR        "0 0 1 * *"  // TODO: Run starting now
+
+#define MAX_SCHEDULE_LENGTH 32
+#define MAX_COMMAND_LENGTH  256
 
 /**
  * Represents a single line (entry) in a crontab.
@@ -22,11 +25,11 @@ typedef struct {
   /**
    * The original cron schedule specification in the entry.
    */
-  char        *schedule;
+  char         schedule[MAX_SCHEDULE_LENGTH];
   /**
    * The command specified by the entry.
    */
-  char        *cmd;
+  char         cmd[MAX_COMMAND_LENGTH];
   /**
    * The next execution time, relative to the current crond iteration.
    */

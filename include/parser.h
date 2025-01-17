@@ -14,15 +14,13 @@ typedef enum { ENV_VAR_ADDED, SKIP_LINE, ENTRY, DONE } parse_ln_result;
  * This is a dumb function and it doesn't handle any edge cases, so use it judiciously.
  * @param str
  */
-void strip_comment(char *str);
-
-char           *until_nth_of_char(const char *str, char c, int n);
+void            strip_comment(char *str);
 bool            is_comment_line(const char *str);
 bool            should_parse_line(const char *line);
-void            extract_vars(const char *s, hash_table *ht);
-retval_t        parse_cmd(char *line, cron_entry *entry, int count);
-retval_t        parse_entry(cron_entry *entry, char *line);
-retval_t        parse_schedule(cron_entry *entry);
+retval_t        parse_schedule(const char *s, char *dest);
+retval_t        parse_cmd(char *s, char *dest);
+retval_t        parse_expr(cron_entry *entry);
+retval_t        parse_entry(cron_entry *entry, const char *line);
 parse_ln_result parse_line(char *ptr, int max_entries, hash_table *ht);
 
 #endif /* PARSER_H */

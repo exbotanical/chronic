@@ -34,7 +34,7 @@ typedef struct {
 #define SOCKET_PATH          "/tmp/chronic.sock"
 #define MAX_CONCURRENT_CONNS 5
 #define RECV_BUFFER_SIZE     1024
-#define ERROR_MESSAGE_FMT    "{\"error\":\"%s\"}\n"
+#define ERROR_MESSAGE_FMT    "{\"error\":\"%s\"}"
 
 static int server_fd = -1;
 

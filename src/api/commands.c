@@ -30,7 +30,7 @@ static hash_table*    command_handlers_map;
 
 static void
 write_jobs_command (int client_fd) {
-  write(client_fd, "[", 2);
+  write(client_fd, "[", 1);
   unsigned int len = array_size(job_queue);
   foreach (job_queue, i) {
     job_t* job = (job_t*)array_get_or_panic(job_queue, i);
@@ -38,30 +38,32 @@ write_jobs_command (int client_fd) {
       continue;
     }
 
-    char* ts = to_time_str_secs(job->next_run);
+    char* ts      = to_time_str_secs(job->next_run);
+    char* cmd_esc = escape_json_string(job->cmd);
 
-    char* s  = s_fmt(
+    char* s       = s_fmt(
       "{\"id\":\"%s\",\"cmd\":\"%s\",\"mailto\":\"%s\",\"state\":\"%s\","
-       "\"next\":\"%s\"}%s",
+            "\"next\":\"%s\"}%s",
       job->ident,
-      job->cmd,
+      cmd_esc,
       job->mailto,
       job_state_names[job->state],
       ts,
-      i != len - 1 ? ",\n" : ""
+      i != len - 1 ? "," : ""
     );
 
     write(client_fd, s, strlen(s));
 
+    free(cmd_esc);
     free(s);
     free(ts);
   }
-  write(client_fd, "]\n", 3);
+  write(client_fd, "]", 1);
 }
 
 static void
 write_crontabs_command (int client_fd) {
-  write(client_fd, "[", 2);
+  write(client_fd, "[", 1);
 
   unsigned int entries = db->count;
   HT_ITER_START(db)
@@ -73,28 +75,30 @@ write_crontabs_command (int client_fd) {
 
     char* ts       = to_time_str_secs(ce->next);
     char* se       = s_concat_arr(ct->envp, ", ");
+    char* cmd_esc  = escape_json_string(ce->cmd);
 
     char* s        = s_fmt(
       "{\"id\":\"%d\",\"cmd\":\"%s\",\"schedule\":\"%s\",\"owner\":\"%s\","
              "\"envp\":\"%s\",\"next\":\"%s\"}%s",
       ce->id,
-      ce->cmd,
+      cmd_esc,
       ce->schedule,
       ct->uname,
       se,
       ts,
-      entries != 0 || i != len - 1 ? ",\n" : ""
+      entries != 0 || i != len - 1 ? "," : ""
     );
 
     write(client_fd, s, strlen(s));
 
+    free(cmd_esc);
     free(s);
     free(se);
     free(ts);
   }
   HT_ITER_END
 
-  write(client_fd, "]\n", 3);
+  write(client_fd, "]", 1);
 }
 
 static void
@@ -106,8 +110,8 @@ write_program_info (int client_fd) {
   char*  uptime = pretty_print_seconds(diff);
 
   char* s       = s_fmt(
-    "{\n\t\"pid\": \"%d\",\n\t\"started_at\": \"%s\",\n\t\"uptime\": \"%s\","
-          "\n\t\"version\": \"%s\"\n}\n",
+    "{\"pid\": \"%d\",\"started_at\": \"%s\",\"uptime\": \"%s\","
+          "\"version\": \"%s\"}",
     proginfo.pid,
     st,
     uptime,

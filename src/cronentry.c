@@ -1,6 +1,7 @@
 #include "cronentry.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "logger.h"
 #include "panic.h"
@@ -23,27 +24,48 @@ get_cadence (cadence_t cadence) {
   }
 }
 
+static retval_t
+copy_schedule (cron_entry* entry, const char* schedule_override) {
+  size_t len = strlen(schedule_override);
+  if (len > MAX_SCHEDULE_LENGTH) {
+    log_warn("invalid schedule length for override (must be %d, was %s)\n", MAX_SCHEDULE_LENGTH, len);
+    return ERR;
+  }
+  memcpy(entry->schedule, schedule_override, len);
+  entry->schedule[len] = '\0';
+
+  return OK;
+}
+
+static retval_t
+copy_command (cron_entry* entry, const char* command) {
+  size_t len = strlen(command);
+  if (len > MAX_COMMAND_LENGTH) {
+    log_warn("invalid command length for override (must be %d, was %s)\n", MAX_COMMAND_LENGTH, len);
+    return ERR;
+  }
+  memcpy(entry->cmd, command, len);
+  entry->cmd[len] = '\0';
+
+  return OK;
+}
+
 cron_entry*
 new_cron_entry (char* raw, time_t curr, crontab_t* ct, cadence_t cadence) {
-  cron_entry* entry         = xmalloc(sizeof(cron_entry));
-  char*       expr_override = get_cadence(cadence);
+  cron_entry* entry             = xmalloc(sizeof(cron_entry));
+  char*       schedule_override = get_cadence(cadence);
 
-  if (expr_override) {
-    entry->schedule = s_copy(expr_override);
-    if (parse_schedule(entry) != OK) {
-      log_error("Failed to parse entry schedule %s / %s\n", raw, expr_override);
+  if (schedule_override) {
+    copy_schedule(entry, schedule_override);
+    if (copy_schedule(entry, schedule_override) != OK || copy_command(entry, raw) != OK || parse_expr(entry) != OK) {
+      log_error("Failed to parse entry schedule %s / %s\n", raw, schedule_override);
 
-      free(expr_override);
       free(entry);
-
       return NULL;
     }
-    entry->cmd = s_copy(raw);
   } else if (parse_entry(entry, raw) != OK) {
     log_error("Failed to parse entry line %s\n", raw);
-
     free(entry);
-
     return NULL;
   }
 
@@ -64,7 +86,5 @@ renew_cron_entry (cron_entry* entry, time_t curr) {
 void
 free_cron_entry (cron_entry* entry) {
   free(entry->expr);
-  free(entry->schedule);
-  free(entry->cmd);
   free(entry);
 }

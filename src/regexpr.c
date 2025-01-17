@@ -17,8 +17,7 @@
 #define NCAPTGRPS 9
 #define OVECSIZE  (1 + NCAPTGRPS) * 3
 
-static const char *VARIABLE_PATTERN
-  = "^([a-zA-Z_-][a-zA-Z0-9_-]*)=\"([^\"]*)\"(?<! )$";
+static const char *VARIABLE_PATTERN = "^([a-zA-Z_-][a-zA-Z0-9_-]*)=(.*)(?<! )$";
 
 static int ovector[OVECSIZE];
 
@@ -92,7 +91,7 @@ regex_matches (pcre *re, char *cmp) {
     return NULL;
   }
 
-  printf("matching error on regex\n");
+  log_warn("matching error on regex\n");
 
   return NULL;
 }

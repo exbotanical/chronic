@@ -28,7 +28,6 @@ match_variable_test (void) {
     {.key = "EMPTY", .value = "", .invalid_str = NULL},
     {.invalid_str = "SOME_INVALID_VAR"},
     {.invalid_str = ""},
-    {.invalid_str = "str=\"invalid"},
     {.invalid_str = "~=\"valid_val_but_invalid_key\""}
   };
 
@@ -47,7 +46,7 @@ match_variable_test (void) {
 
       free(input);
     } else {
-      char* input = s_fmt("%s=\"%s\"", s_copy(tc.key), s_copy(tc.value));
+      char* input = s_fmt("%s=%s", s_copy(tc.key), s_copy(tc.value));
 
       match_variable(input, ht);
 

@@ -11,6 +11,8 @@
 
 typedef enum { OK, ERR } retval_t;
 
+void replace_tabs_with_spaces(char *str);
+
 /**
  * xmalloc is a malloc wrapper that exits the program if out of memory
  */
@@ -66,6 +68,7 @@ array_t *get_filenames(char *dirpath, const char *regex);
 
 bool file_exists(const char *path);
 
-int parse_json(const char *json, hash_table *pairs);
+int   parse_json(const char *json, hash_table *pairs);
+char *escape_json_string(const char *input);
 
 #endif /* UTIL_H */

@@ -38,7 +38,7 @@ test_data_setup () {
   . "$SETUP_PATH"
 
   uname_1='narcissus'
-  uname_2='demian'
+  uname_2='goldmund'
 
   # Setup
   setup_user_crondir
@@ -149,13 +149,14 @@ describe 'ipc API IPC_SHOW_INFO command'
 end_describe
 
 describe 'ipc API IPC_LIST_CRONTABS command'
+  n_syscrontabs="$(find /etc/cron.{hourly,daily,weekly,monthly}  -type f 2>/dev/null | wc -l)"
   start_chronic
   sleep 5
 
   out="$(sock_call '{ "command" : "IPC_LIST_CRONTABS"}' 2>/dev/null | tr -d '\0')"
 
   it 'lists all crontabs'
-    assert equal $(jq 'length' <<< "$out") 3
+    assert equal $(jq 'length' <<< "$out") "$((n_syscrontabs + 3))"
   ti
 
   it 'has all required fields on each record'

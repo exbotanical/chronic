@@ -36,6 +36,15 @@ trim_whitespace (char* str) {
   return str;
 }
 
+void
+replace_tabs_with_spaces (char* str) {
+  for (size_t i = 0; str[i] != '\0'; i++) {
+    if (str[i] == '\t') {
+      str[i] = ' ';
+    }
+  }
+}
+
 void*
 xmalloc (size_t sz) {
   void* ptr;
@@ -213,5 +222,29 @@ parse_json (const char* json, hash_table* pairs) {
   }
 
   free(mutable_json);
+
   return count;
+}
+
+// Function to escape control characters in a JSON string
+char*
+escape_json_string (const char* input) {
+  // Allocate enough memory to store the escaped string
+  // Worst case: every character becomes `\uXXXX` (6 characters)
+  size_t input_len      = strlen(input);
+  size_t max_output_len = input_len * 6 + 1;
+  char*  output         = xmalloc(max_output_len);
+
+  char* out_ptr         = output;
+  for (const char* in_ptr = input; *in_ptr; ++in_ptr) {
+    unsigned char c = *in_ptr;
+    if (c <= 0x1F) {  // Control characters
+      out_ptr += sprintf(out_ptr, "\\u%04x", c);
+    } else {
+      *out_ptr++ = c;
+    }
+  }
+  *out_ptr = '\0';
+
+  return output;
 }
