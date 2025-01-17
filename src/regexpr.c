@@ -43,7 +43,7 @@ regex_compile (const char *pattern) {
 
   pcre *re = pcre_compile(pattern, 0, &error, &erroffset, NULL);
   if (re == NULL) {
-    panic("[%s@L%d] PCRE compilation failed at offset %d: %s; errno: %d\n", __func__, __LINE__, erroffset, error, errno);
+    xpanic("[%s@L%d] PCRE compilation failed at offset %d: %s; errno: %d\n", __func__, __LINE__, erroffset, error, errno);
   }
 
   return re;
@@ -101,7 +101,7 @@ bool
 match_variable (char *line, hash_table *vars) {
   pcre *re = regex_cache_get(get_regex_cache(), VARIABLE_PATTERN);
   if (!re) {
-    panic("[%s@L%d] an error occurred when compiling regex\n", __func__, __LINE__);
+    xpanic("[%s@L%d] an error occurred when compiling regex\n", __func__, __LINE__);
   }
 
   array_t *matches = regex_matches(re, line);
@@ -121,7 +121,7 @@ match_string (const char *string, const char *pattern) {
 
   pcre *re          = regex_cache_get(cache, pattern);
   if (!re) {
-    panic("[%s@L%d] Failed to compile regex pattern: %s\n", __func__, __LINE__, pattern);
+    xpanic("[%s@L%d] Failed to compile regex pattern: %s\n", __func__, __LINE__, pattern);
   }
 
   int rc = pcre_exec(re, NULL, string, strlen(string), 0, 0, ovector, OVECSIZE);

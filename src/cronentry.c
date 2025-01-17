@@ -19,7 +19,7 @@ get_cadence (cadence_t cadence) {
     case CADENCE_MONTHLY: return MONTHLY_EXPR;
     case CADENCE_NA: return NULL;
     default: {
-      panic("unhandled cadence %d - this is a bug\n", cadence);
+      xpanic("unhandled cadence %d - this is a bug\n", cadence);
     }
   }
 }

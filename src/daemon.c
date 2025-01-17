@@ -106,7 +106,7 @@ daemon_lock (void) {
   // Initially, we set the perms to be r/w by owner only to prevent race
   // conds.
   if ((fd = open(lp, O_RDWR | O_CREAT, 0600)) == -1) {
-    panic("failed to open/create %s", lp, strerror(errno));
+    xpanic("failed to open/create %s", lp, strerror(errno));
   }
 
   if (flock(fd, LOCK_EX /* exclusive */ | LOCK_NB /* non-blocking */) < OK) {
@@ -137,7 +137,7 @@ daemon_lock (void) {
       }
     }
 
-    panic("failed to acquire dedupe lock");
+    xpanic("failed to acquire dedupe lock");
   }
 
   fchmod(fd, 0644);

@@ -17,8 +17,10 @@ static void
 setopt_logfile (command_t* self) {
   clicontext* ctx = (clicontext*)self->data;
   if (ctx->logopt > 0) {
-    panic("cannot set log file when syslog is being used. the two are mutually "
-          "exclusive; choose one");
+    xpanic(
+      "cannot set log file when syslog is being used. the two are mutually "
+      "exclusive; choose one"
+    );
   }
   ctx->logopt   = 1;
 
@@ -29,7 +31,7 @@ static void
 setopt_syslog (command_t* self) {
   clicontext* ctx = (clicontext*)self->data;
   if (ctx->logopt > 0) {
-    panic(
+    xpanic(
       "cannot set syslog opt when log file is being used. the two are mutually "
       "exclusive; choose one"
     );

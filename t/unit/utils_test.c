@@ -112,9 +112,9 @@ json_parser_test (void) {
                       "\"command\":\"list_tabs\"}";
 
   hash_table* pairs = ht_init(11, free);
-  int         ret   = parse_json(s, pairs);
+  ok(parse_json(s, pairs) == OK, "returns OK");
 
-  ok(ret == 2, "2 pairs");
+  ok(pairs->count == 2, "2 pairs");
   is(ht_get(pairs, "id"), "c0687273-4d7b-4873-96f1-0156d988ebc3", "selects the expected json field");
   is(ht_get(pairs, "command"), "list_tabs", "selects the expected json field");
 }

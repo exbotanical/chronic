@@ -66,9 +66,8 @@ char *create_uuid(void);
  */
 array_t *get_filenames(char *dirpath, const char *regex);
 
-bool file_exists(const char *path);
-
-int   parse_json(const char *json, hash_table *pairs);
-char *escape_json_string(const char *input);
+bool     file_exists(const char *path);
+retval_t parse_json(const char *json, hash_table *pairs);
+char    *escape_json_string(const char *input);
 
 #endif /* UTIL_H */

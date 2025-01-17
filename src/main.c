@@ -54,7 +54,7 @@ main (int argc, char** argv) {
 #ifndef VALGRIND
   // Become a daemon process
   if (daemonize() != OK) {
-    panic("[%s@L%d] daemonize fail\n", __func__, __LINE__);
+    xpanic("[%s@L%d] daemonize fail\n", __func__, __LINE__);
   }
 #endif
   user_init();

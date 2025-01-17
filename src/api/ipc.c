@@ -69,7 +69,7 @@ ipc_routine (void* arg __attribute__((unused))) {
     log_debug("API req: '%s'\n", buffer);
 
     hash_table* pairs = ht_init(11, free);
-    if (parse_json(buffer, pairs) == -1) {
+    if (parse_json(buffer, pairs) != OK) {
       ipc_write_err(client_fd, "invalid format");
       goto client_done;
     }
@@ -105,10 +105,10 @@ ipc_routine_init (void) {
   pthread_attr_t attr;
   int            rc = pthread_attr_init(&attr);
   if (rc != 0) {
-    panic("pthread_attr_init failed with rc %d\n", rc);
+    xpanic("pthread_attr_init failed with rc %d\n", rc);
   }
   if ((rc = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED)) != 0) {
-    panic("pthread_attr_setdetachstate failed with rc %d\n", rc);
+    xpanic("pthread_attr_setdetachstate failed with rc %d\n", rc);
   }
   pthread_create(&reaper_thread_id, &attr, &ipc_routine, NULL);
 }
@@ -118,7 +118,7 @@ ipc_init (void) {
   struct sockaddr_un addr;
 
   if ((server_fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
-    panic("failed to create socket (reason: %s)", strerror(errno));
+    xpanic("failed to create socket (reason: %s)", strerror(errno));
   }
 
   memset(&addr, 0, sizeof(addr));
@@ -131,12 +131,12 @@ ipc_init (void) {
 
   if (bind(server_fd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
     log_error("failed to bind IPC server sock (reason: %s)\n", strerror(errno));
-    panic("failed to bind socket");
+    xpanic("failed to bind socket");
   }
 
   if (listen(server_fd, MAX_CONCURRENT_CONNS) == -1) {
     log_error("failed to listen on IPC server sock (reason: %s)\n", strerror(errno));
-    panic("failed to listen on socket");
+    xpanic("failed to listen on socket");
   }
 
   ipc_routine_init();

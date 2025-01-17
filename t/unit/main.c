@@ -21,7 +21,7 @@ main (int _argc, char** _argv) {
   usr.uname = "root";
   usr.root  = true;
 
-  plan(197);
+  plan(198);
 
   run_parser_tests();
   run_regexpr_tests();

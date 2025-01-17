@@ -6,6 +6,7 @@
 
 #include "globals.h"
 #include "job.h"
+#include "logger.h"
 #include "panic.h"
 #include "proginfo.h"
 #include "util.h"
@@ -70,6 +71,7 @@ write_crontabs_command (int client_fd) {
   entries--;
   crontab_t*   ct  = entry->value;
   unsigned int len = array_size(ct->entries);
+
   foreach (ct->entries, i) {
     cron_entry* ce = array_get_or_panic(ct->entries, i);
 

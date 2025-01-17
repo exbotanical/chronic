@@ -102,7 +102,7 @@ sig_handlers_init (void) {
     || sigaction(SIGQUIT, &sa_exit, NULL) < 0
     || sigaction(SIGSEGV, &sa_segfault, NULL) < 0
     || sigaction(SIGHUP, &sa_hangup, NULL) < 0) {
-    panic("Failed to setup signal handlers: %s", strerror(errno));
+    xpanic("Failed to setup signal handlers: %s", strerror(errno));
   }
   // clang-format on
 }

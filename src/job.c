@@ -277,10 +277,10 @@ reap_routine_init (void) {
   pthread_attr_t attr;
   int            rc = pthread_attr_init(&attr);
   if (rc != 0) {
-    panic("pthread_attr_init failed with rc %d\n", rc);
+    xpanic("pthread_attr_init failed with rc %d\n", rc);
   }
   if ((rc = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED)) != 0) {
-    panic("pthread_attr_setdetachstate failed with rc %d\n", rc);
+    xpanic("pthread_attr_setdetachstate failed with rc %d\n", rc);
   }
   pthread_create(&reaper_thread_id, &attr, &reap_routine, NULL);
 }

@@ -14,6 +14,11 @@
 #include "panic.h"
 #include "regexpr.h"
 
+#ifdef __MACH__
+#  include <mach/clock.h>
+#  include <mach/mach.h>
+#endif
+
 #ifndef UUID_STR_LEN
 #  define UUID_STR_LEN 37
 #endif
@@ -49,7 +54,7 @@ void*
 xmalloc (size_t sz) {
   void* ptr;
   if ((ptr = malloc(sz)) == NULL) {
-    panic("xmalloc failed to allocate memory");
+    xpanic("xmalloc failed to allocate memory");
   }
 
   return ptr;
@@ -57,11 +62,10 @@ xmalloc (size_t sz) {
 
 void
 get_time (struct timespec* ts) {
-  // TODO: Make OSX path non-monotonic
 #ifdef __MACH__
   clock_serv_t    cclock;
   mach_timespec_t mts;
-  host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &cclock);
+  host_get_clock_service(mach_host_self(), REALTIME_CLOCK, &cclock);
   clock_get_time(cclock, &mts);
   mach_port_deallocate(mach_task_self(), cclock);
   ts->tv_sec  = mts.tv_sec;
@@ -131,22 +135,30 @@ create_uuid (void) {
   return s_copy_or_panic(uuid);
 }
 
+static inline bool
+is_pointer_file (const char* fname) {
+  return s_equals(fname, ".") || s_equals(fname, "..");
+}
+
+static inline bool
+should_skip_file (const char* fname, const char* regex) {
+  return regex && !match_string(fname, regex);
+}
+
 array_t*
 get_filenames (char* dirpath, const char* regex) {
   DIR* dir;
   if ((dir = opendir(dirpath)) != NULL) {
-    log_debug("scanning dir %s\n", dirpath);
-    struct dirent* den;
-
     array_t* file_names = array_init_or_panic();
+    log_debug("scanning dir %s\n", dirpath);
 
+    struct dirent* den;
     while ((den = readdir(dir)) != NULL) {
-      // Skip pointer files
-      if (s_equals(den->d_name, ".") || s_equals(den->d_name, "..")) {
+      if (is_pointer_file(den->d_name)) {
         continue;
       }
 
-      if (regex && !match_string(den->d_name, regex)) {
+      if (should_skip_file(den->d_name, regex)) {
         log_debug("skipping file %s (did not match regex %s)\n", den->d_name, regex);
         continue;
       }
@@ -172,30 +184,31 @@ file_exists (const char* path) {
 }
 
 // No arrays
-int
+retval_t
 parse_json (const char* json, hash_table* pairs) {
+  retval_t ret       = OK;
+
   char* mutable_json = s_copy_or_panic(json);
 
   char* start        = strchr(mutable_json, '{');
   char* end          = strrchr(mutable_json, '}');
   if (!start || !end || start >= end) {
     log_warn("%s\n", "Invalid JSON format");
-    free(mutable_json);
-    return -1;
+    ret = ERR;
+    goto done;
   }
 
   // Replace closing brace and skip next opening one
   *end = '\0';
   start++;
 
-  int   count    = 0;
   char* pair_str = strtok(start, ",");
   while (pair_str) {
     char* colon = strchr(pair_str, ':');
     if (!colon) {
       log_warn("Invalid key-value pair: %s\n", pair_str);
-      free(mutable_json);
-      return -1;
+      ret = ERR;
+      goto done;
     }
 
     *colon      = '\0';
@@ -217,13 +230,13 @@ parse_json (const char* json, hash_table* pairs) {
 
     ht_insert(pairs, s_copy(key), s_copy(value));
 
-    count++;
     pair_str = strtok(NULL, ",");
   }
 
+done:
   free(mutable_json);
 
-  return count;
+  return ret;
 }
 
 // Function to escape control characters in a JSON string
