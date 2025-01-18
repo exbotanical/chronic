@@ -1,7 +1,28 @@
 #ifndef FILE_UTILS_H
 #define FILE_UTILS_H
 
+#include <pwd.h>
+#include <sys/stat.h>
+
 #include "libutil/libutil.h"
+#include "utils/xpanic.h"
+
+/**
+ * Returns true if the file represented by the stat entity is owned by the
+ * user (represented by the pw entity).
+ *
+ * @param statbuf The stat struct for the file we're evaluating.
+ * @param pw The user's passwd entry.
+ * @return true The file IS owned by the given user.
+ * @return false The file IS NOT owned by the given user.
+ */
+static inline bool
+is_file_owner (struct stat *statbuf, struct passwd *pw) {
+  if (!statbuf || !pw) {
+    xpanic("statbuf and/or pw was unexpectedly NULL\n");
+  }
+  return statbuf->st_uid == pw->pw_uid;
+}
 
 /**
  * Given a directory path, returns an array of all of the valid filenames

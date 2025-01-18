@@ -22,7 +22,7 @@
 #include "user.h"
 #include "utils/time.h"
 #include "utils/xpanic.h"
-#include "workload.h"
+#include "workloads.h"
 
 proginfo_t proginfo;
 

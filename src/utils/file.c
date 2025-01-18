@@ -3,12 +3,10 @@
 #include <dirent.h>
 #include <errno.h>
 #include <string.h>
-#include <sys/stat.h>
 
 #include "libutil/libutil.h"
 #include "logger.h"
 #include "utils/regex.h"
-#include "utils/xpanic.h"
 
 static inline bool
 is_pointer_file (const char* fname) {

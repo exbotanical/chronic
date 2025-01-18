@@ -29,20 +29,6 @@
 #define RW_BUFFER  1024
 
 /**
- * Returns true if the file represented by the stat entity is owned by the
- * user (represented by the pw entity).
- *
- * @param statbuf The stat struct for the file we're evaluating.
- * @param pw The user's passwd entry.
- * @return true The file IS owned by the given user.
- * @return false The file IS NOT owned by the given user.
- */
-static bool
-is_file_owner (struct stat* statbuf, struct passwd* pw) {
-  return statbuf->st_uid == pw->pw_uid;
-}
-
-/**
  * Modifies and finalizes the given crontab's environment data by adding any
  * missing env vars. For example, we check for the user's home directory, shell,
  * etc and set those.
@@ -102,9 +88,13 @@ get_crontab_fd_if_valid (char* fpath, char* uname, time_t last_mtime, struct sta
   int crontab_fd = not_ok;
 
 #ifndef UNIT_TEST
+  // TODO: Only call for current user once
   struct passwd* pw = NULL;
+
   // No user found in passwd
-  if (!s_equals(uname, ROOT_UNAME) && (pw = getpwnam(uname)) == NULL) {
+  // Note: getpwnam must be called first -
+  // we may need it later if the current file is for root but the current user isn't.
+  if ((pw = getpwnam(uname)) == NULL && !s_equals(uname, ROOT_UNAME)) {
     log_warn("user %s not found\n", uname);
     goto dont_process;
   }
@@ -324,7 +314,6 @@ scan_crontabs (hash_table* old_db, hash_table* new_db, dir_config* dir_conf, tim
     char*       uname = dir_conf->is_root ? ROOT_UNAME : fname;
 
     log_debug("scanning file %s...\n", fpath);
-
     // The file hasn't been processed before. Create the new crontab.
     if (!ct) {
       if ((crontab_fd = get_crontab_fd_if_valid(fpath, uname, 0, &statbuf, false)) < OK) {
