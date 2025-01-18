@@ -22,30 +22,18 @@
 #include "user.h"
 #include "utils/time.h"
 #include "utils/xpanic.h"
+#include "workload.h"
 
 proginfo_t proginfo;
 
+// Desired interval in seconds between loop iterations
+const short loop_interval = 60;
 hash_table* db;
 array_t*    job_queue;
 array_t*    mail_queue;
 
-// Desired interval in seconds between loop iterations
-const short loop_interval = 60;
-
-cli_opts opts             = {0};
-user_t   usr              = {0};
-
-dir_config sys_dir        = {.is_root = true, .path = SYS_CRONTABS_DIR};
-dir_config sysapp_dir = {.is_root = true, .path = "/etc", .regex = "crontab"};
-dir_config hourly_dir = {.is_root = true, .path = SYS_HOURLY_CRONTABS_DIR, .cadence = CADENCE_HOURLY};
-dir_config daily_dir = {.is_root = true, .path = SYS_DAILY_CRONTABS_DIR, .cadence = CADENCE_DAILY};
-dir_config weekly_dir = {.is_root = true, .path = SYS_WEEKLY_CRONTABS_DIR, .cadence = CADENCE_WEEKLY};
-dir_config monthly_dir = {.is_root = true, .path = SYS_MONTHLY_CRONTABS_DIR, .cadence = CADENCE_MONTHLY};
-
-dir_config usr_dir = {.is_root = false, .path = CRONTABS_DIR};
-
-#define ALL_DIRS \
-  &usr_dir, &sys_dir, &sysapp_dir, &hourly_dir, &daily_dir, &weekly_dir, &monthly_dir, NULL
+cli_opts opts = {0};
+user_t   usr  = {0};
 
 int
 main (int argc, char** argv) {

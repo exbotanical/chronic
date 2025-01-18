@@ -106,11 +106,22 @@ void free_crontab(crontab_t *ct);
  * @param new_db A pointer to the new database; all updates will be placed here.
  * @param dir_conf The dir config for the directory to be scanned.
  * @param curr The current time.
- *
  */
 void scan_crontabs(hash_table *old_db, hash_table *new_db, dir_config *dir_conf, time_t curr);
 
-// TODO:
+/**
+ * Same as scan_crontabs except this looks for executable files in lieu of actual crontabs. Then, for each executable,
+ * it creates a "virtual" crontab (internal data structure) to represent the executable. Thus, the virtual crontab
+ * is a singleton / has a single entry, always; the mtime comparison occurs on the script itself.
+ *
+ * This allows us to support canonical system cron directories such as cron.daily.
+ *
+ * @param old_db
+ * @param new_db
+ * @param dir_conf
+ * @param curr
+ * @param cadence The cadence of the virtual cron entry, since there is no actual cron expr.
+ */
 void scan_virtual_crontabs(hash_table *old_db, hash_table *new_db, dir_config *dir_conf, time_t curr, cadence_t cadence);
 
 /**
