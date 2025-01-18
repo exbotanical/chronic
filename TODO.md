@@ -39,6 +39,7 @@
 - [x] daily, weekly, etc
 - [ ] detect shebang
 - [ ] Way to prevent scan entire dir? e.g. use mtime and if mtime hasnt changed use an index of known crontabs therein
+- [ ] Make all APIs consistent (e.g. return new string or always accept the dest as input)
 
 
 We make tradeoffs between runtime op/main loop work and startup work (loading the crontabs).

@@ -1,7 +1,11 @@
+#include "libhash/libhash.h"
 #include "libutil/libutil.h"
 #include "tap.c/tap.h"
 #include "tests.h"
-#include "util.h"
+#include "utils/file.h"
+#include "utils/json.h"
+#include "utils/retval.h"
+#include "utils/time.h"
 
 void
 round_ts_test (void) {

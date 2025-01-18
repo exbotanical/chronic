@@ -5,7 +5,7 @@
 
 #include "cronentry.h"
 #include "libhash/libhash.h"
-#include "util.h"
+#include "utils/retval.h"
 
 typedef enum { ENV_VAR_ADDED, SKIP_LINE, ENTRY, DONE } parse_ln_result;
 
@@ -20,7 +20,7 @@ bool            should_parse_line(const char *line);
 retval_t        parse_schedule(const char *s, char *dest);
 retval_t        parse_cmd(char *s, char *dest);
 retval_t        parse_expr(cron_entry *entry);
-retval_t        parse_entry(cron_entry *entry, const char *line);
+retval_t        parse_entry(cron_entry *entry, char *line);
 parse_ln_result parse_line(char *ptr, int max_entries, hash_table *ht);
 
 #endif /* PARSER_H */

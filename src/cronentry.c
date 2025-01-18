@@ -6,7 +6,8 @@
 #include "logger.h"
 #include "panic.h"
 #include "parser.h"
-#include "util.h"
+#include "utils/retval.h"
+#include "utils/xmalloc.h"
 
 static unsigned int id_counter = 0;
 

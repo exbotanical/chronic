@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <stdnoreturn.h>
 
+#include "libutil/libutil.h"
+
 static noreturn void
 __panic (const char* fmt, ...) {
   va_list va;

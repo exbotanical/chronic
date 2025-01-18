@@ -9,7 +9,8 @@
 #include "logger.h"
 #include "panic.h"
 #include "proginfo.h"
-#include "util.h"
+#include "utils/json.h"
+#include "utils/time.h"
 
 typedef struct {
   const char* command;

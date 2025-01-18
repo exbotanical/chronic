@@ -9,6 +9,8 @@
 #include "logger.h"
 #include "panic.h"
 #include "regexpr.h"
+#include "utils/string.h"
+#include "utils/xmalloc.h"
 
 // Basically whether we support seconds (7)
 #define SUPPORTED_CRONEXPR_COLS 5
@@ -136,7 +138,7 @@ parse_expr (cron_entry* entry) {
 }
 
 retval_t
-parse_entry (cron_entry* entry, const char* line) {
+parse_entry (cron_entry* entry, char* line) {
   if (!line) {
     return ERR;
   }

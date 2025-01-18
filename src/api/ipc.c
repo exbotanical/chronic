@@ -14,7 +14,8 @@
 #include "job.h"
 #include "logger.h"
 #include "panic.h"
-#include "util.h"
+#include "utils/file.h"
+#include "utils/json.h"
 
 typedef enum {
   JOB_RUN_STATE_ACTIVE,

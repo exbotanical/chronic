@@ -21,7 +21,7 @@
 #include "proginfo.h"
 #include "sig.h"
 #include "user.h"
-#include "util.h"
+#include "utils/time.h"
 
 proginfo_t proginfo;
 

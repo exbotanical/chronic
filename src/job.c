@@ -15,7 +15,8 @@
 #include "logger.h"
 #include "panic.h"
 #include "proginfo.h"
-#include "util.h"
+#include "utils/string.h"
+#include "utils/xmalloc.h"
 
 const char* job_state_names[] = {X(PENDING), X(RUNNING), X(EXITED)};
 

@@ -13,7 +13,7 @@
 #include "libutil/libutil.h"
 #include "panic.h"
 #include "proginfo.h"
-#include "util.h"
+#include "utils/time.h"
 
 #define LOG_LEVEL_FMT "[%s]"
 

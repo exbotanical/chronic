@@ -1,7 +1,7 @@
 #ifndef DAEMON_H
 #define DAEMON_H
 
-#include "util.h"
+#include "utils/retval.h"
 
 /**
  * Daemonizes the current running process and detaches it from the TTY.
