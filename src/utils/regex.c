@@ -1,4 +1,4 @@
-#include "regexpr.h"
+#include "utils/regex.h"
 
 #include <errno.h>
 #include <pcre.h>
@@ -8,7 +8,7 @@
 
 #include "libutil/libutil.h"
 #include "logger.h"
-#include "panic.h"
+#include "utils/xpanic.h"
 
 // This should be proportional to the number of anticipated capture groups.
 // Each capture group needs three slots (start and end offsets plus internal-use slot).

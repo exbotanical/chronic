@@ -4,7 +4,7 @@
 #include <string.h>
 #include <uuid/uuid.h>
 
-#include "panic.h"
+#include "utils/xpanic.h"
 
 #ifndef UUID_STR_LEN
 #  define UUID_STR_LEN 37

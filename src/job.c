@@ -13,10 +13,10 @@
 #include "globals.h"
 #include "libutil/libutil.h"
 #include "logger.h"
-#include "panic.h"
 #include "proginfo.h"
 #include "utils/string.h"
 #include "utils/xmalloc.h"
+#include "utils/xpanic.h"
 
 const char* job_state_names[] = {X(PENDING), X(RUNNING), X(EXITED)};
 

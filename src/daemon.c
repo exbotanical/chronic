@@ -19,7 +19,7 @@
 #include "job.h"
 #include "libutil/libutil.h"
 #include "logger.h"
-#include "panic.h"
+#include "utils/xpanic.h"
 
 #define LOCKFILE_BUFFER_SZ    512
 #define SYS_LOCKFILE_PATH     "/var/run/crond.pid"

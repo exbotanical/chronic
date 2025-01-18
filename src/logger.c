@@ -11,9 +11,9 @@
 #include "config.h"
 #include "globals.h"
 #include "libutil/libutil.h"
-#include "panic.h"
 #include "proginfo.h"
 #include "utils/time.h"
+#include "utils/xpanic.h"
 
 #define LOG_LEVEL_FMT "[%s]"
 

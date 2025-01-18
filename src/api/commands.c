@@ -7,10 +7,10 @@
 #include "globals.h"
 #include "job.h"
 #include "logger.h"
-#include "panic.h"
 #include "proginfo.h"
 #include "utils/json.h"
 #include "utils/time.h"
+#include "utils/xpanic.h"
 
 typedef struct {
   const char* command;

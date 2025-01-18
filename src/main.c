@@ -17,11 +17,11 @@
 #include "globals.h"
 #include "job.h"
 #include "logger.h"
-#include "panic.h"
 #include "proginfo.h"
 #include "sig.h"
 #include "user.h"
 #include "utils/time.h"
+#include "utils/xpanic.h"
 
 proginfo_t proginfo;
 

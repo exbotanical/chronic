@@ -7,8 +7,7 @@
 #include "libhash/libhash.h"
 #include "libutil/libutil.h"
 #include "logger.h"
-#include "panic.h"
-#include "regexpr.h"
+#include "utils/regex.h"
 #include "utils/string.h"
 #include "utils/xmalloc.h"
 

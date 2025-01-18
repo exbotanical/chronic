@@ -1,8 +1,7 @@
-#include "regexpr.h"
-
 #include "libutil/libutil.h"
 #include "tap.c/tap.h"
 #include "tests.h"
+#include "utils/regex.h"
 
 static void
 match_variable_test (void) {

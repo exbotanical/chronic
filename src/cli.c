@@ -2,7 +2,7 @@
 
 #include "commander/commander.h"
 #include "globals.h"
-#include "panic.h"
+#include "utils/xpanic.h"
 
 typedef struct {
   int logopt;

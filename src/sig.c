@@ -12,7 +12,7 @@
 #include "daemon.h"
 #include "globals.h"
 #include "logger.h"
-#include "panic.h"
+#include "utils/xpanic.h"
 
 static void
 handle_exit (int sig) {

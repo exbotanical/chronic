@@ -1,5 +1,5 @@
-#ifndef REGEXPR_H
-#define REGEXPR_H
+#ifndef REGEX_UTILS_H
+#define REGEX_UTILS_H
 
 #include <stdbool.h>
 
@@ -8,4 +8,4 @@
 bool match_variable(char *line, hash_table *vars);
 bool match_string(const char *string, const char *pattern);
 
-#endif /* REGEXPR_H */
+#endif /* REGEX_UTILS_H */

@@ -7,8 +7,8 @@
 
 #include "libutil/libutil.h"
 #include "logger.h"
-#include "panic.h"
-#include "regexpr.h"
+#include "utils/regex.h"
+#include "utils/xpanic.h"
 
 static inline bool
 is_pointer_file (const char* fname) {

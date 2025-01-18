@@ -15,10 +15,10 @@
 #include "cronentry.h"
 #include "globals.h"
 #include "logger.h"
-#include "panic.h"
 #include "parser.h"
 #include "utils/file.h"
 #include "utils/xmalloc.h"
+#include "utils/xpanic.h"
 
 // Some systems won't have this option and we'll just have to live without it.
 #ifndef O_NOFOLLOW

@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#include "panic.h"
+#include "utils/xpanic.h"
 
 /**
  * xmalloc is a malloc wrapper that exits the program if out of memory
