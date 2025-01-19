@@ -82,9 +82,11 @@ write_crontabs_command (int client_fd) {
     char* cmd_esc  = escape_json_string(ce->cmd);
 
     char* s        = s_fmt(
-      "{\"id\":\"%d\",\"cmd\":\"%s\",\"schedule\":\"%s\",\"owner\":\"%s\","
+      "{\"id\":\"%d\",\"filepath\":\"%s\",\"cmd\":\"%s\",\"schedule\":\"%s\","
+             "\"owner\":\"%s\","
              "\"envp\":\"%s\",\"next\":\"%s\"}%s",
       ce->id,
+      entry->key,
       cmd_esc,
       ce->schedule,
       ct->uname,

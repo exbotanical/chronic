@@ -153,7 +153,14 @@ describe 'ipc API IPC_LIST_CRONTABS command'
   start_chronic
   sleep 5
 
-  out="$(sock_call '{ "command" : "IPC_LIST_CRONTABS"}' 2>/dev/null | tr -d '\0')"
+  out="$(sock_call '{ "command" : "IPC_LIST_CRONTABS"}')"
+  echo "$out" | jq 'length'
+  echo "$out" | jq
+
+  xxxt=$(echo "$out" | jq)
+
+  echo "> > > > $out"
+  echo "1>>> $(jq --arg)"
 
   it 'lists all crontabs'
     assert equal $(jq 'length' <<< "$out") "$((n_syscrontabs + 3))"
@@ -177,7 +184,7 @@ describe 'ipc API IPC_LIST_JOBS command'
   echo 'sleeping for 60 seconds...'
   sleep 60
 
-  out="$(sock_call '{ "command" : "IPC_LIST_JOBS"}' 2>/dev/null | tr -d '\0')"
+  out="$(sock_call '{ "command" : "IPC_LIST_JOBS"}')"
 
   it 'lists all jobs'
     assert gt "$(jq 'length' <<< "$out")" 0
