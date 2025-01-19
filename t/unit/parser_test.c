@@ -158,8 +158,7 @@ parse_cmd_test (void) {
   // clang-format on
 
   ITER_CASES_TEST(tests, test_case) {
-    test_case  tc = tests[i];
-    cron_entry entry;
+    test_case tc = tests[i];
 
     char     ret[256];
     retval_t rv = parse_cmd(tc.input, ret);

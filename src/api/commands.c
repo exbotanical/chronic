@@ -30,6 +30,7 @@ static command_handler_entry command_handler_map_index[] = {
 static pthread_once_t command_handlers_map_init_once = PTHREAD_ONCE_INIT;
 static hash_table*    command_handlers_map;
 
+// TODO: just ret str
 static void
 write_jobs_command (int client_fd) {
   write(client_fd, "[", 1);

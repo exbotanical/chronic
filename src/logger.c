@@ -16,8 +16,6 @@
 #include "utils/xpanic.h"
 
 #define LOG_LEVEL_FMT "[%s]"
-
-//   "%Y-%m-%d %H:%M:%S - [%s] %%s crond: "
 #define LOG_HEADER    "%s - " LOG_LEVEL_FMT " %s " DAEMON_IDENT ": "
 
 #define LOG_GUARD     \

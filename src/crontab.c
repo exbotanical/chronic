@@ -20,11 +20,6 @@
 #include "utils/xmalloc.h"
 #include "utils/xpanic.h"
 
-// Some systems won't have this option and we'll just have to live without it.
-#ifndef O_NOFOLLOW
-#  define O_NOFOLLOW 0
-#endif
-
 #define MAXENTRIES 256
 #define RW_BUFFER  1024
 
@@ -82,27 +77,25 @@ complete_env (crontab_t* ct) {
   }
 }
 
-int
-get_crontab_fd_if_valid (char* fpath, char* uname, time_t last_mtime, struct stat* statbuf, bool virtual) {
+static int
+get_crontab_fd_if_valid (char* fpath, char* file_owner_uname, time_t last_mtime, struct stat* statbuf, bool virtual) {
   int not_ok     = OK - 1;
   int crontab_fd = not_ok;
 
 #ifndef UNIT_TEST
   // TODO: Only call for current user once
-  struct passwd* pw = NULL;
+  struct passwd* pw = getpwnam(file_owner_uname);
 
   // No user found in passwd
-  // Note: getpwnam must be called first -
-  // we may need it later if the current file is for root but the current user isn't.
-  if ((pw = getpwnam(uname)) == NULL && !s_equals(uname, ROOT_UNAME)) {
-    log_warn("user %s not found\n", uname);
+  if (!is_valid_user(pw, file_owner_uname)) {
+    log_warn("user %s not found\n", file_owner_uname);
     goto dont_process;
   }
 #endif
 
   // Open in readonly, non-blocking mode. Don't follow symlinks.
   // Not following symlinks is largely for security
-  if ((crontab_fd = open(fpath, O_RDONLY | O_NONBLOCK | O_NOFOLLOW, 0)) < OK) {
+  if ((crontab_fd = safe_open(fpath)) < OK) {
     log_warn("cannot read %s (reason=%s)\n", fpath, strerror(errno));
     goto dont_process;
   }
@@ -120,7 +113,7 @@ get_crontab_fd_if_valid (char* fpath, char* uname, time_t last_mtime, struct sta
 #ifndef UNIT_TEST
   if (virtual) {
     // If it's virtual, that means each file is actually an executable. We need at least r/x for the owner.
-    if ((statbuf->st_mode & OWNER_RX_PERMS) == 0) {
+    if (!is_read_exec_by_owner(statbuf)) {
       log_warn(
         "file %s has invalid permissions (should be r/x by owner only but got "
         "%o)\n",
@@ -129,13 +122,13 @@ get_crontab_fd_if_valid (char* fpath, char* uname, time_t last_mtime, struct sta
       );
       goto dont_process;
     }
-    if (access(fpath, X_OK) != 0) {
+    if (!is_executable(fpath)) {
       log_warn("file %s is not executable but was expected to be\n", fpath);
       goto dont_process;
     }
   } else {
     // It's a regular crontab...
-    if ((statbuf->st_mode & OWNER_RW_PERMS) == 0) {
+    if (!is_read_write_by_owner(statbuf)) {
       log_warn(
         "file %s has invalid permissions (should be r/w by owner only but got "
         "%o)\n",
@@ -149,20 +142,13 @@ get_crontab_fd_if_valid (char* fpath, char* uname, time_t last_mtime, struct sta
   // Verify that the user the file is named after actually owns said file,
   // unless we're root.
   if (!usr.root && !is_file_owner(statbuf, pw)) {
-    log_warn("file %s not owned by specified user %s (it's owned by %s)\n", fpath, uname, pw->pw_name);
-    goto dont_process;
-  }
-
-  // This time we're checking that the user who executed this program matches
-  // the crontab owner, unless we're root;.
-  if (!usr.root && pw->pw_uid != usr.uid) {
-    log_warn("current user %s must own this crontab (%s) or be root to schedule it\n ", uname, fpath);
+    log_warn("file %s not owned by specified user %s (it's owned by %s)\n", fpath, file_owner_uname, pw->pw_name);
     goto dont_process;
   }
 #endif
 
   // Ensure there aren't any hard links
-  if (statbuf->st_nlink != 1) {
+  if (has_hard_links(statbuf)) {
     log_warn("file %s has hard symlinks (%d)\n", fpath, statbuf->st_nlink);
     goto dont_process;
   }
@@ -403,7 +389,7 @@ scan_virtual_crontabs (hash_table* old_db, hash_table* new_db, dir_config* dir_c
         log_debug("existing cadence file %s was modified, recreating virtual crontab\n", fpath);
 
         ct = new_virtual_crontab(curr, statbuf.st_mtime, uname, s_copy_or_panic(fname), cadence);
-        // Dont set null in else path because we recreate the crontab and want the old one to be freed
+        // Don't set null in else path because we recreate the crontab and want the old one to be freed
       }
     }
 

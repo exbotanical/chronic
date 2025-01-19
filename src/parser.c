@@ -11,7 +11,7 @@
 #include "utils/string.h"
 #include "utils/xmalloc.h"
 
-// Basically whether we support seconds (7)
+// Basically whether we support seconds
 #define SUPPORTED_CRONEXPR_COLS 5
 
 bool
@@ -125,8 +125,6 @@ parse_expr (cron_entry* entry) {
   cron_parse_expr(entry->schedule, expr, &err);
 
   if (err) {
-    printf("XXX %s\n\n", entry->schedule);
-
     log_warn("error parsing cron expression: %s\n\n", err);
     free(expr);
     return ERR;
