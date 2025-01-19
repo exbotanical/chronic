@@ -1,6 +1,10 @@
 #ifndef TESTS_H
 #define TESTS_H
 
+#define TAP_WANT_PCRE    1
+#define TAP_WANT_PTHREAD 1
+#include "libtap/libtap.h"
+
 #define ITER_CASES_TEST(tests, type) \
   for (unsigned int i = 0; i < sizeof(tests) / sizeof(type); i++)
 
@@ -16,5 +20,6 @@ void run_parser_tests(void);
 void run_crontab_tests(void);
 void run_utils_tests(void);
 void run_regexpr_tests(void);
+void run_ipc_commands_test(void);
 
 #endif /* TESTS_H */

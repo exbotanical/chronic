@@ -1,5 +1,6 @@
 #include "utils/json.h"
 
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -22,44 +23,90 @@ parse_json (const char* json, hash_table* pairs) {
     goto done;
   }
 
-  // Replace closing brace and skip next opening one
+  // Replace closing brace and skip the opening one
   *end = '\0';
   start++;
 
-  char* pair_str = strtok(start, ",");
-  while (pair_str) {
-    char* colon = strchr(pair_str, ':');
-    if (!colon) {
-      log_warn("Invalid key-value pair: %s\n", pair_str);
+  while (*start) {
+    // Skip whitespace
+    while (*start && isspace((unsigned char)*start)) {
+      start++;
+    }
+
+    // Parse key
+    if (*start != '"') {
+      log_warn("%s\n", "Expected key to start with a double quote");
       ret = ERR;
       goto done;
     }
-
-    *colon      = '\0';
-    char* key   = trim_whitespace(pair_str);
-    char* value = trim_whitespace(colon + 1);
-
-    if (*key == '"') {
-      key++;
-    }
-    if (*value == '"') {
-      value++;
-    }
-    if (key[strlen(key) - 1] == '"') {
-      key[strlen(key) - 1] = '\0';
-    }
-    if (value[strlen(value) - 1] == '"') {
-      value[strlen(value) - 1] = '\0';
+    char* key_start = ++start;
+    while (*start && (*start != '"' || *(start - 1) == '\\')) {
+      start++;
     }
 
+    if (*start != '"') {
+      log_warn("%s\n", "Malformed JSON: Missing closing quote for key");
+      ret = ERR;
+      goto done;
+    }
+    *start    = '\0';  // Null-terminate the key
+    char* key = key_start;
+
+    // Skip to the colon
+    start++;
+    while (*start && isspace((unsigned char)*start)) {
+      start++;
+    }
+    if (*start != ':') {
+      log_warn("%s\n", "Expected colon after key");
+      ret = ERR;
+      goto done;
+    }
+    start++;
+
+    // Parse value
+    while (*start && isspace((unsigned char)*start)) {
+      start++;
+    }
+    char* value_start;
+    if (*start == '"') {
+      value_start = ++start;
+      while (*start && (*start != '"' || *(start - 1) == '\\')) {
+        start++;
+      }
+      if (*start != '"') {
+        log_warn("%s\n", "Malformed JSON: Missing closing quote for value");
+        ret = ERR;
+        goto done;
+      }
+    } else {
+      value_start = start;
+      while (*start && *start != ',' && !isspace((unsigned char)*start)) {
+        start;
+      }
+    }
+    char* value = value_start;
+    if (*start) {
+      *start = '\0';  // Null-terminate the value
+      start++;
+    }
+
+    // Trim and store the key-value pair
+    key   = trim_whitespace(key);
+    value = trim_whitespace(value);
     ht_insert(pairs, s_copy(key), s_copy(value));
 
-    pair_str = strtok(NULL, ",");
+    // Skip trailing commas and whitespace
+    while (*start && isspace((unsigned char)*start)) {
+      start++;
+    }
+    if (*start == ',') {
+      start++;
+    }
   }
 
 done:
   free(mutable_json);
-
   return ret;
 }
 

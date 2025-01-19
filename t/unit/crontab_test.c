@@ -7,15 +7,14 @@
 #include <time.h>
 
 #include "cronentry.h"
-#include "tap.c/tap.h"
 #include "tests.h"
 #include "utils/retval.h"
 
 static void
 validate_entry (cron_entry* entry, cron_entry* expected) {
-  is(expected->cmd, entry->cmd, "Expect cmd '%s'", expected->cmd);
-  is(expected->schedule, entry->schedule, "Expect schedule '%s'", expected->schedule);
-  is(
+  eq_str(expected->cmd, entry->cmd, "Expect cmd '%s'", expected->cmd);
+  eq_str(expected->schedule, entry->schedule, "Expect schedule '%s'", expected->schedule);
+  eq_str(
     expected->parent->uname,
     entry->parent->uname,
     "Expect parent->uname '%s'",
@@ -30,7 +29,7 @@ new_crontab_test (void) {
 
   int crontab_fd                    = OK - 1;
   if ((crontab_fd = get_fd(test_fpath)) < OK) {
-    fail();
+    fail("get_fd failed\n");
   }
 
   time_t now         = time(NULL);
@@ -60,9 +59,9 @@ new_crontab_test (void) {
   }
 
   ok(ct->vars->count == 3, "has 3 environment variables");
-  is(ht_get(ct->vars, "PATH"), "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", "has the PATH environment variable");
-  is(ht_get(ct->vars, "SHELL"), "/bin/echo", "has the SHELL environment variable");
-  is(ht_get(ct->vars, "KEY"), "VALUE", "has the KEY environment variable");
+  eq_str(ht_get(ct->vars, "PATH"), "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", "has the PATH environment variable");
+  eq_str(ht_get(ct->vars, "SHELL"), "/bin/echo", "has the SHELL environment variable");
+  eq_str(ht_get(ct->vars, "KEY"), "VALUE", "has the KEY environment variable");
 
   array_t* expected_envp_entries = array_init();
 
@@ -72,7 +71,7 @@ new_crontab_test (void) {
 
   foreach (expected_envp_entries, i) {
     char* expected = array_get(expected_envp_entries, i);
-    is(ct->envp[i], expected, "expect to find %s", expected);
+    eq_str(ct->envp[i], expected, "expect to find %s", expected);
   }
 
   array_free(expected_envp_entries, free);
@@ -86,7 +85,7 @@ new_crontab_test_2 (void) {
 
   int crontab_fd                    = OK - 1;
   if ((crontab_fd = get_fd(test_fpath)) < OK) {
-    fail();
+    fail("get_fd failed\n");
   }
 
   time_t now         = time(NULL);
@@ -128,8 +127,8 @@ new_crontab_test_2 (void) {
   }
 
   ok(ct->vars->count == 2, "has 2 environment variables");
-  is(ht_get(ct->vars, "PATH"), "/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin", "has the PATH environment variable");
-  is(ht_get(ct->vars, "SHELL"), "/bin/sh", "has the SHELL environment variable");
+  eq_str(ht_get(ct->vars, "PATH"), "/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin", "has the PATH environment variable");
+  eq_str(ht_get(ct->vars, "SHELL"), "/bin/sh", "has the SHELL environment variable");
 
   array_t* expected_envp_entries = array_init();
 
@@ -139,7 +138,7 @@ new_crontab_test_2 (void) {
 
   foreach (expected_envp_entries, i) {
     char* expected = array_get(expected_envp_entries, i);
-    is(ct->envp[i], expected, "expect to find %s", expected);
+    eq_str(ct->envp[i], expected, "expect to find %s", expected);
   }
 
   array_free(expected_envp_entries, free);
@@ -268,7 +267,6 @@ update_db_test (void) {
   ok(array_size(ct1->entries) == 2, "user1's crontab has 2 entries");
   ok(array_size(ct4->entries) == 2, "the root2 crontab has 2 entries");
 
-  // Cleanup
   cleanup_test_file(usr_dirname, "user1");
   cleanup_test_file(sys_dirname, "root2");
   cleanup_test_directory(usr_dirname);
@@ -303,11 +301,11 @@ run_virtual_crontabs_tests (void) {
   cron_entry* ce1 = array_get(ct1->entries, 0);
   cron_entry* ce2 = array_get(ct2->entries, 0);
 
-  is(ce1->cmd, fpath1, "uses executable name as cmd");
-  is(ce2->cmd, fpath2, "uses executable name as cmd");
+  eq_str(ce1->cmd, fpath1, "uses executable name as cmd");
+  eq_str(ce2->cmd, fpath2, "uses executable name as cmd");
 
-  is(ce1->schedule, HOURLY_EXPR, "has a once hourly schedule");
-  is(ce2->schedule, HOURLY_EXPR, "has a once hourly schedule");
+  eq_str(ce1->schedule, HOURLY_EXPR, "has a once hourly schedule");
+  eq_str(ce2->schedule, HOURLY_EXPR, "has a once hourly schedule");
 
   cleanup_test_file(dirname, "1");
 

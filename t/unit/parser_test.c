@@ -4,7 +4,6 @@
 
 #include "constants.h"
 #include "cronentry.h"
-#include "tap.c/tap.h"
 #include "tests.h"
 
 void
@@ -30,7 +29,7 @@ strip_comment_test (void) {
     char* s      = s_copy(tc.input);
     strip_comment(s);
 
-    is(s, tc.expect, "Expect '%s'", tc.expect);
+    eq_str(s, tc.expect, "Expect '%s'", tc.expect);
 
     free(s);
   }
@@ -104,7 +103,7 @@ parse_schedule_test (void) {
       ok(rv == ERR, "returns ERR (reason: %s)", tc.err_msg);
     } else {
       ok(rv == OK, "returns OK");
-      is(ret, tc.expect, "Expect '%s'", tc.expect ? tc.expect : "NULL");
+      eq_str(ret, tc.expect, "Expect '%s'", tc.expect ? tc.expect : "NULL");
     }
   }
 }
@@ -167,7 +166,7 @@ parse_cmd_test (void) {
       ok(rv == ERR, "returns ERR (reason: %s)", tc.err_msg);
     } else {
       ok(rv == OK, "returns OK");
-      is(ret, tc.expect, "Expect '%s'", tc.expect ? tc.expect : "NULL");
+      eq_str(ret, tc.expect, "Expect '%s'", tc.expect ? tc.expect : "NULL");
     }
   }
 }
@@ -236,7 +235,7 @@ parse_entry_test (void) {
       ok(ret == ERR, "Expect result to be ERR (%d)", ERR);
     } else {
       ok(ret == OK, "Expect result to be OK (%d)", OK);
-      is(entry.cmd, tc.expect, "Expect '%s'", tc.expect);
+      eq_str(entry.cmd, tc.expect, "Expect '%s'", tc.expect);
     }
   }
 }

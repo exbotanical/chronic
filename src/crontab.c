@@ -32,10 +32,10 @@
  */
 static void
 complete_env (crontab_t* ct) {
-  hash_table* vars = ct->vars;
+  hash_table* vars  = ct->vars;
 
-// We don't want to have to create users for unit tests.
-#ifndef UNIT_TEST
+  // We don't want to have to create users for unit tests.
+  // #ifndef UNIT_TEST
   struct passwd* pw = getpwnam(ct->uname);
   if (pw) {
     if (!ht_search(vars, HOMEDIR_ENVVAR)) {
@@ -60,7 +60,7 @@ complete_env (crontab_t* ct) {
       ct->uname
     );
   }
-#endif
+  // #endif
   // Fill out the envp using the vars map. We're going to need this later and
   // forevermore, so we might as well get it out of the way upfront.
   if (vars->count > 0) {
@@ -241,7 +241,7 @@ new_crontab (int crontab_fd, bool is_root, time_t curr_time, time_t mtime, char*
           continue;
         }
 
-        log_debug("New entry (%d) for crontab %s\n", entry->id, uname);
+        log_debug("New entry (%s) for crontab %s\n", entry->ident, uname);
         array_push_or_panic(ct->entries, entry);
         max_entries--;
       }

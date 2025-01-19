@@ -24,13 +24,7 @@ const char* job_state_names[] = {X(PENDING), X(RUNNING), X(EXITED)};
 pthread_mutex_t mutex         = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t  cond          = PTHREAD_COND_INITIALIZER;
 
-/**
- * Creates a new job of type CRON.
- *
- * @param entry The entry which this job will represent.
- * @return job_t*
- */
-static job_t*
+job_t*
 new_cronjob (cron_entry* entry) {
   job_t* job    = xmalloc(sizeof(job_t));
   job->ident    = create_uuid();

@@ -57,7 +57,7 @@ ipc_write_err (int client_fd, const char* msg, ...) {
 static void*
 ipc_routine (void* arg __attribute__((unused))) {
   int  client_fd;
-  char buffer[RECV_BUFFER_SIZE];
+  char readbuf[RECV_BUFFER_SIZE];
   log_debug("%s\n", "in ipc routine");
 
   while (true) {
@@ -66,11 +66,11 @@ ipc_routine (void* arg __attribute__((unused))) {
       continue;
     }
 
-    read(client_fd, buffer, sizeof(buffer));
-    log_debug("API req: '%s'\n", buffer);
+    read(client_fd, readbuf, sizeof(readbuf));
+    log_debug("API req: '%s'\n", readbuf);
 
     hash_table* pairs = ht_init(11, free);
-    if (parse_json(buffer, pairs) != OK) {
+    if (parse_json(readbuf, pairs) != OK) {
       ipc_write_err(client_fd, "invalid format");
       goto client_done;
     }
@@ -82,17 +82,20 @@ ipc_routine (void* arg __attribute__((unused))) {
     }
 
     log_debug("received command '%s'\n", command);
-    void (*handler)(int) = ht_get(get_command_handlers_map(), command);
+    void (*handler)(buffer_t*) = ht_get(get_command_handlers_map(), command);
 
     if (!handler) {
       ipc_write_err(client_fd, "unknown command '%s'", command);
       goto client_done;
     }
 
-    handler(client_fd);
+    buffer_t* writebuf = buffer_init(NULL);
+    handler(writebuf);
+    write(client_fd, buffer_state(writebuf), buffer_size(writebuf));
+    buffer_free(writebuf);
 
   client_done:
-    memset(buffer, 0, RECV_BUFFER_SIZE);
+    memset(readbuf, 0, RECV_BUFFER_SIZE);
     ht_delete_table(pairs);
     close(client_fd);
   }

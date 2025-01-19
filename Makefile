@@ -24,8 +24,8 @@ TESTDIR     := t
 SRC         := $(shell find $(SRCDIR) -name "*.c")
 TESTS       := $(shell find $(TESTDIR) -name "*.c")
 SRC_NOMAIN  := $(filter-out $(SRCDIR)/main.c, $(SRC))
-TEST_DEPS   := $(wildcard $(DEPSDIR)/tap.c/*.c)
-DEPS        := $(filter-out $(wildcard $(DEPSDIR)/tap.c/*), $(wildcard $(DEPSDIR)/*/*.c))
+TEST_DEPS   := $(wildcard $(DEPSDIR)/libtap/*.c)
+DEPS        := $(filter-out $(wildcard $(DEPSDIR)/libtap/*), $(wildcard $(DEPSDIR)/*/*.c))
 UNIT_TESTS  := $(wildcard $(TESTDIR)/unit/*.c)
 
 INCLUDES         := -I$(DEPSDIR) -I$(INCDIR)

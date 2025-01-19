@@ -14,26 +14,22 @@
 
 typedef struct {
   const char* command;
-  void (*handler)(int);
+  void (*handler)(buffer_t*);
 } command_handler_entry;
 
-static void write_jobs_command(int client_fd);
-static void write_crontabs_command(int client_fd);
-static void write_program_info(int client_fd);
-
 static command_handler_entry command_handler_map_index[] = {
-  {.command = "IPC_LIST_JOBS",     .handler = write_jobs_command    },
-  {.command = "IPC_LIST_CRONTABS", .handler = write_crontabs_command},
-  {.command = "IPC_SHOW_INFO",     .handler = write_program_info    }
+  {.command = "IPC_LIST_JOBS",     .handler = write_jobs_info    },
+  {.command = "IPC_LIST_CRONTABS", .handler = write_crontabs_info},
+  {.command = "IPC_SHOW_INFO",     .handler = write_program_info }
 };
 
 static pthread_once_t command_handlers_map_init_once = PTHREAD_ONCE_INIT;
 static hash_table*    command_handlers_map;
 
-// TODO: just ret str
-static void
-write_jobs_command (int client_fd) {
-  write(client_fd, "[", 1);
+void
+write_jobs_info (buffer_t* buf) {
+  buffer_append(buf, "[");
+
   unsigned int len = array_size(job_queue);
   foreach (job_queue, i) {
     job_t* job = (job_t*)array_get_or_panic(job_queue, i);
@@ -55,18 +51,18 @@ write_jobs_command (int client_fd) {
       i != len - 1 ? "," : ""
     );
 
-    write(client_fd, s, strlen(s));
+    buffer_append(buf, s);
 
     free(cmd_esc);
     free(s);
     free(ts);
   }
-  write(client_fd, "]", 1);
+  buffer_append(buf, "]");
 }
 
-static void
-write_crontabs_command (int client_fd) {
-  write(client_fd, "[", 1);
+void
+write_crontabs_info (buffer_t* buf) {
+  buffer_append(buf, "[");
 
   unsigned int entries = db->count;
   HT_ITER_START(db)
@@ -75,25 +71,28 @@ write_crontabs_command (int client_fd) {
   unsigned int len = array_size(ct->entries);
 
   foreach (ct->entries, i) {
+    len--;
     cron_entry* ce = array_get_or_panic(ct->entries, i);
 
     char* ts       = to_time_str_secs(ce->next);
+
     char* se       = s_concat_arr(ct->envp, ", ");
     char* cmd_esc  = escape_json_string(ce->cmd);
 
     char* s        = s_fmt(
-      "{\"id\":\"%d\",\"cmd\":\"%s\",\"schedule\":\"%s\",\"owner\":\"%s\","
+      "{\"id\":\"%s\",\"filepath\":\"%s\",\"cmd\":\"%s\",\"schedule\":\"%s\","
+             "\"owner\":\"%s\","
              "\"envp\":\"%s\",\"next\":\"%s\"}%s",
-      ce->id,
+      ce->ident,
+      entry->key,
       cmd_esc,
       ce->schedule,
       ct->uname,
       se,
       ts,
-      entries != 0 || i != len - 1 ? "," : ""
+      entries != 0 || len != 0 ? "," : ""
     );
-
-    write(client_fd, s, strlen(s));
+    buffer_append(buf, s);
 
     free(cmd_esc);
     free(s);
@@ -101,12 +100,17 @@ write_crontabs_command (int client_fd) {
     free(ts);
   }
   HT_ITER_END
+  buffer_state(buf)[buffer_size(buf) - 1] = ',';
 
-  write(client_fd, "]", 1);
+  if (buffer_state(buf)[buffer_size(buf) - 1] == ',') {
+    buffer_state(buf)[buffer_size(buf) - 1] = ']';
+  } else {
+    buffer_append(buf, "]");
+  }
 }
 
-static void
-write_program_info (int client_fd) {
+void
+write_program_info (buffer_t* buf) {
   char*  st     = to_time_str_millis(proginfo.start);
   time_t now    = time(NULL);
 
@@ -121,7 +125,7 @@ write_program_info (int client_fd) {
     uptime,
     proginfo.version
   );
-  write(client_fd, s, strlen(s));
+  buffer_append(buf, s);
 
   free(s);
   free(st);

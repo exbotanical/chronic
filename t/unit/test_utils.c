@@ -1,9 +1,9 @@
+#include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "libutil/libutil.h"
-#include "tap.c/tap.h"
 #include "tests.h"
 
 char*
@@ -13,8 +13,7 @@ setup_test_directory (void) {
   char* dirname   = s_copy(mkdtemp(template));
 
   if (dirname == NULL) {
-    perror("mkdtemp failed");
-    fail();
+    fail("mkdtemp failed (reason: %s)\n", strerror(errno));
   }
 
   return dirname;
@@ -57,6 +56,7 @@ modify_test_file (const char* dirname, const char* filename, const char* content
 void
 cleanup_test_directory (char* dirname) {
   rmdir(dirname);
+  free(dirname);
 }
 
 void

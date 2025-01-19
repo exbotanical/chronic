@@ -42,6 +42,7 @@
 - [ ] Make all APIs consistent (e.g. return new string or always accept the dest as input)
 - [ ] Document all behaviors and usage patterns; complete manpage
 - [ ] Perf improvements
+- [ ] Update Makefile template w/manpage and install updates
 
 
 We make tradeoffs between runtime op/main loop work and startup work (loading the crontabs).

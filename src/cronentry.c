@@ -6,10 +6,9 @@
 #include "logger.h"
 #include "parser.h"
 #include "utils/retval.h"
+#include "utils/string.h"
 #include "utils/xmalloc.h"
 #include "utils/xpanic.h"
-
-static unsigned int id_counter = 0;
 
 static inline char*
 get_cadence (cadence_t cadence) {
@@ -72,14 +71,14 @@ new_cron_entry (char* raw, time_t curr, crontab_t* ct, cadence_t cadence) {
 
   entry->parent = ct;
   entry->next   = cron_next(entry->expr, curr);
-  entry->id     = ++id_counter;
+  entry->ident  = create_uuid();
 
   return entry;
 }
 
 void
 renew_cron_entry (cron_entry* entry, time_t curr) {
-  log_debug("Updating time for entry %d\n", entry->id);
+  log_debug("Updating time for entry %s\n", entry->ident);
 
   entry->next = cron_next(entry->expr, curr);
 }
@@ -87,5 +86,6 @@ renew_cron_entry (cron_entry* entry, time_t curr) {
 void
 free_cron_entry (cron_entry* entry) {
   free(entry->expr);
+  free(entry->ident);
   free(entry);
 }

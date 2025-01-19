@@ -1,6 +1,5 @@
 #include "libhash/libhash.h"
 #include "libutil/libutil.h"
-#include "tap.c/tap.h"
 #include "tests.h"
 #include "utils/file.h"
 #include "utils/json.h"
@@ -119,8 +118,8 @@ json_parser_test (void) {
   ok(parse_json(s, pairs) == OK, "returns OK");
 
   ok(pairs->count == 2, "2 pairs");
-  is(ht_get(pairs, "id"), "c0687273-4d7b-4873-96f1-0156d988ebc3", "selects the expected json field");
-  is(ht_get(pairs, "command"), "list_tabs", "selects the expected json field");
+  eq_str(ht_get(pairs, "id"), "c0687273-4d7b-4873-96f1-0156d988ebc3", "selects the expected json field");
+  eq_str(ht_get(pairs, "command"), "list_tabs", "selects the expected json field");
 }
 
 static void
@@ -146,7 +145,7 @@ pretty_print_seconds_test (void) {
     TestCase tc = tests[i];
 
     char* ret   = pretty_print_seconds(tc.seconds);
-    is(tc.expect, ret, "expect %s (got %s)", tc.expect, ret);
+    eq_str(tc.expect, ret, "expect %s (got %s)", tc.expect, ret);
     free(ret);
   }
 }

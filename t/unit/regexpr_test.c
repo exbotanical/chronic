@@ -1,5 +1,4 @@
 #include "libutil/libutil.h"
-#include "tap.c/tap.h"
 #include "tests.h"
 #include "utils/regex.h"
 
@@ -49,7 +48,7 @@ match_variable_test (void) {
 
       match_variable(input, ht);
 
-      is(ht_get(ht, tc.key), tc.value, "parses the variable and updates the hash table");
+      eq_str(ht_get(ht, tc.key), tc.value, "parses the variable and updates the hash table");
     }
   }
 }

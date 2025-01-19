@@ -105,6 +105,14 @@ void signal_reap_routine(void);
 void try_run_jobs(hash_table *db, time_t ts);
 
 /**
+ * Creates a new job of type CRON.
+ *
+ * @param entry The entry which this job will represent.
+ * @return job_t*
+ */
+job_t *new_cronjob(cron_entry *entry);
+
+/**
  * Deallocates a job with type CRON.
  */
 void free_cronjob(job_t *job);

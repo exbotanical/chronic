@@ -149,11 +149,11 @@ describe 'ipc API IPC_SHOW_INFO command'
 end_describe
 
 describe 'ipc API IPC_LIST_CRONTABS command'
-  n_syscrontabs="$(find /etc/cron.{hourly,daily,weekly,monthly}  -type f 2>/dev/null | wc -l)"
+  n_syscrontabs="$(find /etc/cron.{hourly,daily,weekly,monthly} -type f 2>/dev/null | wc -l)"
   start_chronic
   sleep 5
 
-  out="$(sock_call '{ "command" : "IPC_LIST_CRONTABS"}' 2>/dev/null | tr -d '\0')"
+  out="$(sock_call '{ "command" : "IPC_LIST_CRONTABS"}')"
 
   it 'lists all crontabs'
     assert equal $(jq 'length' <<< "$out") "$((n_syscrontabs + 3))"
@@ -177,7 +177,7 @@ describe 'ipc API IPC_LIST_JOBS command'
   echo 'sleeping for 60 seconds...'
   sleep 60
 
-  out="$(sock_call '{ "command" : "IPC_LIST_JOBS"}' 2>/dev/null | tr -d '\0')"
+  out="$(sock_call '{ "command" : "IPC_LIST_JOBS"}')"
 
   it 'lists all jobs'
     assert gt "$(jq 'length' <<< "$out")" 0

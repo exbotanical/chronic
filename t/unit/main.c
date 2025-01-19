@@ -2,7 +2,6 @@
 #include "globals.h"
 #include "libutil/libutil.h"
 #include "proginfo.h"
-#include "tap.c/tap.h"
 #include "tests.h"
 
 // Externs initialized in main
@@ -21,12 +20,13 @@ main (int _argc, char** _argv) {
   usr.uname = "root";
   usr.root  = true;
 
-  plan(198);
+  plan(221);
 
   run_parser_tests();
   run_regexpr_tests();
   run_crontab_tests();
   run_utils_tests();
+  run_ipc_commands_test();
 
   done_testing();
 }
