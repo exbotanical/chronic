@@ -7,9 +7,9 @@
 #include "crontab.h"
 
 #define HOURLY_EXPR         "0 * * * *"
-#define DAILY_EXPR          "0 0 * * *"  // TODO: Run starting now
-#define WEEKLY_EXPR         "0 0 * * 0"  // TODO: Run starting now
-#define MONTHLY_EXPR        "0 0 1 * *"  // TODO: Run starting now
+#define DAILY_EXPR          "0 0 * * *"
+#define WEEKLY_EXPR         "0 0 * * 0"
+#define MONTHLY_EXPR        "0 0 1 * *"
 
 #define MAX_SCHEDULE_LENGTH 32
 #define MAX_COMMAND_LENGTH  256

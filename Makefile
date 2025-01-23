@@ -11,7 +11,7 @@ INSTALL_DIR ?= /usr/local
 MAN_DIR     ?= /usr/share/man/man1
 PROG        := chronic
 MANPAGE     := $(PROG).1
-# TODO: Get from env
+
 PROGVERS    := 0.0.1
 
 UNIT_TARGET := unit_test
@@ -32,11 +32,12 @@ INCLUDES         := -I$(DEPSDIR) -I$(INCDIR)
 STRICT           := -Wall -Wextra -Wno-missing-field-initializers \
  -Wno-unused-parameter -Wno-unused-function -Wno-unused-value
 CFLAGS           := $(STRICT) $(INCLUDES)
-UNIT_TEST_CFLAGS := -DUNIT_TEST $(CFLAGS)
+PROGFLAGS        := -DCHRONIC_VERSION=$(PROGVERS)
+UNITTEST_FLAGS   := -DUNIT_TEST $(CFLAGS)
 LIBS             := -lm -lpthread -lpcre -luuid
 
 all: $(SRC) $(DEPS)
-	$(CC) $(CFLAGS) $^ $(LIBS) -o $(PROG)
+	$(CC) $(CFLAGS) $(PROGFLAGS) $^ $(LIBS) -o $(PROG)
 
 install: all
 	$(shell mkdir -p $(INSTALL_DIR)/bin)
@@ -52,7 +53,7 @@ test:
 	@$(MAKE) integ_test
 
 unit_test: $(UNIT_TESTS) $(DEPS) $(TEST_DEPS) $(SRC_NOMAIN)
-	$(CC) $(UNIT_TEST_CFLAGS) $^ $(LIBS) -o $(UNIT_TARGET)
+	$(CC) $(UNITTEST_FLAGS) $^ $(LIBS) -o $(UNIT_TARGET)
 	@./$(UNIT_TARGET)
 	@$(MAKE) clean
 

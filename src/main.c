@@ -69,7 +69,6 @@ main (int argc, char** argv) {
   time_t start_time = ts.tv_sec;
   time_t current_iter_time;
 
-  // TODO: Check all inserts for statics
   db = update_db(db, start_time, ALL_DIRS);
 
   reap_routine_init();
