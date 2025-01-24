@@ -43,6 +43,7 @@
 - [ ] Document all behaviors and usage patterns; complete manpage
 - [ ] Perf improvements
 - [ ] Update Makefile template w/manpage and install updates
+- [ ] Add install target for systemd service
 
 
 We make tradeoffs between runtime op/main loop work and startup work (loading the crontabs).

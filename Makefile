@@ -1,18 +1,7 @@
+include Makefile.config
+
 .PHONY: all test unit_test unit_test_dev integ_test valgrind clean fmt
 .DELETE_ON_ERROR:
-
-CC          ?= gcc
-AR          ?= ar
-FMT         ?= clang-format
-
-INSTALL     := install
-
-INSTALL_DIR ?= /usr/local
-MAN_DIR     ?= /usr/share/man/man1
-PROG        := chronic
-MANPAGE     := $(PROG).1
-
-PROGVERS    := 0.0.1
 
 UNIT_TARGET := unit_test
 
@@ -32,7 +21,7 @@ INCLUDES         := -I$(DEPSDIR) -I$(INCDIR)
 STRICT           := -Wall -Wextra -Wno-missing-field-initializers \
  -Wno-unused-parameter -Wno-unused-function -Wno-unused-value
 CFLAGS           := $(STRICT) $(INCLUDES)
-PROGFLAGS        := -DCHRONIC_VERSION=$(PROGVERS)
+PROGFLAGS        := -DCHRONIC_VERSION=\"$(PROGVERS)\"
 UNITTEST_FLAGS   := -DUNIT_TEST $(CFLAGS)
 LIBS             := -lm -lpthread -lpcre -luuid
 
